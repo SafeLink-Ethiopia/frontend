@@ -1,63 +1,65 @@
 import { useState } from "react";
 import { createSession } from "./api/sessionApi";
-
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Consent from "./pages/Consent";
+import Awareness from "./pages/Awareness";
 type Language = "am" | "om" | "en";
 
-function App() {
+function Home() {
   const [showSession, setShowSession] = useState(false);
   const [language, setLanguage] = useState<Language>("en");
   const [password, setPassword] = useState("");
- const [safelinkId, setSafelinkId] = useState("");
+  const [safelinkId, setSafelinkId] = useState("");
 
- const [hasSavedSession, setHasSavedSession] = useState(() => {
-   return localStorage.getItem("safelink_session") !== null;
- });
- const [showSupport, setShowSupport] = useState(false);
+  const [hasSavedSession, setHasSavedSession] = useState(() => {
+    return localStorage.getItem("safelink_session") !== null;
+  });
+  const [showSupport, setShowSupport] = useState(false);
 
   const handleCreateSession = async () => {
     try {
       const response = await createSession(language, password || undefined);
-const session = response.session;
+      const session = response.session;
 
-localStorage.setItem("safelink_session", JSON.stringify(session));
+      localStorage.setItem("safelink_session", JSON.stringify(session));
 
-setSafelinkId(session.safelink_id);
+      setSafelinkId(session.safelink_id);
     } catch (error) {
       console.error("Failed to create session:", error);
     }
   };
- if (showSupport) {
-   return (
-     <main className="min-h-screen flex items-center justify-center p-6">
-       <div className="w-full max-w-md">
-         <div className="mb-8">
-           <p className="text-sm text-gray-500">Private Support Session</p>
+  if (showSupport) {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          <div className="mb-8">
+            <p className="text-sm text-gray-500">Private Support Session</p>
 
-           <h1 className="text-3xl font-bold mt-2">
-             How can we help you today?
-           </h1>
-         </div>
+            <h1 className="text-3xl font-bold mt-2">
+              How can we help you today?
+            </h1>
+          </div>
 
-         <button className="w-full border rounded-xl p-5 text-left hover:bg-gray-50">
-           <div className="text-lg font-semibold">I need medical help</div>
+          <button className="w-full border rounded-xl p-5 text-left hover:bg-gray-50">
+            <div className="text-lg font-semibold">I need medical help</div>
 
-           <div className="text-sm text-gray-500 mt-1">
-             Connect me with medical support
-           </div>
-         </button>
+            <div className="text-sm text-gray-500 mt-1">
+              Connect me with medical support
+            </div>
+          </button>
 
-         <button
-           onClick={() => {
-             window.location.href = "https://www.google.com";
-           }}
-           className="w-full mt-6 border rounded-xl p-4 text-red-600"
-         >
-           Quick Exit
-         </button>
-       </div>
-     </main>
-   );
- }
+          <button
+            onClick={() => {
+              window.location.href = "https://www.google.com";
+            }}
+            className="w-full mt-6 border rounded-xl p-4 text-red-600"
+          >
+            Quick Exit
+          </button>
+        </div>
+      </main>
+    );
+  }
   if (safelinkId) {
     return (
       <main className="min-h-screen flex items-center justify-center p-6">
@@ -149,6 +151,21 @@ setSafelinkId(session.safelink_id);
         </button>
       </div>
     </main>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/awareness/consent" element={<Consent />} />
+
+        {/* Temporary fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/awareness" element={<Awareness />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
