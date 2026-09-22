@@ -3,6 +3,9 @@ import { createSession } from "./api/sessionApi";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Consent from "./pages/Consent";
 import Awareness from "./pages/Awareness";
+import Boundaries from "./pages/Boundaries";
+import Harassment from "./pages/Harassment";
+import Support from "./pages/Support";
 type Language = "am" | "om" | "en";
 
 function Home() {
@@ -159,11 +162,14 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/awareness/consent" element={<Consent />} />
 
-        {/* Temporary fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/awareness" element={<Awareness />} />
+        <Route path="/awareness/consent" element={<Consent />} />
+        <Route path="/awareness/boundaries" element={<Boundaries />} />
+        <Route path="/awareness/harassment" element={<Harassment />} />
+        <Route path="/awareness/support" element={<Support />} />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

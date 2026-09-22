@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import QuickExit from "../components/QuickExit";
+
 export default function Awareness() {
   return (
     <main className="min-h-screen bg-gray-50 px-6 py-10">
       <QuickExit />
+
       <div className="mx-auto max-w-5xl">
         <section className="mb-10">
           <p className="text-sm font-medium text-blue-600">
@@ -42,7 +44,10 @@ export default function Awareness() {
             </span>
           </Link>
 
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
+          <Link
+            to="/awareness/boundaries"
+            className="rounded-2xl bg-white p-6 shadow-sm transition hover:shadow-md"
+          >
             <div className="mb-4 text-3xl">🛡️</div>
 
             <h2 className="text-xl font-semibold text-gray-900">
@@ -54,12 +59,15 @@ export default function Awareness() {
               boundaries.
             </p>
 
-            <span className="mt-5 inline-block text-sm text-gray-400">
-              Coming soon
+            <span className="mt-5 inline-block font-medium text-blue-600">
+              Learn more →
             </span>
-          </div>
+          </Link>
 
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
+          <Link
+            to="/awareness/harassment"
+            className="rounded-2xl bg-white p-6 shadow-sm transition hover:shadow-md"
+          >
             <div className="mb-4 text-3xl">⚠️</div>
 
             <h2 className="text-xl font-semibold text-gray-900">
@@ -71,12 +79,15 @@ export default function Awareness() {
               understand available support options.
             </p>
 
-            <span className="mt-5 inline-block text-sm text-gray-400">
-              Coming soon
+            <span className="mt-5 inline-block font-medium text-blue-600">
+              Learn more →
             </span>
-          </div>
+          </Link>
 
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
+          <Link
+            to="/awareness/support"
+            className="rounded-2xl bg-white p-6 shadow-sm transition hover:shadow-md"
+          >
             <div className="mb-4 text-3xl">💬</div>
 
             <h2 className="text-xl font-semibold text-gray-900">
@@ -88,10 +99,10 @@ export default function Awareness() {
               need help.
             </p>
 
-            <span className="mt-5 inline-block text-sm text-gray-400">
-              Coming soon
+            <span className="mt-5 inline-block font-medium text-blue-600">
+              Learn more →
             </span>
-          </div>
+          </Link>
         </section>
       </div>
     </main>
