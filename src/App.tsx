@@ -1,154 +1,128 @@
-import { useState } from "react";
-import { createSession } from "./api/sessionApi";
+import HelpingPage from "./pages/HelpingPage";
 
-type Language = "am" | "om" | "en";
+import QuickExitPage from "./pages/QuickExitPage";
+import { useState } from "react";
+import LoginSessionPage from "./pages/LoginSessionPage";
+import LandingPage from "./pages/LandingPage";
+import CreateSessionPage from "./pages/CreateSessionPage";
+import SessionCreatedPage from "./pages/SessionCreatedPage";
+import PrivateSupportPage from "./pages/PrivateSupportPage";
+
+type Page =
+  | "landing"
+  | "create"
+  | "login"
+  | "session-created"
+  | "support"
+  | "helping"
+  | "quick-exit";
 
 function App() {
-  const [showSession, setShowSession] = useState(false);
-  const [language, setLanguage] = useState<Language>("en");
-  const [password, setPassword] = useState("");
- const [safelinkId, setSafelinkId] = useState("");
+  const [currentPage, setCurrentPage] = useState<Page>("landing");
 
- const [hasSavedSession, setHasSavedSession] = useState(() => {
-   return localStorage.getItem("safelink_session") !== null;
- });
- const [showSupport, setShowSupport] = useState(false);
+  const [safelinkId, setSafelinkId] = useState("");
 
-  const handleCreateSession = async () => {
-    try {
-      const response = await createSession(language, password || undefined);
-const session = response.session;
+  const [hasSavedSession, setHasSavedSession] = useState(() => {
+    return localStorage.getItem("safelink_session") !== null;
+  });
 
-localStorage.setItem("safelink_session", JSON.stringify(session));
+  /* ================= I NEED HELP ================= */
 
-setSafelinkId(session.safelink_id);
-    } catch (error) {
-      console.error("Failed to create session:", error);
-    }
+  const handleNeedHelp = () => {
+    setCurrentPage("create");
   };
- if (showSupport) {
-   return (
-     <main className="min-h-screen flex items-center justify-center p-6">
-       <div className="w-full max-w-md">
-         <div className="mb-8">
-           <p className="text-sm text-gray-500">Private Support Session</p>
 
-           <h1 className="text-3xl font-bold mt-2">
-             How can we help you today?
-           </h1>
-         </div>
+  /* ================= I'M HELPING ================= */
 
-         <button className="w-full border rounded-xl p-5 text-left hover:bg-gray-50">
-           <div className="text-lg font-semibold">I need medical help</div>
+  const handleHelping = () => {
+    setCurrentPage("helping");
+  };
 
-           <div className="text-sm text-gray-500 mt-1">
-             Connect me with medical support
-           </div>
-         </button>
+  /* ================= SESSION CREATED ================= */
 
-         <button
-           onClick={() => {
-             window.location.href = "https://www.google.com";
-           }}
-           className="w-full mt-6 border rounded-xl p-4 text-red-600"
-         >
-           Quick Exit
-         </button>
-       </div>
-     </main>
-   );
- }
-  if (safelinkId) {
+  const handleSessionCreated = (id: string) => {
+    setSafelinkId(id);
+    setHasSavedSession(true);
+
+    setCurrentPage("session-created");
+  };
+
+  /* ================= CONTINUE SESSION ================= */
+
+  const handleContinueSession = () => {
+    setCurrentPage("login");
+  };
+
+  /* ================= QUICK EXIT ================= */
+
+  const handleQuickExit = () => {
+    setSafelinkId("");
+    setCurrentPage("quick-exit");
+  };
+
+  /* ================= SESSION CREATED PAGE ================= */
+
+  if (currentPage === "session-created") {
     return (
-      <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="w-full max-w-md text-center">
-          <h1 className="text-3xl font-bold mb-4">Your SafeLink ID</h1>
-
-          <div className="border rounded-xl p-6 mb-4">
-            <p className="text-2xl font-mono font-bold">{safelinkId}</p>
-          </div>
-
-          <p className="text-gray-600 mb-6">
-            Keep this ID safe. You can use it to access your private session
-            again.
-          </p>
-
-          <button
-            onClick={() => setShowSupport(true)}
-            className="w-full rounded-lg bg-black text-white py-3"
-          >
-            Continue
-          </button>
-        </div>
-      </main>
+      <SessionCreatedPage
+        safelinkId={safelinkId}
+        onContinue={() => setCurrentPage("support")}
+      />
     );
   }
 
-  if (showSession) {
+  /* ================= PRIVATE SUPPORT ================= */
+
+  if (currentPage === "support") {
     return (
-      <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
-          <h1 className="text-3xl font-bold mb-2">Create a Private Session</h1>
-
-          <p className="text-gray-600 mb-8">
-            No name, phone number, or email is required.
-          </p>
-
-          <label className="block mb-2 font-medium">Language</label>
-
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value as Language)}
-            className="w-full border rounded-lg p-3 mb-6"
-          >
-            <option value="en">English</option>
-            <option value="am">Amharic</option>
-            <option value="om">Afaan Oromoo</option>
-          </select>
-
-          <label className="block mb-2 font-medium">Optional PIN</label>
-
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Leave empty if you don't want a PIN"
-            className="w-full border rounded-lg p-3 mb-6"
-          />
-
-          <button
-            onClick={handleCreateSession}
-            className="w-full rounded-lg bg-black text-white py-3"
-          >
-            Create Private Session
-          </button>
-
-          <button
-            onClick={() => setShowSession(false)}
-            className="w-full mt-3 py-3"
-          >
-            Back
-          </button>
-        </div>
-      </main>
+      <PrivateSupportPage
+        safelinkId={safelinkId}
+        onQuickExit={handleQuickExit}
+      />
     );
   }
+  if (currentPage === "login") {
+    return (
+      <LoginSessionPage
+        onLoginSuccess={(id) => {
+          setSafelinkId(id);
+          setCurrentPage("support");
+        }}
+        onBack={() => setCurrentPage("landing")}
+      />
+    );
+  }
+  /* ================= CREATE SESSION ================= */
+
+  if (currentPage === "create") {
+    return (
+      <CreateSessionPage
+        onSessionCreated={handleSessionCreated}
+        onBack={() => setCurrentPage("landing")}
+      />
+    );
+  }
+
+  /* ================= I'M HELPING ================= */
+if (currentPage === "helping") {
+  return <HelpingPage onBack={() => setCurrentPage("landing")} />;
+}
+
+  /* ================= QUICK EXIT ================= */
+
+  if (currentPage === "quick-exit") {
+    return <QuickExitPage />;
+  }
+
+  /* ================= LANDING ================= */
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
-      <div className="text-center max-w-md">
-        <h1 className="text-4xl font-bold mb-4">SafeLink Ethiopia</h1>
-
-        <p className="text-gray-600 mb-8">Private support. Your next step.</p>
-
-        <button
-          onClick={() => setShowSession(true)}
-          className="rounded-lg bg-black text-white px-8 py-3"
-        >
-          I Need Help
-        </button>
-      </div>
-    </main>
+    <LandingPage
+      onNeedHelp={handleNeedHelp}
+      onHelping={handleHelping}
+      hasSavedSession={hasSavedSession}
+      onContinueSession={handleContinueSession}
+    />
   );
 }
 
