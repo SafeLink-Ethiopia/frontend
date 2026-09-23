@@ -136,7 +136,7 @@ function App() {
         */}
       </Routes>
 
-      <Assistant />
+     
     </BrowserRouter>
   );
 }

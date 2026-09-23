@@ -21,6 +21,12 @@ export interface Conversation {
   recommendation: Recommendation | null;
 }
 
+interface ConversationResponse {
+  success: boolean;
+  message?: string;
+  conversation: Conversation;
+}
+
 async function handleResponse<T>(response: Response): Promise<T> {
   const data = await response.json();
 
@@ -47,7 +53,9 @@ export async function requestMedicalSupport(
     }
   );
 
-  return handleResponse<Conversation>(response);
+  const data = await handleResponse<ConversationResponse>(response);
+
+  return data.conversation;
 }
 
 export async function getConversation(
@@ -57,7 +65,9 @@ export async function getConversation(
     `${API_URL}/conversations/${conversationId}`
   );
 
-  return handleResponse<Conversation>(response);
+  const data = await handleResponse<ConversationResponse>(response);
+
+  return data.conversation;
 }
 
 export async function sendUserMessage(
@@ -78,7 +88,9 @@ export async function sendUserMessage(
     }
   );
 
-  return handleResponse<Conversation>(response);
+  const data = await handleResponse<ConversationResponse>(response);
+
+  return data.conversation;
 }
 
 export async function sendAdvisorMessage(
@@ -99,7 +111,9 @@ export async function sendAdvisorMessage(
     }
   );
 
-  return handleResponse<Conversation>(response);
+  const data = await handleResponse<ConversationResponse>(response);
+
+  return data.conversation;
 }
 
 export async function recommendFacility(
@@ -117,5 +131,7 @@ export async function recommendFacility(
     }
   );
 
-  return handleResponse<Conversation>(response);
+  const data = await handleResponse<ConversationResponse>(response);
+
+  return data.conversation;
 }
