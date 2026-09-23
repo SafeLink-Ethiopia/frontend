@@ -1,206 +1,139 @@
 import { useState } from "react";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  useNavigate,
-} from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 
-import { createSession } from "./api/sessionApi";
 import { Assistant } from "./components/Assistant";
+
+import LandingPage from "./pages/LandingPage";
+import CreateSessionPage from "./pages/CreateSessionPage";
+import SessionCreatedPage from "./pages/SessionCreatedPage";
+import LoginSessionPage from "./pages/LoginSessionPage";
+import PrivateSupportPage from "./pages/PrivateSupportPage";
+import HelpingPage from "./pages/HelpingPage";
+import QuickExitPage from "./pages/QuickExitPage";
 import MedicalFlowPage from "./pages/MedicalFlowPage";
 import AdvisorPage from "./pages/AdvisorPage";
 
-type Language = "am" | "om" | "en";
+// Each *Route wrapper below exists for one reason: the already-built
+// page components (from main) take callback PROPS like onNeedHelp,
+// onBack, onContinue — they were written for state-based switching.
+// Routing needs those same callbacks to navigate to a URL instead of
+// calling setCurrentPage. These wrappers translate one into the other
+// without having to rewrite the page components themselves.
 
-function SessionPage() {
+function LandingRoute({ hasSavedSession }: { hasSavedSession: boolean }) {
   const navigate = useNavigate();
-
-  const [showSession, setShowSession] = useState(false);
-  const [language, setLanguage] = useState<Language>("en");
-  const [password, setPassword] = useState("");
-  const [safelinkId, setSafelinkId] = useState("");
-
-  const handleCreateSession = async () => {
-    try {
-      const response = await createSession(
-        language,
-        password || undefined
-      );
-
-      const session = response.session;
-
-      localStorage.setItem(
-        "safelink_session",
-        JSON.stringify(session)
-      );
-
-      setSafelinkId(session.safelink_id);
-    } catch (error) {
-      console.error("Failed to create session:", error);
-    }
-  };
-
-  if (safelinkId) {
-    return (
-      <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="w-full max-w-md text-center">
-          <h1 className="text-3xl font-bold mb-4">
-            Your SafeLink ID
-          </h1>
-
-          <div className="border rounded-xl p-6 mb-4">
-            <p className="text-2xl font-mono font-bold">
-              {safelinkId}
-            </p>
-          </div>
-
-          <p className="text-gray-600 mb-6">
-            Keep this ID safe. You can use it to access
-            your private session again.
-          </p>
-
-          <button
-            onClick={() => navigate("/support")}
-            className="w-full rounded-lg bg-black text-white py-3"
-          >
-            Continue
-          </button>
-        </div>
-      </main>
-    );
-  }
-
-  if (showSession) {
-    return (
-      <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
-          <h1 className="text-3xl font-bold mb-2">
-            Create a Private Session
-          </h1>
-
-          <p className="text-gray-600 mb-8">
-            No name, phone number, or email is required.
-          </p>
-
-          <label className="block mb-2 font-medium">
-            Language
-          </label>
-
-          <select
-            value={language}
-            onChange={(e) =>
-              setLanguage(e.target.value as Language)
-            }
-            className="w-full border rounded-lg p-3 mb-6"
-          >
-            <option value="en">English</option>
-            <option value="am">Amharic</option>
-            <option value="om">Afaan Oromoo</option>
-          </select>
-
-          <label className="block mb-2 font-medium">
-            Optional PIN
-          </label>
-
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Leave empty if you don't want a PIN"
-            className="w-full border rounded-lg p-3 mb-6"
-          />
-
-          <button
-            onClick={handleCreateSession}
-            className="w-full rounded-lg bg-black text-white py-3"
-          >
-            Create Private Session
-          </button>
-
-          <button
-            onClick={() => setShowSession(false)}
-            className="w-full mt-3 py-3"
-          >
-            Back
-          </button>
-        </div>
-      </main>
-    );
-  }
-
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
-      <div className="text-center max-w-md">
-        <h1 className="text-4xl font-bold mb-4">
-          SafeLink Ethiopia
-        </h1>
-
-        <p className="text-gray-600 mb-8">
-          Private support. Your next step.
-        </p>
-
-        <button
-          onClick={() => setShowSession(true)}
-          className="rounded-lg bg-black text-white px-8 py-3"
-        >
-          I Need Help
-        </button>
-      </div>
-    </main>
+    <LandingPage
+      onNeedHelp={() => navigate("/create")}
+      onHelping={() => navigate("/helping")}
+      hasSavedSession={hasSavedSession}
+      onContinueSession={() => navigate("/login")}
+    />
   );
 }
 
-function SupportPage() {
+function CreateSessionRoute({
+  onSessionCreated,
+}: {
+  onSessionCreated: (id: string) => void;
+}) {
   const navigate = useNavigate();
-
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        <div className="mb-8">
-          <p className="text-sm text-gray-500">
-            Private Support Session
-          </p>
-
-          <h1 className="text-3xl font-bold mt-2">
-            How can we help you today?
-          </h1>
-        </div>
-
-        <button
-          onClick={() => navigate("/medical")}
-          className="w-full border rounded-xl p-5 text-left hover:bg-gray-50"
-        >
-          <div className="text-lg font-semibold">
-            I need medical help
-          </div>
-
-          <div className="text-sm text-gray-500 mt-1">
-            Connect me with medical support
-          </div>
-        </button>
-
-        <button
-          onClick={() => {
-            window.location.href = "https://www.google.com";
-          }}
-          className="w-full mt-6 border rounded-xl p-4 text-red-600"
-        >
-          Quick Exit
-        </button>
-      </div>
-    </main>
+    <CreateSessionPage
+      onSessionCreated={(id: string) => {
+        onSessionCreated(id);
+        navigate("/session-created");
+      }}
+      onBack={() => navigate("/")}
+    />
   );
+}
+
+function SessionCreatedRoute({ safelinkId }: { safelinkId: string }) {
+  const navigate = useNavigate();
+  return (
+    <SessionCreatedPage
+      safelinkId={safelinkId}
+      onContinue={() => navigate("/support")}
+    />
+  );
+}
+
+function LoginRoute({
+  onLoginSuccess,
+}: {
+  onLoginSuccess: (id: string) => void;
+}) {
+  const navigate = useNavigate();
+  return (
+    <LoginSessionPage
+      onLoginSuccess={(id: string) => {
+        onLoginSuccess(id);
+        navigate("/support");
+      }}
+      onBack={() => navigate("/")}
+    />
+  );
+}
+
+function SupportRoute({ safelinkId }: { safelinkId: string }) {
+  const navigate = useNavigate();
+  return (
+    <PrivateSupportPage
+      safelinkId={safelinkId}
+      onQuickExit={() => navigate("/quick-exit")}
+    />
+  );
+}
+
+function HelpingRoute() {
+  const navigate = useNavigate();
+  return <HelpingPage onBack={() => navigate("/")} />;
 }
 
 function App() {
+  const [safelinkId, setSafelinkId] = useState("");
+
+  const [hasSavedSession] = useState(() => {
+    return localStorage.getItem("safelink_session") !== null;
+  });
+
+  const handleSessionCreated = (id: string) => {
+    setSafelinkId(id);
+  };
+
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<SessionPage />} />
-        <Route path="/support" element={<SupportPage />} />
+        <Route
+          path="/"
+          element={<LandingRoute hasSavedSession={hasSavedSession} />}
+        />
+        <Route
+          path="/create"
+          element={<CreateSessionRoute onSessionCreated={handleSessionCreated} />}
+        />
+        <Route
+          path="/session-created"
+          element={<SessionCreatedRoute safelinkId={safelinkId} />}
+        />
+        <Route
+          path="/login"
+          element={<LoginRoute onLoginSuccess={handleSessionCreated} />}
+        />
+        <Route path="/support" element={<SupportRoute safelinkId={safelinkId} />} />
+        <Route path="/helping" element={<HelpingRoute />} />
+        <Route path="/quick-exit" element={<QuickExitPage />} />
         <Route path="/medical" element={<MedicalFlowPage />} />
         <Route path="/advisor" element={<AdvisorPage />} />
+
+        {/*
+          TODO — not yet added by anyone: Assistant.tsx's
+          showAwarenessPage() navigates to /awareness/consent and
+          /awareness/harassment, but no route exists for either yet.
+          Ask Person 4 to add an AwarenessPage component and a route
+          here, e.g.: <Route path="/awareness/:slug" element={<AwarenessPage />} />
+        */}
       </Routes>
 
       <Assistant />
