@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 
 import { Assistant } from "./components/Assistant";
 
@@ -12,6 +12,12 @@ import HelpingPage from "./pages/HelpingPage";
 import QuickExitPage from "./pages/QuickExitPage";
 import MedicalFlowPage from "./pages/MedicalFlowPage";
 import AdvisorPage from "./pages/AdvisorPage";
+
+import Awareness from "./pages/Awareness";
+import Consent from "./pages/Consent";
+import Boundaries from "./pages/Boundaries";
+import Harassment from "./pages/Harassment";
+import Support from "./pages/Support";
 
 // Each *Route wrapper below exists for one reason: the already-built
 // page components (from main) take callback PROPS like onNeedHelp,
@@ -127,13 +133,15 @@ function App() {
         <Route path="/medical" element={<MedicalFlowPage />} />
         <Route path="/advisor" element={<AdvisorPage />} />
 
-        {/*
-          TODO — not yet added by anyone: Assistant.tsx's
-          showAwarenessPage() navigates to /awareness/consent and
-          /awareness/harassment, but no route exists for either yet.
-          Ask Person 4 to add an AwarenessPage component and a route
-          here, e.g.: <Route path="/awareness/:slug" element={<AwarenessPage />} />
-        */}
+        {/* Awareness section — built by Person 4 */}
+        <Route path="/awareness" element={<Awareness />} />
+        <Route path="/awareness/consent" element={<Consent />} />
+        <Route path="/awareness/boundaries" element={<Boundaries />} />
+        <Route path="/awareness/harassment" element={<Harassment />} />
+        <Route path="/awareness/support" element={<Support />} />
+
+        {/* Unknown URL → back to landing, instead of a blank/broken page */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
       <Assistant />
