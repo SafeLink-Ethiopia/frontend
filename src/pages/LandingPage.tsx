@@ -1,5 +1,6 @@
 import { useLanguage } from "../context/LanguageContext";
 import { getTranslations } from "../i18n/translations";
+import { useNavigate } from "react-router-dom";
 
 interface LandingPageProps {
   onNeedHelp: () => void;
@@ -16,6 +17,12 @@ function LandingPage({
 }: LandingPageProps) {
   const { language, setLanguage } = useLanguage();
   const t = getTranslations(language);
+
+  const navigate = useNavigate();
+
+  const handleAdminLogin = () => {
+    navigate("/admin/login");
+  };
 
   return (
     <main className="min-h-screen text-white overflow-hidden">
@@ -53,32 +60,57 @@ function LandingPage({
               </div>
             </div>
 
-            {/* Language Selector */}
-            <select
-              value={language}
-              onChange={(e) =>
-                setLanguage(e.target.value as "en" | "am" | "om")
-              }
-              aria-label="Select language"
-              className="
-                bg-white/90
-                text-[#12304a]
-                px-5
-                py-3
-                rounded-full
-                shadow-lg
-                backdrop-blur
-                outline-none
-                cursor-pointer
-                font-medium
-                hover:bg-white
-                transition
-              "
-            >
-              <option value="en">English</option>
-              <option value="am">አማርኛ</option>
-              <option value="om">Afaan Oromoo</option>
-            </select>
+            {/* Header Actions */}
+            <div className="flex items-center gap-3">
+              {/* Admin Login */}
+              <button
+                type="button"
+                onClick={handleAdminLogin}
+                className="
+                  bg-white/15
+                  hover:bg-white/25
+                  backdrop-blur-md
+                  border
+                  border-white/30
+                  text-white
+                  px-5
+                  py-3
+                  rounded-full
+                  shadow-lg
+                  font-medium
+                  transition
+                "
+              >
+                Admin Login
+              </button>
+
+              {/* Language Selector */}
+              <select
+                value={language}
+                onChange={(e) =>
+                  setLanguage(e.target.value as "en" | "am" | "om")
+                }
+                aria-label="Select language"
+                className="
+                  bg-white/90
+                  text-[#12304a]
+                  px-5
+                  py-3
+                  rounded-full
+                  shadow-lg
+                  backdrop-blur
+                  outline-none
+                  cursor-pointer
+                  font-medium
+                  hover:bg-white
+                  transition
+                "
+              >
+                <option value="en">English</option>
+                <option value="am">አማርኛ</option>
+                <option value="om">Afaan Oromoo</option>
+              </select>
+            </div>
           </div>
         </header>
 

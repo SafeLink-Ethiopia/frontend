@@ -2,7 +2,7 @@ import { VoxideClient, VoxideWidget } from "@voxide/react";
 import { goToMedicalFlow } from "../pages/medicalFlow";
 
 const ai = new VoxideClient({
-  publicKey: "vox_pub_85ff748128230386a14a5df5592f7948e30f2cf21d2d8bdd",
+  publicKey: "vox_pub_326853de9a8cfbcd616e4f9c646083847dc4e99af08c23f1",
 });
 
 type AwarenessSlug = "consent" | "harassment";
