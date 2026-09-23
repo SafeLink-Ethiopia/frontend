@@ -2,11 +2,13 @@ import QuickExit from "../components/QuickExit";
 interface PrivateSupportPageProps {
   safelinkId: string;
   onQuickExit: () => void;
+  onMedicalHelp: () => void;
 }
 
 function PrivateSupportPage({
   safelinkId,
   onQuickExit,
+  onMedicalHelp,
 }: PrivateSupportPageProps) {
   const handleMedicalHelp = () => {
     // Person 3 will connect the medical/advisor flow here.
@@ -59,7 +61,7 @@ function PrivateSupportPage({
 
         {/* Medical help */}
         <button
-          onClick={handleMedicalHelp}
+          onClick={onMedicalHelp}
           className="group w-full bg-white border border-gray-200 rounded-[1.5rem] p-6 text-left shadow-sm hover:shadow-xl hover:border-[#239b78]/40 transition-all"
         >
           <div className="flex items-center gap-5">

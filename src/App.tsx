@@ -82,6 +82,7 @@ function SupportRoute({ safelinkId }: { safelinkId: string }) {
     <PrivateSupportPage
       safelinkId={safelinkId}
       onQuickExit={() => navigate("/quick-exit")}
+      onMedicalHelp={() => navigate("/medical")}
     />
   );
 }
