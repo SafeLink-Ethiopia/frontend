@@ -19,13 +19,6 @@ import Boundaries from "./pages/Boundaries";
 import Harassment from "./pages/Harassment";
 import Support from "./pages/Support";
 
-// Each *Route wrapper below exists for one reason: the already-built
-// page components (from main) take callback PROPS like onNeedHelp,
-// onBack, onContinue — they were written for state-based switching.
-// Routing needs those same callbacks to navigate to a URL instead of
-// calling setCurrentPage. These wrappers translate one into the other
-// without having to rewrite the page components themselves.
-
 function LandingRoute({ hasSavedSession }: { hasSavedSession: boolean }) {
   const navigate = useNavigate();
   return (
@@ -145,8 +138,10 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-    
-<Assistant />
+      {/* Mounted ONCE, here, outside <Routes> — this is what keeps it
+          alive across every page navigation. Do not add another
+          <Assistant /> anywhere else (e.g. inside MedicalFlowPage). */}
+      <Assistant />
     </BrowserRouter>
   );
 }
