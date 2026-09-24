@@ -25,6 +25,7 @@ import AdminAwareness from "./pages/admin/AdminAwareness";
 
 import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
 import AdminLayout from "./components/admin/AdminLayout";
+import AdminRag from "./pages/admin/AdminRag";
 
 function LandingRoute({ hasSavedSession }: { hasSavedSession: boolean }) {
   const navigate = useNavigate();
@@ -163,6 +164,7 @@ function App() {
             <Route path="/admin/users" element={<div>Users</div>} />
 
             <Route path="/admin/reports" element={<div>Reports</div>} />
+            <Route path="/admin/rag" element={<AdminRag />} />
 
             <Route path="/admin/resources" element={<div>Resources</div>} />
 

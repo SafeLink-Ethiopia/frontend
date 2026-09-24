@@ -33,15 +33,8 @@ export default function AdminDashboard() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
 
-          <p className="mt-2 text-gray-600">Welcome, {adminId}</p>
+          <p className="mt-2 text-gray-600">Welcome</p>
         </div>
-
-        <button
-          onClick={handleLogout}
-          className="rounded-lg bg-red-600 px-5 py-2.5 font-medium text-white transition hover:bg-red-700"
-        >
-          Logout
-        </button>
       </div>
     </div>
   );
