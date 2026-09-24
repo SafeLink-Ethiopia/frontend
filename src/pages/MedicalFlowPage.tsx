@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Assistant } from "../components/Assistant";
+// import { Assistant } from "../components/Assistant";
 import {
   getConversation,
   recommendFacility,
@@ -336,9 +336,9 @@ export default function MedicalFlowPage() {
               </p>
 
               {/* ORIGINAL VOXIDE ASSISTANT */}
-              <div className="mt-8 flex justify-center">
+              {/* <div className="mt-8 flex justify-center">
                 <Assistant />
-              </div>
+              </div> */}
 
               <p className="mt-6 text-xs text-white/40">
                 {language === "am"
