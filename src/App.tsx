@@ -88,6 +88,7 @@ function SupportRoute({ safelinkId }: { safelinkId: string }) {
     <PrivateSupportPage
       safelinkId={safelinkId}
       onQuickExit={() => navigate("/quick-exit")}
+      onMedicalHelp={() => navigate("/medical")}
     />
   );
 }
@@ -144,7 +145,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      <Assistant />
+     
     </BrowserRouter>
   );
 }
