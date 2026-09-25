@@ -41,10 +41,6 @@ export default function AdminSidebar() {
     },
 
     {
-      label: "RAG Documents",
-      path: "/admin/rag",
-    },
-    {
       label: "Settings",
       path: "/admin/settings",
     },
