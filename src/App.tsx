@@ -23,10 +23,6 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminAwareness from "./pages/admin/AdminAwareness";
 
-import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
-import AdminLayout from "./components/admin/AdminLayout";
-import AdminRag from "./pages/admin/AdminRag";
-
 function LandingRoute({ hasSavedSession }: { hasSavedSession: boolean }) {
   const navigate = useNavigate();
 
@@ -94,6 +90,7 @@ function SupportRoute({ safelinkId }: { safelinkId: string }) {
     <PrivateSupportPage
       safelinkId={safelinkId}
       onQuickExit={() => navigate("/quick-exit")}
+      onMedicalHelp={() => navigate("/medical")}
     />
   );
 }
@@ -164,7 +161,6 @@ function App() {
             <Route path="/admin/users" element={<div>Users</div>} />
 
             <Route path="/admin/reports" element={<div>Reports</div>} />
-            <Route path="/admin/rag" element={<AdminRag />} />
 
             <Route path="/admin/resources" element={<div>Resources</div>} />
 
@@ -175,6 +171,9 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
+      {/* Mounted ONCE, here, outside <Routes> — this is what keeps it
+          alive across every page navigation. Do not add another
+          <Assistant /> anywhere else (e.g. inside MedicalFlowPage). */}
       <Assistant />
     </BrowserRouter>
   );
