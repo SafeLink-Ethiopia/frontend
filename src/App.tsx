@@ -34,6 +34,7 @@ import AdminLayout from "./components/admin/AdminLayout";
 import CreateAdvisor from "./pages/admin/CreateAdvisor";
 import VerifyOtp from "./pages/advisor/VerifyOtp";
 import ResetPassword from "./pages/advisor/ResetPassword";
+import Advisors from "./pages/admin/Advisors";
 
 function LandingRoute({ hasSavedSession }: { hasSavedSession: boolean }) {
   const navigate = useNavigate();
@@ -192,6 +193,8 @@ function App() {
 
             <Route path="/admin/settings" element={<div>Settings</div>} />
             <Route path="/admin/advisors/create" element={<CreateAdvisor />} />
+
+            <Route path="/admin/advisors" element={<Advisors />} />
           </Route>
         </Route>
 
