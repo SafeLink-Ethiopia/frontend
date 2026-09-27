@@ -20,7 +20,6 @@ export default function AdminSidebar() {
     } finally {
       localStorage.removeItem("adminToken");
       localStorage.removeItem("adminId");
-
       navigate("/admin/login", { replace: true });
     }
   };
@@ -34,12 +33,14 @@ export default function AdminSidebar() {
       label: "Awareness",
       path: "/admin/awareness",
     },
-
+    {
+      label: "Create Advisor",
+      path: "/admin/advisors/create",
+    },
     {
       label: "Reports",
       path: "/admin/reports",
     },
-
     {
       label: "Settings",
       path: "/admin/settings",
@@ -48,13 +49,11 @@ export default function AdminSidebar() {
 
   return (
     <aside className="flex min-h-screen w-64 flex-col bg-[#126d85] text-white">
-      {/* Logo / Title */}
       <div className="border-b border-white/20 p-6">
         <h1 className="text-2xl font-bold">SafeLink</h1>
         <p className="mt-1 text-sm text-white/70">Admin Panel</p>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 p-4">
         <div className="space-y-2">
           {navItems.map((item) => (
@@ -75,7 +74,6 @@ export default function AdminSidebar() {
         </div>
       </nav>
 
-      {/* Logout */}
       <div className="border-t border-white/20 p-4">
         <button
           type="button"

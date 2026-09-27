@@ -57,7 +57,11 @@ function getPublicKeyForLanguage(language: Language): string {
 
 const currentLanguage = getSavedLanguage();
 
-const ai = new VoxideClient({});
+const ai = new VoxideClient({
+  publicKey: getPublicKeyForLanguage(currentLanguage),
+  //   console.log("[Assistant] Using language:", currentLanguage);
+  // console.log("[Assistant] Using key ending in:", getPublicKeyForLanguage(currentLanguage).slice(-6));
+});
 console.log("[Assistant] Using language:", currentLanguage);
 console.log(
   "[Assistant] Using key ending in:",

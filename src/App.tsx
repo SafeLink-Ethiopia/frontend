@@ -19,9 +19,18 @@ import QuickExitPage from "./pages/QuickExitPage";
 import MedicalFlowPage from "./pages/MedicalFlowPage";
 import AdvisorPage from "./pages/AdvisorPage";
 
+import AdvisorLogin from "./pages/advisor/AdvisorLogin";
+import ForgotPassword from "./pages/advisor/ForgotPassword";
+import ChangePassword from "./pages/advisor/changePassword";
+
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminAwareness from "./pages/admin/AdminAwareness";
+import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
+import AdminLayout from "./components/admin/AdminLayout";
+import CreateAdvisor from "./pages/admin/CreateAdvisor";
+import VerifyOtp from "./pages/advisor/VerifyOtp";
+import ResetPassword from "./pages/advisor/ResetPassword";
 
 function LandingRoute({ hasSavedSession }: { hasSavedSession: boolean }) {
   const navigate = useNavigate();
@@ -150,7 +159,17 @@ function App() {
 
         <Route path="/advisor" element={<AdvisorPage />} />
 
+        <Route path="/advisor/login" element={<AdvisorLogin />} />
+
+        <Route path="/advisor/change-password" element={<ChangePassword />} />
+
+        <Route path="/advisor/forgot-password" element={<ForgotPassword />} />
+
         <Route path="/admin/login" element={<AdminLogin />} />
+
+        <Route path="/advisor/verify-otp" element={<VerifyOtp />} />
+
+        <Route path="/advisor/reset-password" element={<ResetPassword />} />
 
         <Route element={<AdminProtectedRoute />}>
           <Route element={<AdminLayout />}>
@@ -165,15 +184,13 @@ function App() {
             <Route path="/admin/resources" element={<div>Resources</div>} />
 
             <Route path="/admin/settings" element={<div>Settings</div>} />
+            <Route path="/admin/advisors/create" element={<CreateAdvisor />} />
           </Route>
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {/* Mounted ONCE, here, outside <Routes> — this is what keeps it
-          alive across every page navigation. Do not add another
-          <Assistant /> anywhere else (e.g. inside MedicalFlowPage). */}
       <Assistant />
     </BrowserRouter>
   );
