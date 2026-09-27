@@ -48,7 +48,7 @@ function getPublicKeyForLanguage(language: Language): string {
 
   if (!key) {
     console.error(
-      "[Assistant] No Voxide public key found in .env — check VITE_VOXIDE_PUBLIC_KEY_DEFAULT is set."
+      "[Assistant] No Voxide public key found in .env — check VITE_VOXIDE_PUBLIC_KEY_DEFAULT is set.",
     );
   }
 
@@ -59,11 +59,14 @@ const currentLanguage = getSavedLanguage();
 
 const ai = new VoxideClient({
   publicKey: getPublicKeyForLanguage(currentLanguage),
-//   console.log("[Assistant] Using language:", currentLanguage);
-// console.log("[Assistant] Using key ending in:", getPublicKeyForLanguage(currentLanguage).slice(-6));
+  //   console.log("[Assistant] Using language:", currentLanguage);
+  // console.log("[Assistant] Using key ending in:", getPublicKeyForLanguage(currentLanguage).slice(-6));
 });
-  console.log("[Assistant] Using language:", currentLanguage);
-console.log("[Assistant] Using key ending in:", getPublicKeyForLanguage(currentLanguage).slice(-6));
+console.log("[Assistant] Using language:", currentLanguage);
+console.log(
+  "[Assistant] Using key ending in:",
+  getPublicKeyForLanguage(currentLanguage).slice(-6),
+);
 
 // ---------------------------------------------------------------------
 // Navigate by URL for both flows — this matches how the rest of the

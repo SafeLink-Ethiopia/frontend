@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
 
 import { Assistant } from "./components/Assistant";
 
@@ -16,14 +22,22 @@ import AdvisorLoginPage from "./pages/AdvisorLoginPage";
 import AdvisorDashboardPage from "./pages/AdvisorDashboardPage";
 import AdvisorProfilePage from "./pages/AdvisorProfilePage";
 
-import Awareness from "./pages/Awareness";
-import Consent from "./pages/Consent";
-import Boundaries from "./pages/Boundaries";
-import Harassment from "./pages/Harassment";
-import Support from "./pages/Support";
+import AdvisorLogin from "./pages/advisor/AdvisorLogin";
+import ForgotPassword from "./pages/advisor/ForgotPassword";
+import ChangePassword from "./pages/advisor/changePassword";
+
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminAwareness from "./pages/admin/AdminAwareness";
+import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
+import AdminLayout from "./components/admin/AdminLayout";
+import CreateAdvisor from "./pages/admin/CreateAdvisor";
+import VerifyOtp from "./pages/advisor/VerifyOtp";
+import ResetPassword from "./pages/advisor/ResetPassword";
 
 function LandingRoute({ hasSavedSession }: { hasSavedSession: boolean }) {
   const navigate = useNavigate();
+
   return (
     <LandingPage
       onNeedHelp={() => navigate("/create")}
@@ -40,6 +54,7 @@ function CreateSessionRoute({
   onSessionCreated: (id: string) => void;
 }) {
   const navigate = useNavigate();
+
   return (
     <CreateSessionPage
       onSessionCreated={(id: string) => {
@@ -53,6 +68,7 @@ function CreateSessionRoute({
 
 function SessionCreatedRoute({ safelinkId }: { safelinkId: string }) {
   const navigate = useNavigate();
+
   return (
     <SessionCreatedPage
       safelinkId={safelinkId}
@@ -67,6 +83,7 @@ function LoginRoute({
   onLoginSuccess: (id: string) => void;
 }) {
   const navigate = useNavigate();
+
   return (
     <LoginSessionPage
       onLoginSuccess={(id: string) => {
@@ -80,6 +97,7 @@ function LoginRoute({
 
 function SupportRoute({ safelinkId }: { safelinkId: string }) {
   const navigate = useNavigate();
+
   return (
     <PrivateSupportPage
       safelinkId={safelinkId}
@@ -91,6 +109,7 @@ function SupportRoute({ safelinkId }: { safelinkId: string }) {
 
 function HelpingRoute() {
   const navigate = useNavigate();
+
   return <HelpingPage onBack={() => navigate("/")} />;
 }
 
@@ -112,42 +131,73 @@ function App() {
           path="/"
           element={<LandingRoute hasSavedSession={hasSavedSession} />}
         />
+
         <Route
           path="/create"
-          element={<CreateSessionRoute onSessionCreated={handleSessionCreated} />}
+          element={
+            <CreateSessionRoute onSessionCreated={handleSessionCreated} />
+          }
         />
+
         <Route
           path="/session-created"
           element={<SessionCreatedRoute safelinkId={safelinkId} />}
         />
+
         <Route
           path="/login"
           element={<LoginRoute onLoginSuccess={handleSessionCreated} />}
         />
-        <Route path="/support" element={<SupportRoute safelinkId={safelinkId} />} />
+
+        <Route
+          path="/support"
+          element={<SupportRoute safelinkId={safelinkId} />}
+        />
+
         <Route path="/helping" element={<HelpingRoute />} />
+
         <Route path="/quick-exit" element={<QuickExitPage />} />
+
         <Route path="/medical" element={<MedicalFlowPage />} />
+
         <Route path="/advisor" element={<AdvisorPage />} />
         <Route path="/advisor/login" element={<AdvisorLoginPage />} />
         <Route path="/advisor/dashboard" element={<AdvisorDashboardPage />} />
         <Route path="/advisor/profile" element={<AdvisorProfilePage />} />
         <Route path="/advisor/change-password" element={<AdvisorProfilePage />} />
 
-        {/* Awareness section — built by Person 4 */}
-        <Route path="/awareness" element={<Awareness />} />
-        <Route path="/awareness/consent" element={<Consent />} />
-        <Route path="/awareness/boundaries" element={<Boundaries />} />
-        <Route path="/awareness/harassment" element={<Harassment />} />
-        <Route path="/awareness/support" element={<Support />} />
+        <Route path="/advisor/login" element={<AdvisorLogin />} />
 
-        {/* Unknown URL → back to landing, instead of a blank/broken page */}
+        <Route path="/advisor/change-password" element={<ChangePassword />} />
+
+        <Route path="/advisor/forgot-password" element={<ForgotPassword />} />
+
+        <Route path="/admin/login" element={<AdminLogin />} />
+
+        <Route path="/advisor/verify-otp" element={<VerifyOtp />} />
+
+        <Route path="/advisor/reset-password" element={<ResetPassword />} />
+
+        <Route element={<AdminProtectedRoute />}>
+          <Route element={<AdminLayout />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
+            <Route path="/admin/awareness" element={<AdminAwareness />} />
+
+            <Route path="/admin/users" element={<div>Users</div>} />
+
+            <Route path="/admin/reports" element={<div>Reports</div>} />
+
+            <Route path="/admin/resources" element={<div>Resources</div>} />
+
+            <Route path="/admin/settings" element={<div>Settings</div>} />
+            <Route path="/admin/advisors/create" element={<CreateAdvisor />} />
+          </Route>
+        </Route>
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {/* Mounted ONCE, here, outside <Routes> — this is what keeps it
-          alive across every page navigation. Do not add another
-          <Assistant /> anywhere else (e.g. inside MedicalFlowPage). */}
       <Assistant />
     </BrowserRouter>
   );
