@@ -12,6 +12,9 @@ import HelpingPage from "./pages/HelpingPage";
 import QuickExitPage from "./pages/QuickExitPage";
 import MedicalFlowPage from "./pages/MedicalFlowPage";
 import AdvisorPage from "./pages/AdvisorPage";
+import AdvisorLoginPage from "./pages/AdvisorLoginPage";
+import AdvisorDashboardPage from "./pages/AdvisorDashboardPage";
+import AdvisorProfilePage from "./pages/AdvisorProfilePage";
 
 import Awareness from "./pages/Awareness";
 import Consent from "./pages/Consent";
@@ -126,6 +129,10 @@ function App() {
         <Route path="/quick-exit" element={<QuickExitPage />} />
         <Route path="/medical" element={<MedicalFlowPage />} />
         <Route path="/advisor" element={<AdvisorPage />} />
+        <Route path="/advisor/login" element={<AdvisorLoginPage />} />
+        <Route path="/advisor/dashboard" element={<AdvisorDashboardPage />} />
+        <Route path="/advisor/profile" element={<AdvisorProfilePage />} />
+        <Route path="/advisor/change-password" element={<AdvisorProfilePage />} />
 
         {/* Awareness section — built by Person 4 */}
         <Route path="/awareness" element={<Awareness />} />
