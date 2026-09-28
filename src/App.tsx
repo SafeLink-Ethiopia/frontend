@@ -18,6 +18,9 @@ import HelpingPage from "./pages/HelpingPage";
 import QuickExitPage from "./pages/QuickExitPage";
 import MedicalFlowPage from "./pages/MedicalFlowPage";
 import AdvisorPage from "./pages/AdvisorPage";
+import AdvisorLoginPage from "./pages/AdvisorLoginPage";
+import AdvisorDashboardPage from "./pages/AdvisorDashboardPage";
+import AdvisorProfilePage from "./pages/AdvisorProfilePage";
 
 import AdvisorLogin from "./pages/advisor/AdvisorLogin";
 import ForgotPassword from "./pages/advisor/ForgotPassword";
@@ -169,6 +172,10 @@ function App() {
         ========================== */}
 
         <Route path="/advisor" element={<AdvisorPage />} />
+        <Route path="/advisor/login" element={<AdvisorLoginPage />} />
+        <Route path="/advisor/dashboard" element={<AdvisorDashboardPage />} />
+        <Route path="/advisor/profile" element={<AdvisorProfilePage />} />
+        <Route path="/advisor/change-password" element={<AdvisorProfilePage />} />
 
         <Route path="/advisor/login" element={<AdvisorLogin />} />
 
