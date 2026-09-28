@@ -46,6 +46,10 @@ export default function AdminSidebar() {
       path: "/admin/advisors",
     },
     {
+      label: "Messages",
+      path: "/admin/messages",
+    },
+    {
       label: "Settings",
       path: "/admin/settings",
     },

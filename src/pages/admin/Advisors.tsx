@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 interface Advisor {
   _id?: string;
@@ -22,64 +23,74 @@ interface AdvisorsResponse {
 }
 
 export default function Advisors() {
+  const navigate = useNavigate();
+
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [updatingAdvisorId, setUpdatingAdvisorId] = useState("");
-  const [deletingAdvisorId, setDeletingAdvisorId] = useState("");
-  const [savingAdvisor, setSavingAdvisor] = useState(false);
-  const [advisorToDelete, setAdvisorToDelete] = useState<Advisor | null>(null);
+
   const [selectedAdvisor, setSelectedAdvisor] = useState<Advisor | null>(null);
+
   const [editingAdvisor, setEditingAdvisor] = useState<Advisor | null>(null);
 
-  useEffect(() => {
-    const fetchAdvisors = async () => {
-      try {
-        setLoading(true);
-        setError("");
+  const [advisorToDelete, setAdvisorToDelete] = useState<Advisor | null>(null);
 
-        const token = localStorage.getItem("adminToken");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-        if (!token) {
-          setError("Admin authentication required.");
-          return;
-        }
+  /*
+   * Fetch advisors
+   */
+  const fetchAdvisors = async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-        const response = await axios.get<AdvisorsResponse>(
-          "http://localhost:5000/api/advisors",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
+      const token = localStorage.getItem("adminToken");
 
-        setAdvisors(response.data.advisors);
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
-          setError(
-            error.response?.data?.message ||
-              "Failed to load advisors. Please try again.",
-          );
-        } else {
-          setError("Something went wrong while loading advisors.");
-        }
-      } finally {
-        setLoading(false);
+      if (!token) {
+        setError("Admin authentication required.");
+        return;
       }
-    };
 
+      const response = await axios.get<AdvisorsResponse>(
+        "http://localhost:5000/api/advisors",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      setAdvisors(response.data.advisors || []);
+    } catch (error) {
+      console.error("Failed to fetch advisors:", error);
+
+      if (axios.isAxiosError(error)) {
+        setError(error.response?.data?.message || "Failed to load advisors.");
+      } else {
+        setError("Something went wrong while loading advisors.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchAdvisors();
   }, []);
 
+  /*
+   * Toggle advisor active/inactive
+   */
   const handleToggleActive = async (advisor: Advisor) => {
     if (!advisor.advisor_id) {
-      setError("This advisor does not have an advisor ID.");
+      setError("Advisor ID is missing.");
       return;
     }
 
     try {
-      setUpdatingAdvisorId(advisor.advisor_id);
+      setIsUpdating(true);
       setError("");
 
       const token = localStorage.getItem("adminToken");
@@ -97,56 +108,48 @@ export default function Advisors() {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
         },
       );
 
-      const updatedAdvisor = response.data.advisor;
+      const updatedAdvisor = response.data.advisor || response.data;
 
       setAdvisors((currentAdvisors) =>
-        currentAdvisors.map((currentAdvisor) =>
-          currentAdvisor.advisor_id === updatedAdvisor.advisor_id
+        currentAdvisors.map((item) =>
+          item.advisor_id === advisor.advisor_id
             ? {
-                ...currentAdvisor,
-                active: updatedAdvisor.active,
+                ...item,
+                active: updatedAdvisor.active ?? !advisor.active,
               }
-            : currentAdvisor,
+            : item,
         ),
       );
-
-      if (selectedAdvisor?.advisor_id === updatedAdvisor.advisor_id) {
-        setSelectedAdvisor((current) =>
-          current
-            ? {
-                ...current,
-                active: updatedAdvisor.active,
-              }
-            : null,
-        );
-      }
     } catch (error) {
+      console.error("Failed to update advisor status:", error);
+
       if (axios.isAxiosError(error)) {
         setError(
           error.response?.data?.message || "Failed to update advisor status.",
         );
       } else {
-        setError("Something went wrong while updating advisor status.");
+        setError("Something went wrong.");
       }
     } finally {
-      setUpdatingAdvisorId("");
+      setIsUpdating(false);
     }
   };
 
+  /*
+   * Delete advisor
+   */
   const handleDeleteAdvisor = async () => {
     if (!advisorToDelete?.advisor_id) {
-      setError("This advisor does not have an advisor ID.");
-      setAdvisorToDelete(null);
+      setError("Advisor ID is missing.");
       return;
     }
 
     try {
-      setDeletingAdvisorId(advisorToDelete.advisor_id);
+      setIsDeleting(true);
       setError("");
 
       const token = localStorage.getItem("adminToken");
@@ -171,34 +174,31 @@ export default function Advisors() {
         ),
       );
 
-      if (selectedAdvisor?.advisor_id === advisorToDelete.advisor_id) {
-        setSelectedAdvisor(null);
-      }
-
       setAdvisorToDelete(null);
     } catch (error) {
+      console.error("Failed to delete advisor:", error);
+
       if (axios.isAxiosError(error)) {
         setError(error.response?.data?.message || "Failed to delete advisor.");
       } else {
         setError("Something went wrong while deleting advisor.");
       }
     } finally {
-      setDeletingAdvisorId("");
+      setIsDeleting(false);
     }
   };
 
-  const handleUpdateAdvisor = async (
-    event: React.FormEvent<HTMLFormElement>,
-  ) => {
-    event.preventDefault();
-
+  /*
+   * Update advisor
+   */
+  const handleUpdateAdvisor = async () => {
     if (!editingAdvisor?.advisor_id) {
-      setError("This advisor does not have an advisor ID.");
+      setError("Advisor ID is missing.");
       return;
     }
 
     try {
-      setSavingAdvisor(true);
+      setIsUpdating(true);
       setError("");
 
       const token = localStorage.getItem("adminToken");
@@ -218,20 +218,20 @@ export default function Advisors() {
           phone_number: editingAdvisor.phone_number,
           location: editingAdvisor.location,
           working_hours: editingAdvisor.working_hours,
+          active: editingAdvisor.active,
         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
         },
       );
 
-      const updatedAdvisor = response.data.advisor;
+      const updatedAdvisor = response.data.advisor || response.data;
 
       setAdvisors((currentAdvisors) =>
         currentAdvisors.map((advisor) =>
-          advisor.advisor_id === updatedAdvisor.advisor_id
+          advisor.advisor_id === editingAdvisor.advisor_id
             ? {
                 ...advisor,
                 ...updatedAdvisor,
@@ -240,517 +240,423 @@ export default function Advisors() {
         ),
       );
 
-      if (selectedAdvisor?.advisor_id === updatedAdvisor.advisor_id) {
-        setSelectedAdvisor({
-          ...selectedAdvisor,
-          ...updatedAdvisor,
-        });
-      }
-
       setEditingAdvisor(null);
     } catch (error) {
+      console.error("Failed to update advisor:", error);
+
       if (axios.isAxiosError(error)) {
         setError(error.response?.data?.message || "Failed to update advisor.");
       } else {
         setError("Something went wrong while updating advisor.");
       }
     } finally {
-      setSavingAdvisor(false);
+      setIsUpdating(false);
     }
   };
 
+  /*
+   * Open advisor chat
+   */
+  const handleOpenChat = (advisor: Advisor) => {
+    console.log("Opening chat for advisor:", advisor.advisor_id);
+
+    if (!advisor.advisor_id) {
+      setError("This advisor does not have an advisor ID.");
+      return;
+    }
+
+    navigate(`/admin/advisors/${advisor.advisor_id}/chat`);
+  };
+
   return (
-    <>
-      <div className="min-h-screen bg-slate-50 p-6 lg:p-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-slate-900">Advisors</h1>
+    <div className="min-h-screen bg-slate-50 p-6">
+      <div className="mx-auto max-w-7xl">
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">Advisors</h1>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Manage your advisors and communicate with them.
+            </p>
+          </div>
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="mb-5 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+            <span>{error}</span>
+
+            <button
+              type="button"
+              onClick={() => setError("")}
+              className="font-medium text-red-700 hover:text-red-900"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* Loading */}
+        {loading ? (
+          <div className="rounded-xl bg-white p-10 text-center shadow-sm">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+
+            <p className="mt-4 text-sm text-slate-500">Loading advisors...</p>
+          </div>
+        ) : advisors.length === 0 ? (
+          /* Empty */
+          <div className="rounded-xl bg-white p-10 text-center shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-700">
+              No advisors found
+            </h2>
 
             <p className="mt-2 text-sm text-slate-500">
-              View and manage all SafeLink advisors.
+              There are currently no advisors available.
             </p>
           </div>
+        ) : (
+          /* Advisors table */
+          <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Advisor
+                    </th>
 
-          {error && (
-            <div className="mb-6 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              <span>{error}</span>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Contact
+                    </th>
 
-              <button
-                type="button"
-                onClick={() => setError("")}
-                className="ml-4 font-medium text-red-600 hover:text-red-800"
-              >
-                ×
-              </button>
-            </div>
-          )}
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Type
+                    </th>
 
-          {loading ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Location
+                    </th>
 
-              <p className="mt-4 text-sm text-slate-500">Loading advisors...</p>
-            </div>
-          ) : advisors.length === 0 ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-              <p className="text-sm text-slate-500">No advisors found.</p>
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-200">
-                  <thead className="bg-slate-50">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        Advisor
-                      </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Status
+                    </th>
 
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        Email
-                      </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
 
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        Type
-                      </th>
+                <tbody className="divide-y divide-slate-100">
+                  {advisors.map((advisor) => (
+                    <tr
+                      key={advisor.advisor_id || advisor._id || advisor.email}
+                      className="transition hover:bg-slate-50"
+                    >
+                      {/* Advisor */}
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <div>
+                          <p className="font-medium text-slate-800">
+                            {advisor.name}
+                          </p>
 
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        Working Hours
-                      </th>
+                          {advisor.advisor_id && (
+                            <p className="mt-1 text-xs text-slate-400">
+                              {advisor.advisor_id}
+                            </p>
+                          )}
+                        </div>
+                      </td>
 
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        Status
-                      </th>
-
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody className="divide-y divide-slate-200">
-                    {advisors.map((advisor) => {
-                      const isUpdating =
-                        updatingAdvisorId === advisor.advisor_id;
-
-                      const isDeleting =
-                        deletingAdvisorId === advisor.advisor_id;
-
-                      return (
-                        <tr
-                          key={advisor._id || advisor.advisor_id}
-                          className="transition hover:bg-slate-50"
-                        >
-                          <td className="whitespace-nowrap px-6 py-4">
-                            <div>
-                              <p className="font-medium text-slate-900">
-                                {advisor.name}
-                              </p>
-
-                              {advisor.advisor_id && (
-                                <p className="mt-1 text-xs text-slate-400">
-                                  {advisor.advisor_id}
-                                </p>
-                              )}
-                            </div>
-                          </td>
-
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-600">
+                      {/* Contact */}
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="text-sm text-slate-700">
                             {advisor.email}
-                          </td>
+                          </p>
 
-                          <td className="whitespace-nowrap px-6 py-4">
-                            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium capitalize text-blue-700">
-                              {advisor.type}
-                            </span>
-                          </td>
+                          {advisor.phone_number && (
+                            <p className="mt-1 text-xs text-slate-400">
+                              {advisor.phone_number}
+                            </p>
+                          )}
+                        </div>
+                      </td>
 
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-600">
-                            {advisor.working_hours
-                              ? `${advisor.working_hours.start} - ${advisor.working_hours.end}`
-                              : "Not available"}
-                          </td>
+                      {/* Type */}
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">
+                          {advisor.type}
+                        </span>
+                      </td>
 
-                          <td className="whitespace-nowrap px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <button
-                                type="button"
-                                onClick={() => handleToggleActive(advisor)}
-                                disabled={isUpdating || isDeleting}
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                                  advisor.active
-                                    ? "bg-green-500"
-                                    : "bg-slate-300"
-                                } ${
-                                  isUpdating || isDeleting
-                                    ? "cursor-not-allowed opacity-50"
-                                    : "cursor-pointer"
-                                }`}
-                                aria-label={
-                                  advisor.active
-                                    ? `Deactivate ${advisor.name}`
-                                    : `Activate ${advisor.name}`
-                                }
-                              >
-                                <span
-                                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                                    advisor.active
-                                      ? "translate-x-6"
-                                      : "translate-x-1"
-                                  }`}
-                                />
-                              </button>
+                      {/* Location */}
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-600">
+                        {advisor.location || "—"}
+                      </td>
 
-                              <span
-                                className={`rounded-full px-3 py-1 text-xs font-medium ${
-                                  advisor.active
-                                    ? "bg-green-50 text-green-700"
-                                    : "bg-red-50 text-red-700"
-                                }`}
-                              >
-                                {advisor.active ? "Active" : "Inactive"}
-                              </span>
-                            </div>
-                          </td>
+                      {/* Status */}
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleActive(advisor)}
+                          disabled={
+                            isUpdating || isDeleting || !advisor.advisor_id
+                          }
+                          className={`rounded-full px-3 py-1 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                            advisor.active
+                              ? "bg-green-50 text-green-600 hover:bg-green-100"
+                              : "bg-red-50 text-red-600 hover:bg-red-100"
+                          }`}
+                        >
+                          {advisor.active ? "Active" : "Inactive"}
+                        </button>
+                      </td>
 
-                          <td className="whitespace-nowrap px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => setSelectedAdvisor(advisor)}
-                                className="rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-100"
-                              >
-                                View
-                              </button>
+                      {/* Actions */}
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          {/* View */}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedAdvisor(advisor)}
+                            className="rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-100"
+                          >
+                            View
+                          </button>
 
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setEditingAdvisor({
-                                    ...advisor,
-                                    working_hours: advisor.working_hours || {
-                                      start: "",
-                                      end: "",
-                                    },
-                                  })
-                                }
-                                disabled={
-                                  isUpdating ||
-                                  isDeleting ||
-                                  !advisor.advisor_id
-                                }
-                                className="rounded-lg bg-amber-50 px-4 py-2 text-sm font-medium text-amber-600 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
-                              >
-                                Edit
-                              </button>
+                          {/* Chat */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenChat(advisor)}
+                            disabled={
+                              isUpdating || isDeleting || !advisor.advisor_id
+                            }
+                            className="rounded-lg bg-green-50 px-4 py-2 text-sm font-medium text-green-600 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Chat
+                          </button>
 
-                              <button
-                                type="button"
-                                onClick={() => setAdvisorToDelete(advisor)}
-                                disabled={
-                                  isUpdating ||
-                                  isDeleting ||
-                                  !advisor.advisor_id
-                                }
-                                className="rounded-lg bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-                              >
-                                {isDeleting ? "Deleting..." : "Delete"}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+                          {/* Edit */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setEditingAdvisor({
+                                ...advisor,
+                                working_hours: advisor.working_hours || {
+                                  start: "",
+                                  end: "",
+                                },
+                              })
+                            }
+                            disabled={
+                              isUpdating || isDeleting || !advisor.advisor_id
+                            }
+                            className="rounded-lg bg-amber-50 px-4 py-2 text-sm font-medium text-amber-600 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Edit
+                          </button>
 
-      {advisorToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-              <svg
-                className="h-6 w-6 text-red-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v4m0 4h.01M10.29 3.86l-7.82 14a2 2 0 001.74 3h15.58a2 2 0 001.74-3l-7.82-14a2 2 0 00-3.42 0z"
-                />
-              </svg>
-            </div>
-
-            <h2 className="text-xl font-bold text-slate-900">Delete Advisor</h2>
-
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              Are you sure you want to permanently delete{" "}
-              <span className="font-semibold text-slate-900">
-                {advisorToDelete.name}
-              </span>
-              ?
-            </p>
-
-            <p className="mt-2 text-sm text-red-600">
-              This action cannot be undone.
-            </p>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setAdvisorToDelete(null)}
-                disabled={deletingAdvisorId === advisorToDelete.advisor_id}
-                className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={handleDeleteAdvisor}
-                disabled={deletingAdvisorId === advisorToDelete.advisor_id}
-                className="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {deletingAdvisorId === advisorToDelete.advisor_id
-                  ? "Deleting..."
-                  : "Delete Advisor"}
-              </button>
+                          {/* Delete */}
+                          <button
+                            type="button"
+                            onClick={() => setAdvisorToDelete(advisor)}
+                            disabled={
+                              isUpdating || isDeleting || !advisor.advisor_id
+                            }
+                            className="rounded-lg bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {isDeleting ? "Deleting..." : "Delete"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {selectedAdvisor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">
-                  Advisor Information
+        {/* View Modal */}
+        {selectedAdvisor && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
+              <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+                <h2 className="text-lg font-semibold text-slate-800">
+                  Advisor Details
                 </h2>
 
-                <p className="mt-1 text-sm text-slate-500">
-                  Complete advisor account information
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSelectedAdvisor(null)}
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-                aria-label="Close"
-              >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <button
+                  type="button"
+                  onClick={() => setSelectedAdvisor(null)}
+                  className="text-2xl text-slate-400 hover:text-slate-600"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            <div className="grid gap-5 px-6 py-6 sm:grid-cols-2">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Advisor ID
-                </p>
-
-                <p className="mt-1 text-sm font-medium text-slate-900">
-                  {selectedAdvisor.advisor_id || "Not available"}
-                </p>
+                  ×
+                </button>
               </div>
 
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Full Name
-                </p>
+              <div className="space-y-4 p-6">
+                <div>
+                  <p className="text-xs font-medium uppercase text-slate-400">
+                    Advisor ID
+                  </p>
 
-                <p className="mt-1 text-sm font-medium text-slate-900">
-                  {selectedAdvisor.name}
-                </p>
-              </div>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {selectedAdvisor.advisor_id || "—"}
+                  </p>
+                </div>
 
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Email
-                </p>
+                <div>
+                  <p className="text-xs font-medium uppercase text-slate-400">
+                    Name
+                  </p>
 
-                <p className="mt-1 break-all text-sm text-slate-700">
-                  {selectedAdvisor.email}
-                </p>
-              </div>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {selectedAdvisor.name}
+                  </p>
+                </div>
 
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Gender
-                </p>
+                <div>
+                  <p className="text-xs font-medium uppercase text-slate-400">
+                    Email
+                  </p>
 
-                <p className="mt-1 text-sm capitalize text-slate-700">
-                  {selectedAdvisor.gender || "Not available"}
-                </p>
-              </div>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {selectedAdvisor.email}
+                  </p>
+                </div>
 
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Advisor Type
-                </p>
+                <div>
+                  <p className="text-xs font-medium uppercase text-slate-400">
+                    Gender
+                  </p>
 
-                <p className="mt-1 text-sm capitalize text-slate-700">
-                  {selectedAdvisor.type || "Not available"}
-                </p>
-              </div>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {selectedAdvisor.gender}
+                  </p>
+                </div>
 
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Phone Number
-                </p>
+                <div>
+                  <p className="text-xs font-medium uppercase text-slate-400">
+                    Type
+                  </p>
 
-                <p className="mt-1 text-sm text-slate-700">
-                  {selectedAdvisor.phone_number || "Not available"}
-                </p>
-              </div>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {selectedAdvisor.type}
+                  </p>
+                </div>
 
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Location
-                </p>
+                <div>
+                  <p className="text-xs font-medium uppercase text-slate-400">
+                    Phone
+                  </p>
 
-                <p className="mt-1 text-sm text-slate-700">
-                  {selectedAdvisor.location || "Not available"}
-                </p>
-              </div>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {selectedAdvisor.phone_number || "—"}
+                  </p>
+                </div>
 
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Working Hours
-                </p>
+                <div>
+                  <p className="text-xs font-medium uppercase text-slate-400">
+                    Location
+                  </p>
 
-                <p className="mt-1 text-sm text-slate-700">
-                  {selectedAdvisor.working_hours
-                    ? `${selectedAdvisor.working_hours.start} - ${selectedAdvisor.working_hours.end}`
-                    : "Not available"}
-                </p>
-              </div>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {selectedAdvisor.location || "—"}
+                  </p>
+                </div>
 
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Account Status
-                </p>
+                <div>
+                  <p className="text-xs font-medium uppercase text-slate-400">
+                    Working Hours
+                  </p>
 
-                <div className="mt-1">
-                  <span
-                    className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-                      selectedAdvisor.active
-                        ? "bg-green-50 text-green-700"
-                        : "bg-red-50 text-red-700"
+                  <p className="mt-1 text-sm text-slate-700">
+                    {selectedAdvisor.working_hours?.start || "—"} -{" "}
+                    {selectedAdvisor.working_hours?.end || "—"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs font-medium uppercase text-slate-400">
+                    Status
+                  </p>
+
+                  <p
+                    className={`mt-1 text-sm font-medium ${
+                      selectedAdvisor.active ? "text-green-600" : "text-red-600"
                     }`}
                   >
                     {selectedAdvisor.active ? "Active" : "Inactive"}
-                  </span>
+                  </p>
                 </div>
               </div>
-            </div>
 
-            <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedAdvisor(null);
-                  setEditingAdvisor({
-                    ...selectedAdvisor,
-                    working_hours: selectedAdvisor.working_hours || {
-                      start: "",
-                      end: "",
-                    },
-                  });
-                }}
-                className="rounded-lg bg-amber-50 px-5 py-2.5 text-sm font-medium text-amber-600 transition hover:bg-amber-100"
-              >
-                Edit
-              </button>
+              <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
+                <button
+                  type="button"
+                  onClick={() => handleOpenChat(selectedAdvisor)}
+                  disabled={!selectedAdvisor.advisor_id}
+                  className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Open Chat
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setSelectedAdvisor(null)}
-                className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
-              >
-                Close
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedAdvisor(null)}
+                  className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {editingAdvisor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">
+        {/* Edit Modal */}
+        {editingAdvisor && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white shadow-xl">
+              <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+                <h2 className="text-lg font-semibold text-slate-800">
                   Edit Advisor
                 </h2>
 
-                <p className="mt-1 text-sm text-slate-500">
-                  Update advisor account information
-                </p>
+                <button
+                  type="button"
+                  onClick={() => setEditingAdvisor(null)}
+                  className="text-2xl text-slate-400 hover:text-slate-600"
+                >
+                  ×
+                </button>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setEditingAdvisor(null)}
-                disabled={savingAdvisor}
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50"
-                aria-label="Close"
-              >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            <form onSubmit={handleUpdateAdvisor}>
-              <div className="grid gap-5 px-6 py-6 sm:grid-cols-2">
+              <div className="grid gap-4 p-6 md:grid-cols-2">
+                {/* Advisor ID */}
                 <div>
-                  <label className="text-sm font-medium text-slate-700">
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
                     Advisor ID
                   </label>
 
                   <input
+                    type="text"
                     value={editingAdvisor.advisor_id || ""}
                     disabled
-                    className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-100 px-4 py-2.5 text-sm text-slate-500"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-sm text-slate-500"
                   />
                 </div>
 
+                {/* Name */}
                 <div>
-                  <label className="text-sm font-medium text-slate-700">
-                    Full Name
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                    Name
                   </label>
 
                   <input
+                    type="text"
                     value={editingAdvisor.name}
                     onChange={(event) =>
                       setEditingAdvisor({
@@ -758,13 +664,13 @@ export default function Advisors() {
                         name: event.target.value,
                       })
                     }
-                    required
-                    className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
 
+                {/* Email */}
                 <div>
-                  <label className="text-sm font-medium text-slate-700">
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
                     Email
                   </label>
 
@@ -777,13 +683,13 @@ export default function Advisors() {
                         email: event.target.value,
                       })
                     }
-                    required
-                    className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
 
+                {/* Gender */}
                 <div>
-                  <label className="text-sm font-medium text-slate-700">
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
                     Gender
                   </label>
 
@@ -795,23 +701,23 @@ export default function Advisors() {
                         gender: event.target.value,
                       })
                     }
-                    required
-                    className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   >
                     <option value="">Select gender</option>
-
-                    <option value="male">Male</option>
-
-                    <option value="female">Female</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
 
+                {/* Type */}
                 <div>
-                  <label className="text-sm font-medium text-slate-700">
-                    Advisor Type
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                    Type
                   </label>
 
-                  <select
+                  <input
+                    type="text"
                     value={editingAdvisor.type}
                     onChange={(event) =>
                       setEditingAdvisor({
@@ -819,27 +725,18 @@ export default function Advisors() {
                         type: event.target.value,
                       })
                     }
-                    required
-                    className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  >
-                    <option value="">Select type</option>
-
-                    <option value="medical">Medical</option>
-
-                    <option value="legal">Legal</option>
-
-                    <option value="psychological">Psychological</option>
-
-                    <option value="general">General</option>
-                  </select>
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
                 </div>
 
+                {/* Phone */}
                 <div>
-                  <label className="text-sm font-medium text-slate-700">
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
                     Phone Number
                   </label>
 
                   <input
+                    type="text"
                     value={editingAdvisor.phone_number || ""}
                     onChange={(event) =>
                       setEditingAdvisor({
@@ -847,17 +744,18 @@ export default function Advisors() {
                         phone_number: event.target.value,
                       })
                     }
-                    required
-                    className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
 
+                {/* Location */}
                 <div>
-                  <label className="text-sm font-medium text-slate-700">
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
                     Location
                   </label>
 
                   <input
+                    type="text"
                     value={editingAdvisor.location || ""}
                     onChange={(event) =>
                       setEditingAdvisor({
@@ -865,14 +763,14 @@ export default function Advisors() {
                         location: event.target.value,
                       })
                     }
-                    required
-                    className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
 
+                {/* Working hours start */}
                 <div>
-                  <label className="text-sm font-medium text-slate-700">
-                    Start Time
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                    Working Hours Start
                   </label>
 
                   <input
@@ -887,14 +785,14 @@ export default function Advisors() {
                         },
                       })
                     }
-                    required
-                    className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
 
+                {/* Working hours end */}
                 <div>
-                  <label className="text-sm font-medium text-slate-700">
-                    End Time
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                    Working Hours End
                   </label>
 
                   <input
@@ -909,9 +807,31 @@ export default function Advisors() {
                         },
                       })
                     }
-                    required
-                    className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
+                </div>
+
+                {/* Active */}
+                <div className="flex items-center gap-3 md:col-span-2">
+                  <input
+                    id="advisor-active"
+                    type="checkbox"
+                    checked={editingAdvisor.active}
+                    onChange={(event) =>
+                      setEditingAdvisor({
+                        ...editingAdvisor,
+                        active: event.target.checked,
+                      })
+                    }
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+
+                  <label
+                    htmlFor="advisor-active"
+                    className="text-sm font-medium text-slate-700"
+                  >
+                    Advisor is active
+                  </label>
                 </div>
               </div>
 
@@ -919,24 +839,70 @@ export default function Advisors() {
                 <button
                   type="button"
                   onClick={() => setEditingAdvisor(null)}
-                  disabled={savingAdvisor}
-                  className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                  disabled={isUpdating}
+                  className="rounded-lg bg-slate-100 px-5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200 disabled:opacity-50"
                 >
                   Cancel
                 </button>
 
                 <button
-                  type="submit"
-                  disabled={savingAdvisor}
-                  className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  type="button"
+                  onClick={handleUpdateAdvisor}
+                  disabled={isUpdating}
+                  className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {savingAdvisor ? "Saving..." : "Save Changes"}
+                  {isUpdating ? "Saving..." : "Save Changes"}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
-        </div>
-      )}
-    </>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {advisorToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+              <div className="p-6">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
+                  <span className="text-xl text-red-600">!</span>
+                </div>
+
+                <h2 className="text-lg font-semibold text-slate-800">
+                  Delete Advisor
+                </h2>
+
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  Are you sure you want to delete{" "}
+                  <span className="font-semibold text-slate-700">
+                    {advisorToDelete.name}
+                  </span>
+                  ? This action cannot be undone.
+                </p>
+
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setAdvisorToDelete(null)}
+                    disabled={isDeleting}
+                    className="rounded-lg bg-slate-100 px-5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200 disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleDeleteAdvisor}
+                    disabled={isDeleting}
+                    className="rounded-lg bg-red-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isDeleting ? "Deleting..." : "Delete Advisor"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

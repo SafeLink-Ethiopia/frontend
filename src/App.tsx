@@ -9,6 +9,10 @@ import {
 
 import { Assistant } from "./components/Assistant";
 
+// =========================
+// Public Pages
+// =========================
+
 import LandingPage from "./pages/LandingPage";
 import CreateSessionPage from "./pages/CreateSessionPage";
 import SessionCreatedPage from "./pages/SessionCreatedPage";
@@ -17,24 +21,44 @@ import PrivateSupportPage from "./pages/PrivateSupportPage";
 import HelpingPage from "./pages/HelpingPage";
 import QuickExitPage from "./pages/QuickExitPage";
 import MedicalFlowPage from "./pages/MedicalFlowPage";
+
+// =========================
+// Advisor Pages
+// =========================
+
 import AdvisorPage from "./pages/AdvisorPage";
 import AdvisorLoginPage from "./pages/AdvisorLoginPage";
 import AdvisorDashboardPage from "./pages/AdvisorDashboardPage";
 import AdvisorProfilePage from "./pages/AdvisorProfilePage";
 
-import AdvisorLogin from "./pages/advisor/AdvisorLogin";
 import ForgotPassword from "./pages/advisor/ForgotPassword";
-import ChangePassword from "./pages/advisor/changePassword";
+import VerifyOtp from "./pages/advisor/VerifyOtp";
+import ResetPassword from "./pages/advisor/ResetPassword";
+import AdvisorMessages from "./pages/advisor/AdvisorMessages";
+import AdvisorAdminChat from "./pages/advisor/AdvisorAdminChat";
+
+// =========================
+// Admin Pages
+// =========================
 
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminAwareness from "./pages/admin/AdminAwareness";
+import CreateAdvisor from "./pages/admin/CreateAdvisor";
+import Advisors from "./pages/admin/Advisors";
+import AdminAdvisorChat from "./pages/admin/AdminAdvisorChat";
+import AdminMessages from "./pages/admin/AdminMessages";
+
+// =========================
+// Admin Components
+// =========================
+
 import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
 import AdminLayout from "./components/admin/AdminLayout";
-import CreateAdvisor from "./pages/admin/CreateAdvisor";
-import VerifyOtp from "./pages/advisor/VerifyOtp";
-import ResetPassword from "./pages/advisor/ResetPassword";
-import Advisors from "./pages/admin/Advisors";
+
+// =========================
+// Landing Route
+// =========================
 
 function LandingRoute({ hasSavedSession }: { hasSavedSession: boolean }) {
   const navigate = useNavigate();
@@ -48,6 +72,10 @@ function LandingRoute({ hasSavedSession }: { hasSavedSession: boolean }) {
     />
   );
 }
+
+// =========================
+// Create Session Route
+// =========================
 
 function CreateSessionRoute({
   onSessionCreated,
@@ -67,6 +95,10 @@ function CreateSessionRoute({
   );
 }
 
+// =========================
+// Session Created Route
+// =========================
+
 function SessionCreatedRoute({ safelinkId }: { safelinkId: string }) {
   const navigate = useNavigate();
 
@@ -77,6 +109,10 @@ function SessionCreatedRoute({ safelinkId }: { safelinkId: string }) {
     />
   );
 }
+
+// =========================
+// Login Session Route
+// =========================
 
 function LoginRoute({
   onLoginSuccess,
@@ -96,6 +132,10 @@ function LoginRoute({
   );
 }
 
+// =========================
+// Support Route
+// =========================
+
 function SupportRoute({ safelinkId }: { safelinkId: string }) {
   const navigate = useNavigate();
 
@@ -108,11 +148,19 @@ function SupportRoute({ safelinkId }: { safelinkId: string }) {
   );
 }
 
+// =========================
+// Helping Route
+// =========================
+
 function HelpingRoute() {
   const navigate = useNavigate();
 
   return <HelpingPage onBack={() => navigate("/")} />;
 }
+
+// =========================
+// Main App
+// =========================
 
 function App() {
   const [safelinkId, setSafelinkId] = useState("");
@@ -128,6 +176,10 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* =====================================================
+            PUBLIC ROUTES
+        ====================================================== */}
+
         <Route
           path="/"
           element={<LandingRoute hasSavedSession={hasSavedSession} />}
@@ -161,46 +213,106 @@ function App() {
 
         <Route path="/medical" element={<MedicalFlowPage />} />
 
+        {/* =====================================================
+            ADVISOR ROUTES
+        ====================================================== */}
+
+        {/* Advisor landing / main page */}
         <Route path="/advisor" element={<AdvisorPage />} />
+
+        {/* Advisor login */}
         <Route path="/advisor/login" element={<AdvisorLoginPage />} />
+
+        {/* Advisor dashboard */}
         <Route path="/advisor/dashboard" element={<AdvisorDashboardPage />} />
+
+        {/* Advisor profile */}
         <Route path="/advisor/profile" element={<AdvisorProfilePage />} />
-        <Route path="/advisor/change-password" element={<AdvisorProfilePage />} />
 
-        <Route path="/advisor/login" element={<AdvisorLogin />} />
+        {/* Advisor change password */}
+        <Route
+          path="/advisor/change-password"
+          element={<AdvisorProfilePage />}
+        />
 
-        <Route path="/advisor/change-password" element={<ChangePassword />} />
-
+        {/* Forgot password */}
         <Route path="/advisor/forgot-password" element={<ForgotPassword />} />
+
+        {/* OTP verification */}
+        <Route path="/advisor/verify-otp" element={<VerifyOtp />} />
+
+        {/* Reset password */}
+        <Route path="/advisor/reset-password" element={<ResetPassword />} />
+        <Route path="/advisor/messages" element={<AdvisorMessages />} />
+
+        <Route
+          path="/advisor/messages/:conversationId"
+          element={<AdvisorAdminChat />}
+        />
+
+        {/* =====================================================
+            ADMIN LOGIN
+        ====================================================== */}
 
         <Route path="/admin/login" element={<AdminLogin />} />
 
-        <Route path="/advisor/verify-otp" element={<VerifyOtp />} />
-
-        <Route path="/advisor/reset-password" element={<ResetPassword />} />
+        {/* =====================================================
+            PROTECTED ADMIN ROUTES
+        ====================================================== */}
 
         <Route element={<AdminProtectedRoute />}>
           <Route element={<AdminLayout />}>
+            {/* Admin Dashboard */}
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
+            {/* Awareness */}
             <Route path="/admin/awareness" element={<AdminAwareness />} />
 
+            {/* Users */}
             <Route path="/admin/users" element={<div>Users</div>} />
 
+            {/* Reports */}
             <Route path="/admin/reports" element={<div>Reports</div>} />
 
+            {/* Resources */}
             <Route path="/admin/resources" element={<div>Resources</div>} />
 
+            {/* Settings */}
             <Route path="/admin/settings" element={<div>Settings</div>} />
+
+            {/* =================================================
+                ADVISOR MANAGEMENT
+            ================================================== */}
+
             <Route path="/admin/advisors/create" element={<CreateAdvisor />} />
 
             <Route path="/admin/advisors" element={<Advisors />} />
+
+            {/* =================================================
+                ADMIN → ADVISOR CHAT
+            ================================================== */}
+
+            <Route
+              path="/admin/advisors/:advisorId/chat"
+              element={<AdminAdvisorChat />}
+            />
+
+            {/* =================================================
+                ADMIN MESSAGES
+            ================================================== */}
+
+            <Route path="/admin/messages" element={<AdminMessages />} />
           </Route>
         </Route>
+
+        {/* =====================================================
+            FALLBACK
+        ====================================================== */}
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
+      {/* Global Assistant */}
       <Assistant />
     </BrowserRouter>
   );

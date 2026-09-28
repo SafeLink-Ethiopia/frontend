@@ -56,12 +56,17 @@ export default function AdvisorPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+    return [...requestList].sort((a, b) => {
+      const statusDifference = statusOrder[a.status] - statusOrder[b.status];
   const [showMobileChat, setShowMobileChat] =
     useState(false);
 
   const [showHeaderMenu, setShowHeaderMenu] =
     useState(false);
 
+      return (
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
   const [showListMenu, setShowListMenu] =
     useState(false);
 
@@ -124,6 +129,8 @@ export default function AdvisorPage() {
       ).values()
     );
 
+      const cleanedRequests = parsed.filter(
+        (request) => request && request.safelink_id && request.conversation_id,
     setConversations(unique);
 
     /*
@@ -273,6 +280,7 @@ export default function AdvisorPage() {
       }
 
       try {
+        const fresh = await getConversation(conversation.conversation_id);
         setLoading(true);
 
         await deleteSelectedConversations(
@@ -328,6 +336,7 @@ export default function AdvisorPage() {
     try {
       setLoading(true);
 
+    localStorage.setItem(REQUESTS_KEY, JSON.stringify(sorted));
       const updated =
         await sendAdvisorMessage(
           selectedConversation.conversation_id,
@@ -337,6 +346,15 @@ export default function AdvisorPage() {
       setSelectedConversation(updated);
       setMessage("");
 
+  function markRequestOpened(conversationId: string) {
+    const updated = requests.map((request) =>
+      request.conversation_id === conversationId
+        ? {
+            ...request,
+            status: "opened" as const,
+          }
+        : request,
+    );
       await loadConversations();
     } catch (error) {
       console.error(
@@ -360,6 +378,14 @@ export default function AdvisorPage() {
       return;
     }
 
+  function markRequestCompleted(conversationId: string) {
+    const updated = requests.map((request) =>
+      request.conversation_id === conversationId
+        ? {
+            ...request,
+            status: "completed" as const,
+          }
+        : request,
     setEditingMessageId(
       currentMessage.message_id
     );
@@ -386,6 +412,15 @@ export default function AdvisorPage() {
     try {
       setLoading(true);
 
+      const fresh = await getConversation(request.conversation_id);
+
+      setConversation(fresh);
+      markRequestOpened(request.conversation_id);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "The conversation could not be opened.",
       const updated = await editMessage(
         selectedConversation.conversation_id,
         editingMessageId,
@@ -430,6 +465,16 @@ export default function AdvisorPage() {
     try {
       setLoading(true);
 
+      const updated = await sendAdvisorMessage(
+        conversation.conversation_id,
+        text,
+      );
+
+      setConversation(updated);
+      setMessage("");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Your message could not be sent.",
       const updated = await deleteMessage(
         selectedConversation.conversation_id,
         currentMessage.message_id,
@@ -502,6 +547,8 @@ export default function AdvisorPage() {
       }?`
     );
 
+  async function chooseFacility(facility: (typeof facilities)[number]) {
+    if (!conversation || recommending) return;
     if (!confirmed) {
       return;
     }
@@ -524,6 +571,9 @@ export default function AdvisorPage() {
         error
       );
 
+      const updated = await recommendFacility(
+        conversation.conversation_id,
+        facility,
       alert(
         "Failed to delete selected messages."
       );
@@ -563,6 +613,11 @@ export default function AdvisorPage() {
       setSelectedConversation(updated);
 
       setShowFacilities(false);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "The facility recommendation could not be sent.",
       setShowCustomFacility(false);
       setFacilitySearch("");
 
@@ -594,6 +649,29 @@ export default function AdvisorPage() {
       return "No messages yet";
     }
 
+  return (
+    <main className="min-h-screen bg-[#123d34] text-white">
+      {/* Header */}
+      <header className="border-b border-white/10 bg-[#123d34]/95">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+          <button
+            type="button"
+            onClick={
+              conversation ? handleBackToRequests : () => window.history.back()
+            }
+            className="flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
+          >
+            <span className="text-lg">←</span>
+            {conversation ? "Back to requests" : "Back"}
+          </button>
+
+          <div className="text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#a9cfba]">
+              SafeLink
+            </p>
+
+            <p className="mt-1 text-sm text-white/60">Medical Advisor</p>
+          </div>
     const last =
       conversation.messages[
         conversation.messages.length - 1
@@ -684,6 +762,9 @@ export default function AdvisorPage() {
                 SafeLink
               </h1>
 
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-white/65 sm:text-lg">
+                Review incoming private support requests and connect each person
+                with the appropriate help.
               <p className="mt-0.5 text-xs text-white/50">
                 Advisor conversations
               </p>
@@ -761,6 +842,11 @@ export default function AdvisorPage() {
             </div>
           </div>
 
+                  <h2 className="text-xl font-semibold">No support requests</h2>
+
+                  <p className="mt-2 text-sm text-white/50">
+                    New medical support requests will appear here automatically.
+                  </p>
           {/* CHAT DELETE TOOLBAR */}
           {chatDeleteMode && (
             <div className="flex shrink-0 items-center justify-between border-b border-white/10 bg-[#19483e] px-4 py-3">
@@ -941,6 +1027,10 @@ export default function AdvisorPage() {
                   ✦
                 </div>
 
+                    <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
+                      <span className="text-xs text-white/40">
+                        {new Date(request.created_at).toLocaleString()}
+                      </span>
                 <h2 className="text-xl font-semibold text-white">
                   SafeLink Advisor
                 </h2>
@@ -1235,6 +1325,33 @@ export default function AdvisorPage() {
 
                     <div ref={messagesEndRef} />
                   </div>
+                ) : (
+                  conversation.messages.map((msg, index) => (
+                    <div
+                      key={`${msg.timestamp}-${index}`}
+                      className={`flex ${
+                        msg.sender === "advisor"
+                          ? "justify-end"
+                          : "justify-start"
+                      }`}
+                    >
+                      <div
+                        className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                          msg.sender === "advisor"
+                            ? "rounded-br-md bg-[#19483e] text-white"
+                            : "rounded-bl-md bg-[#e8ece9] text-[#35433e]"
+                        }`}
+                      >
+                        <p className="mb-1 text-[11px] font-semibold opacity-60">
+                          {msg.sender === "advisor" ? "You" : "SafeLink User"}
+                        </p>
+
+                        <p className="text-sm leading-6">{msg.text}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
                 </div>
 
                 {/* EDITING BAR */}
@@ -1263,6 +1380,19 @@ export default function AdvisorPage() {
 
                 {/* COMPOSER */}
 
+              {/* Message composer */}
+              {!conversation.recommendation && (
+                <form
+                  onSubmit={handleSend}
+                  className="border-t border-black/5 bg-[#f0f2ef] p-5"
+                >
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      value={message}
+                      onChange={(event) => setMessage(event.target.value)}
+                      placeholder="Type a message..."
+                      className="min-w-0 flex-1 rounded-full border border-black/10 bg-white px-5 py-3 text-sm text-[#35433e] outline-none transition focus:border-[#6f9c86] focus:ring-2 focus:ring-[#a9cfba]/30"
                 <div className="relative shrink-0 border-t border-white/10 bg-[#f0f2ef] px-3 py-3 sm:px-5">
                   <div className="mx-auto flex max-w-4xl items-end gap-2">
                     <textarea
@@ -1339,6 +1469,32 @@ export default function AdvisorPage() {
                 </div>
               </div>
 
+              {/* Facility recommendation */}
+              {!conversation.recommendation && (
+                <div className="border-t border-black/5 px-6 py-5">
+                  <button
+                    type="button"
+                    onClick={() => setShowFacilities(!showFacilities)}
+                    className="w-full rounded-full border border-[#19483e] px-5 py-3 text-sm font-semibold text-[#19483e] transition hover:bg-[#19483e] hover:text-white"
+                  >
+                    {showFacilities
+                      ? "Hide facilities"
+                      : "Recommend a facility"}
+                  </button>
+
+                  {showFacilities && (
+                    <div className="mt-4 space-y-3">
+                      {facilities.map((facility) => (
+                        <button
+                          key={facility.facility_name}
+                          type="button"
+                          onClick={() => chooseFacility(facility)}
+                          disabled={recommending}
+                          className="w-full rounded-2xl border border-black/10 bg-white p-4 text-left transition hover:border-[#6f9c86] hover:bg-[#f5faf7] disabled:opacity-50"
+                        >
+                          <p className="font-semibold text-[#243c35]">
+                            {facility.facility_name}
+                          </p>
 {showFacilities && (
   <div
     className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
