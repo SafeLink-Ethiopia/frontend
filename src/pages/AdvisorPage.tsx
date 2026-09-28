@@ -54,16 +54,14 @@ export default function AdvisorPage() {
     };
 
     return [...requestList].sort((a, b) => {
-      const statusDifference =
-        statusOrder[a.status] - statusOrder[b.status];
+      const statusDifference = statusOrder[a.status] - statusOrder[b.status];
 
       if (statusDifference !== 0) {
         return statusDifference;
       }
 
       return (
-        new Date(b.created_at).getTime() -
-        new Date(a.created_at).getTime()
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
     });
   }
@@ -80,10 +78,7 @@ export default function AdvisorPage() {
       const parsed = JSON.parse(saved) as SupportRequest[];
 
       const cleanedRequests = parsed.filter(
-        (request) =>
-          request &&
-          request.safelink_id &&
-          request.conversation_id
+        (request) => request && request.safelink_id && request.conversation_id,
       );
 
       /*
@@ -119,9 +114,7 @@ export default function AdvisorPage() {
 
     const interval = window.setInterval(async () => {
       try {
-        const fresh = await getConversation(
-          conversation.conversation_id
-        );
+        const fresh = await getConversation(conversation.conversation_id);
 
         setConversation(fresh);
       } catch {
@@ -135,10 +128,7 @@ export default function AdvisorPage() {
   function saveRequests(updatedRequests: SupportRequest[]) {
     const sorted = sortRequests(updatedRequests);
 
-    localStorage.setItem(
-      REQUESTS_KEY,
-      JSON.stringify(sorted)
-    );
+    localStorage.setItem(REQUESTS_KEY, JSON.stringify(sorted));
 
     setRequests(sorted);
   }
@@ -150,7 +140,7 @@ export default function AdvisorPage() {
             ...request,
             status: "opened" as const,
           }
-        : request
+        : request,
     );
 
     saveRequests(updated);
@@ -163,7 +153,7 @@ export default function AdvisorPage() {
             ...request,
             status: "completed" as const,
           }
-        : request
+        : request,
     );
 
     saveRequests(updated);
@@ -175,9 +165,7 @@ export default function AdvisorPage() {
       setError("");
       setShowFacilities(false);
 
-      const fresh = await getConversation(
-        request.conversation_id
-      );
+      const fresh = await getConversation(request.conversation_id);
 
       setConversation(fresh);
       markRequestOpened(request.conversation_id);
@@ -185,7 +173,7 @@ export default function AdvisorPage() {
       setError(
         err instanceof Error
           ? err.message
-          : "The conversation could not be opened."
+          : "The conversation could not be opened.",
       );
     } finally {
       setLoading(false);
@@ -205,25 +193,21 @@ export default function AdvisorPage() {
 
       const updated = await sendAdvisorMessage(
         conversation.conversation_id,
-        text
+        text,
       );
 
       setConversation(updated);
       setMessage("");
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Your message could not be sent."
+        err instanceof Error ? err.message : "Your message could not be sent.",
       );
     } finally {
       setSending(false);
     }
   }
 
-  async function chooseFacility(
-    facility: (typeof facilities)[number]
-  ) {
+  async function chooseFacility(facility: (typeof facilities)[number]) {
     if (!conversation || recommending) return;
 
     try {
@@ -232,7 +216,7 @@ export default function AdvisorPage() {
 
       const updated = await recommendFacility(
         conversation.conversation_id,
-        facility
+        facility,
       );
 
       setConversation(updated);
@@ -251,7 +235,7 @@ export default function AdvisorPage() {
       setError(
         err instanceof Error
           ? err.message
-          : "The facility recommendation could not be sent."
+          : "The facility recommendation could not be sent.",
       );
     } finally {
       setRecommending(false);
@@ -274,9 +258,7 @@ export default function AdvisorPage() {
           <button
             type="button"
             onClick={
-              conversation
-                ? handleBackToRequests
-                : () => window.history.back()
+              conversation ? handleBackToRequests : () => window.history.back()
             }
             className="flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
           >
@@ -289,9 +271,7 @@ export default function AdvisorPage() {
               SafeLink
             </p>
 
-            <p className="mt-1 text-sm text-white/60">
-              Medical Advisor
-            </p>
+            <p className="mt-1 text-sm text-white/60">Medical Advisor</p>
           </div>
 
           <div className="rounded-full border border-[#a9cfba]/20 bg-[#a9cfba]/10 px-4 py-2 text-xs font-semibold text-[#c8dfd1]">
@@ -314,8 +294,8 @@ export default function AdvisorPage() {
               </h1>
 
               <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-white/65 sm:text-lg">
-                Review incoming private support requests and
-                connect each person with the appropriate help.
+                Review incoming private support requests and connect each person
+                with the appropriate help.
               </p>
             </div>
 
@@ -326,13 +306,10 @@ export default function AdvisorPage() {
                     ✓
                   </div>
 
-                  <h2 className="text-xl font-semibold">
-                    No support requests
-                  </h2>
+                  <h2 className="text-xl font-semibold">No support requests</h2>
 
                   <p className="mt-2 text-sm text-white/50">
-                    New medical support requests will appear
-                    here automatically.
+                    New medical support requests will appear here automatically.
                   </p>
                 </div>
               ) : (
@@ -378,9 +355,7 @@ export default function AdvisorPage() {
 
                     <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
                       <span className="text-xs text-white/40">
-                        {new Date(
-                          request.created_at
-                        ).toLocaleString()}
+                        {new Date(request.created_at).toLocaleString()}
                       </span>
 
                       <span className="text-sm font-semibold text-[#a9cfba]">
@@ -454,14 +429,10 @@ export default function AdvisorPage() {
                         }`}
                       >
                         <p className="mb-1 text-[11px] font-semibold opacity-60">
-                          {msg.sender === "advisor"
-                            ? "You"
-                            : "SafeLink User"}
+                          {msg.sender === "advisor" ? "You" : "SafeLink User"}
                         </p>
 
-                        <p className="text-sm leading-6">
-                          {msg.text}
-                        </p>
+                        <p className="text-sm leading-6">{msg.text}</p>
                       </div>
                     </div>
                   ))
@@ -516,9 +487,7 @@ export default function AdvisorPage() {
                     <input
                       type="text"
                       value={message}
-                      onChange={(event) =>
-                        setMessage(event.target.value)
-                      }
+                      onChange={(event) => setMessage(event.target.value)}
                       placeholder="Type a message..."
                       className="min-w-0 flex-1 rounded-full border border-black/10 bg-white px-5 py-3 text-sm text-[#35433e] outline-none transition focus:border-[#6f9c86] focus:ring-2 focus:ring-[#a9cfba]/30"
                     />
@@ -539,9 +508,7 @@ export default function AdvisorPage() {
                 <div className="border-t border-black/5 px-6 py-5">
                   <button
                     type="button"
-                    onClick={() =>
-                      setShowFacilities(!showFacilities)
-                    }
+                    onClick={() => setShowFacilities(!showFacilities)}
                     className="w-full rounded-full border border-[#19483e] px-5 py-3 text-sm font-semibold text-[#19483e] transition hover:bg-[#19483e] hover:text-white"
                   >
                     {showFacilities
@@ -555,9 +522,7 @@ export default function AdvisorPage() {
                         <button
                           key={facility.facility_name}
                           type="button"
-                          onClick={() =>
-                            chooseFacility(facility)
-                          }
+                          onClick={() => chooseFacility(facility)}
                           disabled={recommending}
                           className="w-full rounded-2xl border border-black/10 bg-white p-4 text-left transition hover:border-[#6f9c86] hover:bg-[#f5faf7] disabled:opacity-50"
                         >
