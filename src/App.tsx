@@ -1,154 +1,320 @@
 import { useState } from "react";
-import { createSession } from "./api/sessionApi";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
 
-type Language = "am" | "om" | "en";
+import { Assistant } from "./components/Assistant";
 
-function App() {
-  const [showSession, setShowSession] = useState(false);
-  const [language, setLanguage] = useState<Language>("en");
-  const [password, setPassword] = useState("");
- const [safelinkId, setSafelinkId] = useState("");
+// =========================
+// Public Pages
+// =========================
 
- const [hasSavedSession, setHasSavedSession] = useState(() => {
-   return localStorage.getItem("safelink_session") !== null;
- });
- const [showSupport, setShowSupport] = useState(false);
+import LandingPage from "./pages/LandingPage";
+import CreateSessionPage from "./pages/CreateSessionPage";
+import SessionCreatedPage from "./pages/SessionCreatedPage";
+import LoginSessionPage from "./pages/LoginSessionPage";
+import PrivateSupportPage from "./pages/PrivateSupportPage";
+import HelpingPage from "./pages/HelpingPage";
+import QuickExitPage from "./pages/QuickExitPage";
+import MedicalFlowPage from "./pages/MedicalFlowPage";
 
-  const handleCreateSession = async () => {
-    try {
-      const response = await createSession(language, password || undefined);
-const session = response.session;
+// =========================
+// Advisor Pages
+// =========================
 
-localStorage.setItem("safelink_session", JSON.stringify(session));
+import AdvisorPage from "./pages/AdvisorPage";
+import AdvisorLoginPage from "./pages/AdvisorLoginPage";
+import AdvisorDashboardPage from "./pages/AdvisorDashboardPage";
+import AdvisorProfilePage from "./pages/AdvisorProfilePage";
 
-setSafelinkId(session.safelink_id);
-    } catch (error) {
-      console.error("Failed to create session:", error);
-    }
-  };
- if (showSupport) {
-   return (
-     <main className="min-h-screen flex items-center justify-center p-6">
-       <div className="w-full max-w-md">
-         <div className="mb-8">
-           <p className="text-sm text-gray-500">Private Support Session</p>
+import ForgotPassword from "./pages/advisor/ForgotPassword";
+import VerifyOtp from "./pages/advisor/VerifyOtp";
+import ResetPassword from "./pages/advisor/ResetPassword";
+import AdvisorMessages from "./pages/advisor/AdvisorMessages";
+import AdvisorAdminChat from "./pages/advisor/AdvisorAdminChat";
 
-           <h1 className="text-3xl font-bold mt-2">
-             How can we help you today?
-           </h1>
-         </div>
+// =========================
+// Admin Pages
+// =========================
 
-         <button className="w-full border rounded-xl p-5 text-left hover:bg-gray-50">
-           <div className="text-lg font-semibold">I need medical help</div>
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminAwareness from "./pages/admin/AdminAwareness";
+import CreateAdvisor from "./pages/admin/CreateAdvisor";
+import Advisors from "./pages/admin/Advisors";
+import AdminAdvisorChat from "./pages/admin/AdminAdvisorChat";
+import AdminMessages from "./pages/admin/AdminMessages";
 
-           <div className="text-sm text-gray-500 mt-1">
-             Connect me with medical support
-           </div>
-         </button>
+// =========================
+// Admin Components
+// =========================
 
-         <button
-           onClick={() => {
-             window.location.href = "https://www.google.com";
-           }}
-           className="w-full mt-6 border rounded-xl p-4 text-red-600"
-         >
-           Quick Exit
-         </button>
-       </div>
-     </main>
-   );
- }
-  if (safelinkId) {
-    return (
-      <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="w-full max-w-md text-center">
-          <h1 className="text-3xl font-bold mb-4">Your SafeLink ID</h1>
+import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
+import AdminLayout from "./components/admin/AdminLayout";
 
-          <div className="border rounded-xl p-6 mb-4">
-            <p className="text-2xl font-mono font-bold">{safelinkId}</p>
-          </div>
+// =========================
+// Landing Route
+// =========================
 
-          <p className="text-gray-600 mb-6">
-            Keep this ID safe. You can use it to access your private session
-            again.
-          </p>
-
-          <button
-            onClick={() => setShowSupport(true)}
-            className="w-full rounded-lg bg-black text-white py-3"
-          >
-            Continue
-          </button>
-        </div>
-      </main>
-    );
-  }
-
-  if (showSession) {
-    return (
-      <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
-          <h1 className="text-3xl font-bold mb-2">Create a Private Session</h1>
-
-          <p className="text-gray-600 mb-8">
-            No name, phone number, or email is required.
-          </p>
-
-          <label className="block mb-2 font-medium">Language</label>
-
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value as Language)}
-            className="w-full border rounded-lg p-3 mb-6"
-          >
-            <option value="en">English</option>
-            <option value="am">Amharic</option>
-            <option value="om">Afaan Oromoo</option>
-          </select>
-
-          <label className="block mb-2 font-medium">Optional PIN</label>
-
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Leave empty if you don't want a PIN"
-            className="w-full border rounded-lg p-3 mb-6"
-          />
-
-          <button
-            onClick={handleCreateSession}
-            className="w-full rounded-lg bg-black text-white py-3"
-          >
-            Create Private Session
-          </button>
-
-          <button
-            onClick={() => setShowSession(false)}
-            className="w-full mt-3 py-3"
-          >
-            Back
-          </button>
-        </div>
-      </main>
-    );
-  }
+function LandingRoute({ hasSavedSession }: { hasSavedSession: boolean }) {
+  const navigate = useNavigate();
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
-      <div className="text-center max-w-md">
-        <h1 className="text-4xl font-bold mb-4">SafeLink Ethiopia</h1>
+    <LandingPage
+      onNeedHelp={() => navigate("/create")}
+      onHelping={() => navigate("/helping")}
+      hasSavedSession={hasSavedSession}
+      onContinueSession={() => navigate("/login")}
+    />
+  );
+}
 
-        <p className="text-gray-600 mb-8">Private support. Your next step.</p>
+// =========================
+// Create Session Route
+// =========================
 
-        <button
-          onClick={() => setShowSession(true)}
-          className="rounded-lg bg-black text-white px-8 py-3"
-        >
-          I Need Help
-        </button>
-      </div>
-    </main>
+function CreateSessionRoute({
+  onSessionCreated,
+}: {
+  onSessionCreated: (id: string) => void;
+}) {
+  const navigate = useNavigate();
+
+  return (
+    <CreateSessionPage
+      onSessionCreated={(id: string) => {
+        onSessionCreated(id);
+        navigate("/session-created");
+      }}
+      onBack={() => navigate("/")}
+    />
+  );
+}
+
+// =========================
+// Session Created Route
+// =========================
+
+function SessionCreatedRoute({ safelinkId }: { safelinkId: string }) {
+  const navigate = useNavigate();
+
+  return (
+    <SessionCreatedPage
+      safelinkId={safelinkId}
+      onContinue={() => navigate("/support")}
+    />
+  );
+}
+
+// =========================
+// Login Session Route
+// =========================
+
+function LoginRoute({
+  onLoginSuccess,
+}: {
+  onLoginSuccess: (id: string) => void;
+}) {
+  const navigate = useNavigate();
+
+  return (
+    <LoginSessionPage
+      onLoginSuccess={(id: string) => {
+        onLoginSuccess(id);
+        navigate("/support");
+      }}
+      onBack={() => navigate("/")}
+    />
+  );
+}
+
+// =========================
+// Support Route
+// =========================
+
+function SupportRoute({ safelinkId }: { safelinkId: string }) {
+  const navigate = useNavigate();
+
+  return (
+    <PrivateSupportPage
+      safelinkId={safelinkId}
+      onQuickExit={() => navigate("/quick-exit")}
+      onMedicalHelp={() => navigate("/medical")}
+    />
+  );
+}
+
+// =========================
+// Helping Route
+// =========================
+
+function HelpingRoute() {
+  const navigate = useNavigate();
+
+  return <HelpingPage onBack={() => navigate("/")} />;
+}
+
+// =========================
+// Main App
+// =========================
+
+function App() {
+  const [safelinkId, setSafelinkId] = useState("");
+
+  const [hasSavedSession] = useState(() => {
+    return localStorage.getItem("safelink_session") !== null;
+  });
+
+  const handleSessionCreated = (id: string) => {
+    setSafelinkId(id);
+  };
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* =====================================================
+            PUBLIC ROUTES
+        ====================================================== */}
+
+        <Route
+          path="/"
+          element={<LandingRoute hasSavedSession={hasSavedSession} />}
+        />
+
+        <Route
+          path="/create"
+          element={
+            <CreateSessionRoute onSessionCreated={handleSessionCreated} />
+          }
+        />
+
+        <Route
+          path="/session-created"
+          element={<SessionCreatedRoute safelinkId={safelinkId} />}
+        />
+
+        <Route
+          path="/login"
+          element={<LoginRoute onLoginSuccess={handleSessionCreated} />}
+        />
+
+        <Route
+          path="/support"
+          element={<SupportRoute safelinkId={safelinkId} />}
+        />
+
+        <Route path="/helping" element={<HelpingRoute />} />
+
+        <Route path="/quick-exit" element={<QuickExitPage />} />
+
+        <Route path="/medical" element={<MedicalFlowPage />} />
+
+        {/* =====================================================
+            ADVISOR ROUTES
+        ====================================================== */}
+
+        {/* Advisor landing / main page */}
+        <Route path="/advisor" element={<AdvisorPage />} />
+
+        {/* Advisor login */}
+        <Route path="/advisor/login" element={<AdvisorLoginPage />} />
+
+        {/* Advisor dashboard */}
+        <Route path="/advisor/dashboard" element={<AdvisorDashboardPage />} />
+
+        {/* Advisor profile */}
+        <Route path="/advisor/profile" element={<AdvisorProfilePage />} />
+
+        {/* Advisor change password */}
+        <Route
+          path="/advisor/change-password"
+          element={<AdvisorProfilePage />}
+        />
+
+        {/* Forgot password */}
+        <Route path="/advisor/forgot-password" element={<ForgotPassword />} />
+
+        {/* OTP verification */}
+        <Route path="/advisor/verify-otp" element={<VerifyOtp />} />
+
+        {/* Reset password */}
+        <Route path="/advisor/reset-password" element={<ResetPassword />} />
+        <Route path="/advisor/messages" element={<AdvisorMessages />} />
+
+        <Route
+          path="/advisor/messages/:conversationId"
+          element={<AdvisorAdminChat />}
+        />
+
+        {/* =====================================================
+            ADMIN LOGIN
+        ====================================================== */}
+
+        <Route path="/admin/login" element={<AdminLogin />} />
+
+        {/* =====================================================
+            PROTECTED ADMIN ROUTES
+        ====================================================== */}
+
+        <Route element={<AdminProtectedRoute />}>
+          <Route element={<AdminLayout />}>
+            {/* Admin Dashboard */}
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
+            {/* Awareness */}
+            <Route path="/admin/awareness" element={<AdminAwareness />} />
+
+            {/* Users */}
+            <Route path="/admin/users" element={<div>Users</div>} />
+
+            {/* Reports */}
+            <Route path="/admin/reports" element={<div>Reports</div>} />
+
+            {/* Resources */}
+            <Route path="/admin/resources" element={<div>Resources</div>} />
+
+            {/* Settings */}
+            <Route path="/admin/settings" element={<div>Settings</div>} />
+
+            {/* =================================================
+                ADVISOR MANAGEMENT
+            ================================================== */}
+
+            <Route path="/admin/advisors/create" element={<CreateAdvisor />} />
+
+            <Route path="/admin/advisors" element={<Advisors />} />
+
+            {/* =================================================
+                ADMIN → ADVISOR CHAT
+            ================================================== */}
+
+            <Route
+              path="/admin/advisors/:advisorId/chat"
+              element={<AdminAdvisorChat />}
+            />
+
+            {/* =================================================
+                ADMIN MESSAGES
+            ================================================== */}
+
+            <Route path="/admin/messages" element={<AdminMessages />} />
+          </Route>
+        </Route>
+
+        {/* =====================================================
+            FALLBACK
+        ====================================================== */}
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+
+      {/* Global Assistant */}
+      <Assistant />
+    </BrowserRouter>
   );
 }
 

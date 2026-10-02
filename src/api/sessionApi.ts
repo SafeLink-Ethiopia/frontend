@@ -1,25 +1,15 @@
 import axios from "axios";
+import type {
+  CreateSessionResponse,
+  GetSessionResponse,
+  Language,
+  LoginSessionResponse,
+} from "../types/session";
 
 const API_URL = "http://localhost:5000";
 
-export interface Session {
-  safelink_id: string;
-  language: "am" | "om" | "en";
-  created_at: string;
-}
-
-export interface CreateSessionResponse {
-  message: string;
-  session: Session;
-}
-
-export interface LoginSessionResponse {
-  message: string;
-  session: Session;
-}
-
 export const createSession = async (
-  language: "am" | "om" | "en",
+  language: Language,
   password?: string,
 ): Promise<CreateSessionResponse> => {
   const response = await axios.post<CreateSessionResponse>(
@@ -34,13 +24,13 @@ export const createSession = async (
 };
 
 export const loginSession = async (
-  safelink_id: string,
+  safelinkId: string,
   password?: string,
 ): Promise<LoginSessionResponse> => {
   const response = await axios.post<LoginSessionResponse>(
     `${API_URL}/session/login`,
     {
-      safelink_id,
+      safelink_id: safelinkId,
       ...(password ? { password } : {}),
     },
   );
@@ -49,10 +39,10 @@ export const loginSession = async (
 };
 
 export const getSession = async (
-  safelink_id: string,
-): Promise<{ session: Session }> => {
-  const response = await axios.get<{ session: Session }>(
-    `${API_URL}/session/${safelink_id}`,
+  safelinkId: string,
+): Promise<GetSessionResponse> => {
+  const response = await axios.get<GetSessionResponse>(
+    `${API_URL}/session/${safelinkId}`,
   );
 
   return response.data;
