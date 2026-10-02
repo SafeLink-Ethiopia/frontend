@@ -515,6 +515,8 @@ export default function AdvisorPage() {
                       ? "Hide facilities"
                       : "Recommend a facility"}
                   </button>
+                  {/*  helloworld
+                  */}
 
                   {showFacilities && (
                     <div className="mt-4 space-y-3">
