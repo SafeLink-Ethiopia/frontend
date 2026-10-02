@@ -92,7 +92,7 @@ export default function AdvisorAdminChat() {
         setError("");
 
         const response = await axios.get<ConversationResponse>(
-          "http://localhost:5000/api/advisor-admin-conversations/conversation",
+          `http://localhost:5000/api/advisors/admin-conversations/${conversationId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
