@@ -25,7 +25,7 @@ import MedicalFlowPage from "./pages/MedicalFlowPage";
 // =========================
 // Advisor Pages
 // =========================
-
+import UserAdvisorChat from "./pages/UserAdvisorChat";
 import AdvisorPage from "./pages/AdvisorPage";
 import AdvisorLoginPage from "./pages/AdvisorLoginPage";
 import AdvisorDashboardPage from "./pages/AdvisorDashboardPage";
@@ -36,7 +36,7 @@ import VerifyOtp from "./pages/advisor/VerifyOtp";
 import ResetPassword from "./pages/advisor/ResetPassword";
 import AdvisorMessages from "./pages/advisor/AdvisorMessages";
 import AdvisorAdminChat from "./pages/advisor/AdvisorAdminChat";
-
+import UserConversations from "./pages/advisor/UserConversations";
 // =========================
 // Admin Pages
 // =========================
@@ -161,7 +161,10 @@ function App() {
         {/* =====================================================
             PUBLIC ROUTES
         ====================================================== */}
-
+        <Route
+          path="/advisor/user-conversations"
+          element={<UserConversations />}
+        />
         <Route
           path="/"
           element={<LandingRoute hasSavedSession={hasSavedSession} />}
@@ -179,7 +182,7 @@ function App() {
           element={<SessionCreatedRoute safelinkId={safelinkId} />}
         />
         <Route path="/login" element={<LoginPage />} />
-
+        <Route path="/user/advisor-chat" element={<UserAdvisorChat />} />
         <Route
           path="/support"
           element={<SupportRoute safelinkId={safelinkId} />}
