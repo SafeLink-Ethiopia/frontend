@@ -12,7 +12,7 @@ import { Assistant } from "./components/Assistant";
 // =========================
 // Public Pages
 // =========================
-
+import AwarenessPage from "./pages/AwarenessPage";
 import LandingPage from "./pages/LandingPage";
 import CreateSessionPage from "./pages/CreateSessionPage";
 import SessionCreatedPage from "./pages/SessionCreatedPage";
@@ -173,7 +173,7 @@ function App() {
             <CreateSessionRoute onSessionCreated={handleSessionCreated} />
           }
         />
-
+        <Route path="/awareness" element={<AwarenessPage />} />
         <Route
           path="/session-created"
           element={<SessionCreatedRoute safelinkId={safelinkId} />}
