@@ -16,7 +16,7 @@ import { Assistant } from "./components/Assistant";
 import LandingPage from "./pages/LandingPage";
 import CreateSessionPage from "./pages/CreateSessionPage";
 import SessionCreatedPage from "./pages/SessionCreatedPage";
-import LoginSessionPage from "./pages/LoginSessionPage";
+import LoginPage from "./pages/LoginPage";
 import PrivateSupportPage from "./pages/PrivateSupportPage";
 import HelpingPage from "./pages/HelpingPage";
 import QuickExitPage from "./pages/QuickExitPage";
@@ -114,24 +114,6 @@ function SessionCreatedRoute({ safelinkId }: { safelinkId: string }) {
 // Login Session Route
 // =========================
 
-function LoginRoute({
-  onLoginSuccess,
-}: {
-  onLoginSuccess: (id: string) => void;
-}) {
-  const navigate = useNavigate();
-
-  return (
-    <LoginSessionPage
-      onLoginSuccess={(id: string) => {
-        onLoginSuccess(id);
-        navigate("/support");
-      }}
-      onBack={() => navigate("/")}
-    />
-  );
-}
-
 // =========================
 // Support Route
 // =========================
@@ -196,11 +178,7 @@ function App() {
           path="/session-created"
           element={<SessionCreatedRoute safelinkId={safelinkId} />}
         />
-
-        <Route
-          path="/login"
-          element={<LoginRoute onLoginSuccess={handleSessionCreated} />}
-        />
+        <Route path="/login" element={<LoginPage />} />
 
         <Route
           path="/support"
