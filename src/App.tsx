@@ -12,11 +12,11 @@ import { Assistant } from "./components/Assistant";
 // =========================
 // Public Pages
 // =========================
-
+import AwarenessPage from "./pages/AwarenessPage";
 import LandingPage from "./pages/LandingPage";
 import CreateSessionPage from "./pages/CreateSessionPage";
 import SessionCreatedPage from "./pages/SessionCreatedPage";
-import LoginSessionPage from "./pages/LoginSessionPage";
+import LoginPage from "./pages/LoginPage";
 import PrivateSupportPage from "./pages/PrivateSupportPage";
 import HelpingPage from "./pages/HelpingPage";
 import QuickExitPage from "./pages/QuickExitPage";
@@ -25,7 +25,7 @@ import MedicalFlowPage from "./pages/MedicalFlowPage";
 // =========================
 // Advisor Pages
 // =========================
-
+import UserAdvisorChat from "./pages/UserAdvisorChat";
 import AdvisorPage from "./pages/AdvisorPage";
 import AdvisorLoginPage from "./pages/AdvisorLoginPage";
 import AdvisorDashboardPage from "./pages/AdvisorDashboardPage";
@@ -36,7 +36,7 @@ import VerifyOtp from "./pages/advisor/VerifyOtp";
 import ResetPassword from "./pages/advisor/ResetPassword";
 import AdvisorMessages from "./pages/advisor/AdvisorMessages";
 import AdvisorAdminChat from "./pages/advisor/AdvisorAdminChat";
-
+import UserConversations from "./pages/advisor/UserConversations";
 // =========================
 // Admin Pages
 // =========================
@@ -116,24 +116,6 @@ function SessionCreatedRoute({ safelinkId }: { safelinkId: string }) {
 // Login Session Route
 // =========================
 
-function LoginRoute({
-  onLoginSuccess,
-}: {
-  onLoginSuccess: (id: string) => void;
-}) {
-  const navigate = useNavigate();
-
-  return (
-    <LoginSessionPage
-      onLoginSuccess={(id: string) => {
-        onLoginSuccess(id);
-        navigate("/support");
-      }}
-      onBack={() => navigate("/")}
-    />
-  );
-}
-
 // =========================
 // Support Route
 // =========================
@@ -181,7 +163,10 @@ function App() {
         {/* =====================================================
             PUBLIC ROUTES
         ====================================================== */}
-
+        <Route
+          path="/advisor/user-conversations"
+          element={<UserConversations />}
+        />
         <Route
           path="/"
           element={<LandingRoute hasSavedSession={hasSavedSession} />}
@@ -193,17 +178,13 @@ function App() {
             <CreateSessionRoute onSessionCreated={handleSessionCreated} />
           }
         />
-
+        <Route path="/awareness" element={<AwarenessPage />} />
         <Route
           path="/session-created"
           element={<SessionCreatedRoute safelinkId={safelinkId} />}
         />
-
-        <Route
-          path="/login"
-          element={<LoginRoute onLoginSuccess={handleSessionCreated} />}
-        />
-
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/user/advisor-chat" element={<UserAdvisorChat />} />
         <Route
           path="/support"
           element={<SupportRoute safelinkId={safelinkId} />}

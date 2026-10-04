@@ -21,13 +21,10 @@ function LandingPage({
   const t = getTranslations(language);
   const navigate = useNavigate();
 
-  const handleAdminLogin = () => {
-    navigate("/admin/login");
-  };
-
-  const handleAdvisorLogin = () => {
-    navigate("/advisor/login");
-  };
+  
+const handleLogin = () => {
+  navigate("/login");
+};
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#001B2E] text-white">
