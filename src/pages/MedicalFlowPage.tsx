@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-// import { Assistant } from "../components/Assistant";
 import {
+  AdvisorType,
   getConversation,
+  markMessagesSeen,
   recommendFacility,
-  requestMedicalSupport,
+  requestAdvisorSupport,
   sendUserMessage,
 } from "../api/medicalApi";
 import type { Conversation } from "../api/medicalApi";
@@ -12,18 +13,18 @@ type Language = "en" | "am" | "om";
 
 const translations = {
   en: {
-    title: "Medical Support",
+    title: "Private Support",
     subtitle:
-      "You are in a private support session. Speak with the voice assistant below.",
+      "You are in a private support session. Choose the kind of help you need.",
     privateSession: "Private Session",
     privateText:
       "You can speak freely. You do not need to provide your name.",
-    connecting: "Connecting you to a medical advisor...",
-    connected: "Connected to a medical advisor",
+    connecting: "Connecting you to an advisor...",
+    connected: "Connected to an advisor",
     conversation: "Your Conversation",
     typeMessage: "Type a message...",
     send: "Send",
-    advisor: "Medical Advisor",
+    advisor: "Advisor",
     you: "You",
     recommendation: "Recommended Facility",
     location: "Location",
@@ -34,21 +35,38 @@ const translations = {
     quickExit: "Quick Exit",
     waiting: "Waiting for advisor...",
     noConversation:
-      "Use the voice assistant to tell us what kind of help you need.",
+      "Choose the kind of support you need to get started.",
+
+    pickTitle: "What kind of support do you need?",
+    pickSubtitle:
+      "Pick the advisor that fits best. If you are not sure, choose “Not sure” — we will start with a general advisor who can guide you.",
+    pickMedical: "Medical Advisor",
+    pickMedicalDesc: "Health, injuries, medical questions.",
+    pickLegal: "Legal Advisor",
+    pickLegalDesc: "Rights, legal questions, reporting.",
+    pickPsychological: "Psychological Advisor",
+    pickPsychologicalDesc: "Emotional support, stress, trauma.",
+    pickGeneral: "General Advisor",
+    pickGeneralDesc: "Not sure — general guidance first.",
+    pickNotSure: "Not sure",
+    pickNotSureDesc:
+      "We will start you with a general advisor who can route you.",
+    pickStart: "Start private support",
+    pickSelected: "Selected",
   },
 
   am: {
-    title: "የሕክምና ድጋፍ",
+    title: "የግል ድጋፍ",
     subtitle:
-      "በግል የድጋፍ ክፍል ውስጥ ነዎት። ከታች ያለውን የድምፅ ረዳት ይጠቀሙ።",
+      "በግል የድጋፍ ክፍል ውስጥ ነዎት። የሚፈልጉትን የእርዳታ አይነት ይምረጡ።",
     privateSession: "የግል ክፍለ ጊዜ",
     privateText: "በነፃነት መናገር ይችላሉ። ስምዎን መስጠት አያስፈልግም።",
-    connecting: "ከሕክምና አማካሪ ጋር በመገናኘት ላይ...",
-    connected: "ከሕክምና አማካሪ ጋር ተገናኝተዋል",
+    connecting: "ከአማካሪ ጋር በመገናኘት ላይ...",
+    connected: "ከአማካሪ ጋር ተገናኝተዋል",
     conversation: "የውይይትዎ",
     typeMessage: "መልዕክት ይጻፉ...",
     send: "ላክ",
-    advisor: "የሕክምና አማካሪ",
+    advisor: "አማካሪ",
     you: "እርስዎ",
     recommendation: "የተመከረ ተቋም",
     location: "ቦታ",
@@ -58,22 +76,39 @@ const translations = {
     back: "ተመለስ",
     quickExit: "ፈጣን መውጫ",
     waiting: "አማካሪን በመጠባበቅ ላይ...",
-    noConversation: "የሚፈልጉትን እርዳታ ለመንገር የድምፅ ረዳቱን ይጠቀሙ።",
+    noConversation: "ለመጀመር የሚፈልጉትን የድጋፍ አይነት ይምረጡ።",
+
+    pickTitle: "የሚፈልጉት ድጋፍ ምን ዓይነት ነው?",
+    pickSubtitle:
+      "የሚስማማዎትን አማካሪ ይምረጡ። እርግጠኛ ካልሆኑ “እርግጠኛ አልሆንኩም” ይምረጡ — በአጠቃላይ አማካሪ እንጀምራለን።",
+    pickMedical: "የሕክምና አማካሪ",
+    pickMedicalDesc: "ጤና፣ ጉዳት፣ የሕክምና ጥያቄዎች።",
+    pickLegal: "የሕግ አማካሪ",
+    pickLegalDesc: "መብቶች፣ የሕግ ጥያቄዎች፣ ሪፖርት ማድረግ።",
+    pickPsychological: "የሥነ-ልቦና አማካሪ",
+    pickPsychologicalDesc: "የስሜት ድጋፍ፣ ጭንቀት፣ ጉዳት።",
+    pickGeneral: "አጠቃላይ አማካሪ",
+    pickGeneralDesc: "እርግጠኛ አልሆንኩም — በአጠቃላይ መመሪያ እንጀምር።",
+    pickNotSure: "እርግጠኛ አልሆንኩም",
+    pickNotSureDesc:
+      "በአጠቃላይ አማካሪ እንጀምርልዎታለን፣ ከዚያም ወደ ትክክለኛው ይመራዎታል።",
+    pickStart: "የግል ድጋፍ ጀምር",
+    pickSelected: "ተመርጧል",
   },
 
   om: {
-    title: "Deeggarsa Fayyaa",
+    title: "Deeggarsa Dhuunfaa",
     subtitle:
-      "Kutaa deeggarsa dhuunfaa keessa jirta. Gargaaraa sagalee armaan gadii fayyadami.",
+      "Kutaa deeggarsa dhuunfaa keessa jirta. Gosa gargaarsa barbaaddu filadhu.",
     privateSession: "Yeroo Dhuunfaa",
     privateText:
       "Bilisaan dubbachuu dandeessa. Maqaa kee kennuun si hin barbaachisu.",
-    connecting: "Gorsaa fayyaa waliin wal qunnamsiisaa jirra...",
-    connected: "Gorsaa fayyaa waliin wal qunnamtii uumameera",
+    connecting: "Gorsaa waliin wal qunnamsiisaa jirra...",
+    connected: "Gorsaa waliin wal qunnamtii uumameera",
     conversation: "Haasa'a Keessanii",
     typeMessage: "Ergaa barreessi...",
     send: "Ergi",
-    advisor: "Gorsaa Fayyaa",
+    advisor: "Gorsaa",
     you: "Ati",
     recommendation: "Bakka Tajaajilaa Yaadame",
     location: "Iddoo",
@@ -84,26 +119,64 @@ const translations = {
     quickExit: "Ba'iinsa Saffisaa",
     waiting: "Gorsaa eeggachaa jirra...",
     noConversation:
-      "Gargaarsa akkamii akka barbaaddu himuuf gargaaraa sagalee fayyadami.",
+      "Jalqabuuf gosa deeggarsa barbaaddu filadhu.",
+
+    pickTitle: "Gosa deeggarsa akkamii barbaadda?",
+    pickSubtitle:
+      "Gorsaa siif mijatu filadhu. Yoo hin mirkaneeffanne “Hin mirkaneeffanne” filadhu — gorsaa waliigalaatiin jalqabna.",
+    pickMedical: "Gorsaa Fayyaa",
+    pickMedicalDesc: "Fayyaa, miidhaa, gaaffii fayyaa.",
+    pickLegal: "Gorsaa Seeraa",
+    pickLegalDesc: "Mirga, gaaffii seeraa, gabaasa.",
+    pickPsychological: "Gorsaa Sammuu",
+    pickPsychologicalDesc: "Deeggarsa miiraa, dhiphina, miidhaa.",
+    pickGeneral: "Gorsaa Waliigalaa",
+    pickGeneralDesc: "Hin mirkaneeffanne — qajeelfama waliigalaa dura.",
+    pickNotSure: "Hin mirkaneeffanne",
+    pickNotSureDesc:
+      "Gorsaa waliigalaatiin jalqabna, sana booda gara sirriitti si qajeelcha.",
+    pickStart: "Deeggarsa dhuunfaa jalqabi",
+    pickSelected: "Filatameera",
   },
 };
 
 function getSavedLanguage(): Language {
   try {
     const saved = localStorage.getItem("safelink_session");
-
     if (!saved) return "en";
-
     const parsed = JSON.parse(saved);
-
     if (parsed?.language === "am") return "am";
     if (parsed?.language === "om") return "om";
-
     return "en";
   } catch {
     return "en";
   }
 }
+
+type PickerOption = {
+  value: AdvisorType | "not_sure";
+  emoji: string;
+  labelKey:
+    | "pickMedical"
+    | "pickLegal"
+    | "pickPsychological"
+    | "pickGeneral"
+    | "pickNotSure";
+  descKey:
+    | "pickMedicalDesc"
+    | "pickLegalDesc"
+    | "pickPsychologicalDesc"
+    | "pickGeneralDesc"
+    | "pickNotSureDesc";
+};
+
+const pickerOptions: PickerOption[] = [
+  { value: "medical", emoji: "🩺", labelKey: "pickMedical", descKey: "pickMedicalDesc" },
+  { value: "legal", emoji: "⚖️", labelKey: "pickLegal", descKey: "pickLegalDesc" },
+  { value: "psychological", emoji: "💬", labelKey: "pickPsychological", descKey: "pickPsychologicalDesc" },
+  { value: "general", emoji: "🤝", labelKey: "pickGeneral", descKey: "pickGeneralDesc" },
+  { value: "not_sure", emoji: "❓", labelKey: "pickNotSure", descKey: "pickNotSureDesc" },
+];
 
 export default function MedicalFlowPage() {
   const [language, setLanguage] = useState<Language>("en");
@@ -114,6 +187,10 @@ export default function MedicalFlowPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
 
+  const [pickedType, setPickedType] = useState<
+    AdvisorType | "not_sure"
+  >("general");
+
   const t = translations[language];
 
   useEffect(() => {
@@ -122,10 +199,8 @@ export default function MedicalFlowPage() {
 
     try {
       const saved = localStorage.getItem("safelink_session");
-
       if (saved) {
         const parsed = JSON.parse(saved);
-
         if (parsed?.safelink_id) {
           setSafelinkId(parsed.safelink_id);
         }
@@ -135,32 +210,57 @@ export default function MedicalFlowPage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (!conversation?.conversation_id) return;
+ useEffect(() => {
+  if (!conversation?.conversation_id) return;
 
-    const interval = window.setInterval(async () => {
-      try {
-        const fresh = await getConversation(
-          conversation.conversation_id
-        );
+  const markSeen = async () => {
+    try {
+      await markMessagesSeen(
+        conversation.conversation_id,
+        "user"
+      );
+    } catch {
+      // ignore
+    }
+  };
 
-        setConversation(fresh);
-      } catch {
-        // Keep the current conversation if polling fails.
-      }
-    }, 2000);
+  markSeen();
 
-    return () => window.clearInterval(interval);
-  }, [conversation?.conversation_id]);
+  const interval = window.setInterval(async () => {
+    try {
+      const fresh = await getConversation(
+        conversation.conversation_id
+      );
+      setConversation(fresh);
+      await markSeen();
+    } catch {
+      // Keep the current conversation if polling fails.
+    }
+  }, 2000);
 
-  async function startMedicalSupport() {
+  return () => window.clearInterval(interval);
+}, [conversation?.conversation_id]);
+
+  function resolveAdvisorType(
+    selection: AdvisorType | "not_sure"
+  ): AdvisorType {
+    if (selection === "not_sure") return "general";
+    return selection;
+  }
+
+  async function startSupport() {
     if (!safelinkId || loading) return;
+
+    const advisorType = resolveAdvisorType(pickedType);
 
     try {
       setLoading(true);
       setError("");
 
-      const result = await requestMedicalSupport(safelinkId);
+      const result = await requestAdvisorSupport(
+        safelinkId,
+        advisorType
+      );
 
       setConversation(result);
 
@@ -169,7 +269,6 @@ export default function MedicalFlowPage() {
       );
 
       let requests: unknown[] = [];
-
       try {
         requests = existingRequests
           ? JSON.parse(existingRequests)
@@ -181,6 +280,7 @@ export default function MedicalFlowPage() {
       const request = {
         safelink_id: safelinkId,
         conversation_id: result.conversation_id,
+        advisor_type: advisorType,
         created_at: new Date().toISOString(),
         status: "new" as const,
       };
@@ -193,7 +293,7 @@ export default function MedicalFlowPage() {
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to connect to medical support."
+          : "Unable to connect to support."
       );
     } finally {
       setLoading(false);
@@ -204,10 +304,7 @@ export default function MedicalFlowPage() {
     event.preventDefault();
 
     const trimmedMessage = message.trim();
-
-    if (!trimmedMessage || !conversation || sending) {
-      return;
-    }
+    if (!trimmedMessage || !conversation || sending) return;
 
     try {
       setSending(true);
@@ -238,12 +335,10 @@ export default function MedicalFlowPage() {
 
     try {
       setError("");
-
       const updated = await recommendFacility(
         conversation.conversation_id,
         facility
       );
-
       setConversation(updated);
     } catch (err) {
       setError(
@@ -255,7 +350,8 @@ export default function MedicalFlowPage() {
   }
 
   function handleBack() {
-    window.history.back();
+    // ← BACK TARGET: change this if you want a different destination
+    window.location.href = "/";
   }
 
   function handleQuickExit() {
@@ -264,7 +360,6 @@ export default function MedicalFlowPage() {
 
   return (
     <main className="min-h-screen bg-[#123d34] text-white">
-      {/* Header */}
       <header className="border-b border-white/10 bg-[#123d34]/95">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
           <button
@@ -281,7 +376,7 @@ export default function MedicalFlowPage() {
               SafeLink
             </p>
             <p className="mt-1 text-sm text-white/60">
-              {safelinkId || "Private session"}
+              {safelinkId || t.privateSession}
             </p>
           </div>
 
@@ -296,76 +391,81 @@ export default function MedicalFlowPage() {
       </header>
 
       <section className="mx-auto max-w-6xl px-6 py-10">
-        {/* Hero */}
-        <div className="mx-auto max-w-3xl text-center">
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#a9cfba]/15 text-3xl">
-            ♡
-          </div>
-
-          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-            {t.title}
-          </h1>
-
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-white/65 sm:text-lg">
-            {t.subtitle}
-          </p>
-        </div>
-
-        {/* Voice assistant area */}
-        <div className="mx-auto mt-10 max-w-3xl">
-          <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#19483e] px-6 py-10 shadow-2xl">
-            <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#a9cfba]/10 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-[#6ca58a]/10 blur-3xl" />
-
-            <div className="relative text-center">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#a9cfba]/20 bg-[#a9cfba]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#c8dfd1]">
-                <span className="h-2 w-2 rounded-full bg-[#a9cfba]" />
-                {language === "am"
-                  ? "በድምፅ ይናገሩ"
-                  : language === "om"
-                    ? "Sagaleedhaan dubbadhu"
-                    : "Voice assistant"}
+        {/* PICKER SCREEN */}
+        {!conversation && (
+          <>
+            <div className="mx-auto max-w-3xl text-center">
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#a9cfba]/15 text-3xl">
+                ♡
               </div>
 
-              <h2 className="mt-4 text-2xl font-semibold">
-                {t.noConversation}
-              </h2>
+              <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+                {t.pickTitle}
+              </h1>
 
-              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-white/55">
-                {t.privateText}
-              </p>
-
-              {/* ORIGINAL VOXIDE ASSISTANT */}
-              {/* <div className="mt-8 flex justify-center">
-                <Assistant />
-              </div> */}
-
-              <p className="mt-6 text-xs text-white/40">
-                {language === "am"
-                  ? "የድምፅ ረዳቱን ለመጀመር የብርቱካናማውን ማይክሮፎን ይጫኑ።"
-                  : language === "om"
-                    ? "Gargaaraa sagalee jalqabuuf maaykirofoonii burtukaanaa tuqi."
-                    : "Tap the orange microphone to speak."}
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-white/65 sm:text-lg">
+                {t.pickSubtitle}
               </p>
             </div>
-          </div>
-        </div>
 
-        {/* Connect fallback */}
-        {!conversation && (
-          <div className="mx-auto mt-8 max-w-3xl text-center">
-            <button
-              type="button"
-              onClick={startMedicalSupport}
-              disabled={loading || !safelinkId}
-              className="rounded-full bg-[#a9cfba] px-7 py-3.5 text-sm font-bold text-[#123d34] shadow-lg transition hover:bg-[#c2dfce] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {loading ? t.connecting : t.connect}
-            </button>
-          </div>
+            <div className="mx-auto mt-10 grid max-w-3xl gap-3 sm:grid-cols-2">
+              {pickerOptions.map((option) => {
+                const isSelected = pickedType === option.value;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setPickedType(option.value)}
+                    className={`group relative flex items-start gap-4 rounded-2xl border p-5 text-left transition ${
+                      isSelected
+                        ? "border-[#a9cfba] bg-[#19483e] shadow-xl"
+                        : "border-white/10 bg-[#19483e]/60 hover:border-[#a9cfba]/50 hover:bg-[#19483e]"
+                    }`}
+                  >
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#a9cfba]/15 text-2xl">
+                      {option.emoji}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-white">
+                        {t[option.labelKey]}
+                      </p>
+
+                      <p className="mt-1 text-sm leading-6 text-white/60">
+                        {t[option.descKey]}
+                      </p>
+                    </div>
+
+                    {isSelected && (
+                      <span className="shrink-0 rounded-full bg-[#a9cfba] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#123d34]">
+                        {t.pickSelected}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {error && (
+              <div className="mx-auto mt-6 max-w-3xl rounded-2xl border border-red-300/20 bg-red-400/10 px-5 py-4 text-center text-sm text-red-100">
+                {error}
+              </div>
+            )}
+
+            <div className="mx-auto mt-8 max-w-3xl text-center">
+              <button
+                type="button"
+                onClick={startSupport}
+                disabled={loading || !safelinkId}
+                className="rounded-full bg-[#a9cfba] px-7 py-3.5 text-sm font-bold text-[#123d34] shadow-lg transition hover:bg-[#c2dfce] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? t.connecting : t.pickStart}
+              </button>
+            </div>
+          </>
         )}
-
-        {/* Conversation */}
+                {/* CONVERSATION VIEW — shown once a conversation exists */}
         {conversation && (
           <div className="mx-auto mt-10 max-w-4xl">
             <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#f7f5f1] text-[#565857] shadow-2xl">
@@ -409,51 +509,68 @@ export default function MedicalFlowPage() {
                         }`}
                       >
                         <p className="mb-1 text-[11px] font-semibold opacity-60">
-                          {msg.sender === "user"
-                            ? t.you
-                            : t.advisor}
+                          {msg.sender === "user" ? t.you : t.advisor}
                         </p>
 
-                        <p className="text-sm leading-6">
-                          {msg.text}
-                        </p>
+                        <p className="text-sm leading-6">{msg.text}</p>
+
+                        {/* Read receipt — only on user's own messages */}
+                        {msg.sender === "user" && (
+                          <div className="mt-1 flex items-center justify-end">
+                            <span
+                              className={`text-[11px] font-semibold leading-none ${
+                                msg.seen_at
+                                  ? "text-[#a9cfba]"
+                                  : "text-white/50"
+                              }`}
+                              title={msg.seen_at ? "Seen" : "Sent"}
+                            >
+                              {msg.seen_at ? "✓✓" : "✓"}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))
                 )}
+
+                {conversation.recommendation && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[88%] rounded-2xl border border-[#a9cfba] bg-[#e6f1eb] p-4 shadow-sm sm:max-w-[70%]">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#39705b]">
+                        ✓ Facility Recommended
+                      </p>
+
+                      <div className="mt-2 space-y-1 text-[13px] text-[#243c35]">
+                        <p className="font-mono text-[10px] text-[#789187]">
+                          For: {conversation.session_id}
+                        </p>
+
+                        <p className="font-semibold">
+                          {conversation.recommendation.facility_name}
+                        </p>
+
+                        <p className="text-[#66766f]">
+                          {conversation.recommendation.location}
+                        </p>
+
+                        <p className="text-[#66766f]">
+                          {conversation.recommendation.contact}
+                        </p>
+
+                        <p className="text-xs italic text-[#789187]">
+                          {conversation.recommendation.notes}
+                        </p>
+
+                        <p className="pt-1 font-mono text-[10px] text-[#789187]">
+                          From: {conversation.advisor_id}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Recommendation */}
-              {conversation.recommendation && (
-                <div className="mx-6 mb-6 rounded-2xl border border-[#a9cfba] bg-[#edf6f0] p-5">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#477661]">
-                    {t.recommendation}
-                  </p>
-
-                  <h3 className="mt-2 text-xl font-semibold text-[#243c35]">
-                    {conversation.recommendation.facility_name}
-                  </h3>
-
-                  <div className="mt-4 space-y-2 text-sm text-[#58665f]">
-                    <p>
-                      <strong>{t.location}:</strong>{" "}
-                      {conversation.recommendation.location}
-                    </p>
-
-                    <p>
-                      <strong>{t.contact}:</strong>{" "}
-                      {conversation.recommendation.contact}
-                    </p>
-
-                    <p>
-                      <strong>{t.notes}:</strong>{" "}
-                      {conversation.recommendation.notes}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Message composer */}
               <form
                 onSubmit={handleSend}
                 className="border-t border-black/5 bg-[#f0f2ef] p-5"
@@ -482,8 +599,7 @@ export default function MedicalFlowPage() {
           </div>
         )}
 
-        {/* Error */}
-        {error && (
+        {conversation && error && (
           <div className="mx-auto mt-6 max-w-3xl rounded-2xl border border-red-300/20 bg-red-400/10 px-5 py-4 text-center text-sm text-red-100">
             {error}
           </div>
