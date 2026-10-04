@@ -6,7 +6,7 @@ import {
   Navigate,
   useNavigate,
 } from "react-router-dom";
-
+import InformationPage from "./pages/InformationPage";
 import { Assistant } from "./components/Assistant";
 
 // =========================
@@ -64,12 +64,14 @@ function LandingRoute({ hasSavedSession }: { hasSavedSession: boolean }) {
   const navigate = useNavigate();
 
   return (
+    
     <LandingPage
       onNeedHelp={() => navigate("/create")}
       onHelping={() => navigate("/helping")}
       hasSavedSession={hasSavedSession}
       onContinueSession={() => navigate("/login")}
     />
+
   );
 }
 
@@ -166,7 +168,7 @@ function App() {
           path="/"
           element={<LandingRoute hasSavedSession={hasSavedSession} />}
         />
-
+        <Route path="/information" element={<InformationPage />} />
         <Route
           path="/create"
           element={
@@ -288,10 +290,11 @@ function App() {
         ====================================================== */}
 
         <Route path="*" element={<Navigate to="/" replace />} />
+        
       </Routes>
 
-      {/* Global Assistant */}
-      <Assistant />
+      {/* Global Assistant 
+      <Assistant />*/}
     </BrowserRouter>
   );
 }

@@ -20,10 +20,13 @@ function LandingPage({
 
   const navigate = useNavigate();
 
-  
-const handleLogin = () => {
-  navigate("/login");
-};
+  const handleAdminLogin = () => {
+    navigate("/admin/login");
+  };
+
+  const handleAdvisorLogin = () => {
+    navigate("/advisor/login");
+  };
 
   return (
     <main className="min-h-screen text-white overflow-hidden">
@@ -55,6 +58,45 @@ const handleLogin = () => {
             </div>
 
             <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleAdvisorLogin}
+                className="
+              bg-[#126d85]
+              hover:bg-[#0d5d73]
+              text-white
+              px-5
+              py-3
+              rounded-full
+              shadow-lg
+              font-medium
+              transition
+            "
+              >
+                Advisor Login
+              </button>
+
+              <button
+                type="button"
+                onClick={handleAdminLogin}
+                className="
+              bg-white/15
+              hover:bg-white/25
+              backdrop-blur-md
+              border
+              border-white/30
+              text-white
+              px-5
+              py-3
+              rounded-full
+              shadow-lg
+              font-medium
+              transition
+            "
+              >
+                Admin Login
+              </button>
+
               <select
                 value={language}
                 onChange={(e) =>
@@ -128,12 +170,7 @@ const handleLogin = () => {
                     →
                   </span>
                 </button>
-                <button
-                  onClick={handleLogin}
-                  className="rounded-xl bg-[#5C838A] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#4C6F75]"
-                >
-                  Login
-                </button>
+
                 <button
                   type="button"
                   onClick={onHelping}
