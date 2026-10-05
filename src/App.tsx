@@ -23,6 +23,12 @@ import QuickExitPage from "./pages/QuickExitPage";
 import MedicalFlowPage from "./pages/MedicalFlowPage";
 
 // =========================
+// User ↔ Advisor Chat
+// =========================
+
+import UserAdvisorChat from "./components/UserAdvisorChat";
+
+// =========================
 // Advisor Pages
 // =========================
 
@@ -55,6 +61,75 @@ import AdminMessages from "./pages/admin/AdminMessages";
 
 import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
 import AdminLayout from "./components/admin/AdminLayout";
+
+// =========================
+// SafeLink Session Helper
+// =========================
+
+function getSavedSafelinkId(): string {
+  const savedSession = localStorage.getItem("safelink_session");
+
+  if (!savedSession) {
+    console.log("[App] No saved SafeLink session found.");
+    return "";
+  }
+
+  console.log("[App] Raw saved SafeLink session:", savedSession);
+
+  // --------------------------------------------------
+  // Case 1:
+  // localStorage contains the ID directly
+  // Example:
+  // "SL123456"
+  // --------------------------------------------------
+
+  try {
+    const parsed = JSON.parse(savedSession);
+
+    // JSON string:
+    // "SL123456"
+    if (typeof parsed === "string" && parsed.trim()) {
+      console.log("[App] Restored SafeLink ID:", parsed);
+      return parsed.trim();
+    }
+
+    // JSON object:
+    // { safelink_id: "SL123456" }
+    if (parsed && typeof parsed === "object") {
+      const id =
+        parsed.safelink_id ||
+        parsed.safelinkId ||
+        parsed.id ||
+        parsed.session_id ||
+        parsed.sessionId;
+
+      if (typeof id === "string" && id.trim()) {
+        console.log("[App] Restored SafeLink ID:", id);
+        return id.trim();
+      }
+    }
+  } catch {
+    // --------------------------------------------------
+    // Not JSON.
+    // Treat the stored value as the SafeLink ID itself.
+    // --------------------------------------------------
+
+    if (savedSession.trim()) {
+      console.log(
+        "[App] Restored SafeLink ID from plain localStorage value:",
+        savedSession.trim(),
+      );
+
+      return savedSession.trim();
+    }
+  }
+
+  console.warn(
+    "[App] safelink_session exists, but no SafeLink ID could be extracted.",
+  );
+
+  return "";
+}
 
 // =========================
 // Landing Route
@@ -149,6 +224,23 @@ function SupportRoute({ safelinkId }: { safelinkId: string }) {
 }
 
 // =========================
+// User Advisor Chat Route
+// =========================
+
+function UserAdvisorChatRoute({ safelinkId }: { safelinkId: string }) {
+  console.log(
+    "[App] UserAdvisorChatRoute SafeLink ID:",
+    safelinkId || "(EMPTY)",
+  );
+
+  return (
+    <div className="h-screen bg-gray-50">
+      <UserAdvisorChat sessionId={safelinkId} />
+    </div>
+  );
+}
+
+// =========================
 // Helping Route
 // =========================
 
@@ -163,14 +255,42 @@ function HelpingRoute() {
 // =========================
 
 function App() {
-  const [safelinkId, setSafelinkId] = useState("");
+  // --------------------------------------------------
+  // IMPORTANT:
+  // Restore the existing SafeLink ID from localStorage
+  // when the application starts.
+  // --------------------------------------------------
 
-  const [hasSavedSession] = useState(() => {
+  const [safelinkId, setSafelinkId] = useState<string>(getSavedSafelinkId);
+
+  // --------------------------------------------------
+  // Check whether a saved session exists
+  // --------------------------------------------------
+
+  const [hasSavedSession, setHasSavedSession] = useState<boolean>(() => {
     return localStorage.getItem("safelink_session") !== null;
   });
 
+  // --------------------------------------------------
+  // Called after creating a new session OR logging in
+  // --------------------------------------------------
+
   const handleSessionCreated = (id: string) => {
+    console.log("[App] SafeLink session received:", id);
+
+    // Update React state immediately
     setSafelinkId(id);
+
+    // Make sure the ID is persisted.
+    //
+    // IMPORTANT:
+    // This stores the actual SafeLink ID as a JSON string.
+    // The restore function above supports this format.
+    localStorage.setItem("safelink_session", JSON.stringify(id));
+
+    setHasSavedSession(true);
+
+    console.log("[App] SafeLink session saved successfully.");
   };
 
   return (
@@ -207,6 +327,15 @@ function App() {
           element={<SupportRoute safelinkId={safelinkId} />}
         />
 
+        {/* =====================================================
+            USER ↔ ADVISOR CHAT
+        ====================================================== */}
+
+        <Route
+          path="/advisor-chat"
+          element={<UserAdvisorChatRoute safelinkId={safelinkId} />}
+        />
+
         <Route path="/helping" element={<HelpingRoute />} />
 
         <Route path="/quick-exit" element={<QuickExitPage />} />
@@ -217,32 +346,25 @@ function App() {
             ADVISOR ROUTES
         ====================================================== */}
 
-        {/* Advisor landing / main page */}
         <Route path="/advisor" element={<AdvisorPage />} />
 
-        {/* Advisor login */}
         <Route path="/advisor/login" element={<AdvisorLoginPage />} />
 
-        {/* Advisor dashboard */}
         <Route path="/advisor/dashboard" element={<AdvisorDashboardPage />} />
 
-        {/* Advisor profile */}
         <Route path="/advisor/profile" element={<AdvisorProfilePage />} />
 
-        {/* Advisor change password */}
         <Route
           path="/advisor/change-password"
           element={<AdvisorProfilePage />}
         />
 
-        {/* Forgot password */}
         <Route path="/advisor/forgot-password" element={<ForgotPassword />} />
 
-        {/* OTP verification */}
         <Route path="/advisor/verify-otp" element={<VerifyOtp />} />
 
-        {/* Reset password */}
         <Route path="/advisor/reset-password" element={<ResetPassword />} />
+
         <Route path="/advisor/messages" element={<AdvisorMessages />} />
 
         <Route
