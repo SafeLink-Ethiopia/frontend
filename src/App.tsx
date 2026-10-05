@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   BrowserRouter,
@@ -6,12 +7,17 @@ import {
   Navigate,
   useNavigate,
 } from "react-router-dom";
+
 import InformationPage from "./pages/InformationPage";
 import { Assistant } from "./components/Assistant";
 
 // =========================
 // Public Pages
 // =========================
+
+import UserDashboard from "./pages/UserDashboard";
+import UserAdvisorChat from "./pages/UserAdvisorChat";
+
 import AwarenessPage from "./pages/AwarenessPage";
 import LandingPage from "./pages/LandingPage";
 import CreateSessionPage from "./pages/CreateSessionPage";
@@ -25,7 +31,7 @@ import MedicalFlowPage from "./pages/MedicalFlowPage";
 // =========================
 // Advisor Pages
 // =========================
-import UserAdvisorChat from "./pages/UserAdvisorChat";
+
 import AdvisorPage from "./pages/AdvisorPage";
 import AdvisorLoginPage from "./pages/AdvisorLoginPage";
 import AdvisorDashboardPage from "./pages/AdvisorDashboardPage";
@@ -37,6 +43,7 @@ import ResetPassword from "./pages/advisor/ResetPassword";
 import AdvisorMessages from "./pages/advisor/AdvisorMessages";
 import AdvisorAdminChat from "./pages/advisor/AdvisorAdminChat";
 import UserConversations from "./pages/advisor/UserConversations";
+
 // =========================
 // Admin Pages
 // =========================
@@ -60,18 +67,20 @@ import AdminLayout from "./components/admin/AdminLayout";
 // Landing Route
 // =========================
 
-function LandingRoute({ hasSavedSession }: { hasSavedSession: boolean }) {
+function LandingRoute({
+  hasSavedSession,
+}: {
+  hasSavedSession: boolean;
+}) {
   const navigate = useNavigate();
 
   return (
-    
     <LandingPage
       onNeedHelp={() => navigate("/create")}
       onHelping={() => navigate("/helping")}
       hasSavedSession={hasSavedSession}
       onContinueSession={() => navigate("/login")}
     />
-
   );
 }
 
@@ -101,7 +110,11 @@ function CreateSessionRoute({
 // Session Created Route
 // =========================
 
-function SessionCreatedRoute({ safelinkId }: { safelinkId: string }) {
+function SessionCreatedRoute({
+  safelinkId,
+}: {
+  safelinkId: string;
+}) {
   const navigate = useNavigate();
 
   return (
@@ -113,14 +126,14 @@ function SessionCreatedRoute({ safelinkId }: { safelinkId: string }) {
 }
 
 // =========================
-// Login Session Route
-// =========================
-
-// =========================
 // Support Route
 // =========================
 
-function SupportRoute({ safelinkId }: { safelinkId: string }) {
+function SupportRoute({
+  safelinkId,
+}: {
+  safelinkId: string;
+}) {
   const navigate = useNavigate();
 
   return (
@@ -163,54 +176,131 @@ function App() {
         {/* =====================================================
             PUBLIC ROUTES
         ====================================================== */}
+
         <Route
           path="/advisor/user-conversations"
           element={<UserConversations />}
         />
+
         <Route
           path="/"
-          element={<LandingRoute hasSavedSession={hasSavedSession} />}
+          element={
+            <LandingRoute
+              hasSavedSession={hasSavedSession}
+            />
+          }
         />
-        <Route path="/information" element={<InformationPage />} />
+
+        <Route
+          path="/information"
+          element={<InformationPage />}
+        />
+
         <Route
           path="/create"
           element={
-            <CreateSessionRoute onSessionCreated={handleSessionCreated} />
+            <CreateSessionRoute
+              onSessionCreated={handleSessionCreated}
+            />
           }
         />
-        <Route path="/awareness" element={<AwarenessPage />} />
+
+        <Route
+          path="/awareness"
+          element={<AwarenessPage />}
+        />
+
         <Route
           path="/session-created"
-          element={<SessionCreatedRoute safelinkId={safelinkId} />}
+          element={
+            <SessionCreatedRoute
+              safelinkId={safelinkId}
+            />
+          }
         />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/user/advisor-chat" element={<UserAdvisorChat />} />
+
+        <Route
+          path="/login"
+          element={<LoginPage />}
+        />
+
+        {/* =====================================================
+            USER DASHBOARD
+        ====================================================== */}
+
+        <Route
+          path="/user/dashboard"
+          element={<UserDashboard />}
+        />
+
+        {/* User → Advisor Chat */}
+        <Route
+          path="/user/dashboard/chat"
+          element={<UserAdvisorChat />}
+        />
+
+        {/* Old route kept for compatibility */}
+        <Route
+          path="/user/advisor-chat"
+          element={
+            <Navigate
+              to="/user/dashboard/chat"
+              replace
+            />
+          }
+        />
+
         <Route
           path="/support"
-          element={<SupportRoute safelinkId={safelinkId} />}
+          element={
+            <SupportRoute
+              safelinkId={safelinkId}
+            />
+          }
         />
 
-        <Route path="/helping" element={<HelpingRoute />} />
+        <Route
+          path="/helping"
+          element={<HelpingRoute />}
+        />
 
-        <Route path="/quick-exit" element={<QuickExitPage />} />
+        <Route
+          path="/quick-exit"
+          element={<QuickExitPage />}
+        />
 
-        <Route path="/medical" element={<MedicalFlowPage />} />
+        <Route
+          path="/medical"
+          element={<MedicalFlowPage />}
+        />
 
         {/* =====================================================
             ADVISOR ROUTES
         ====================================================== */}
 
         {/* Advisor landing / main page */}
-        <Route path="/advisor" element={<AdvisorPage />} />
+        <Route
+          path="/advisor"
+          element={<AdvisorPage />}
+        />
 
         {/* Advisor login */}
-        <Route path="/advisor/login" element={<AdvisorLoginPage />} />
+        <Route
+          path="/advisor/login"
+          element={<AdvisorLoginPage />}
+        />
 
         {/* Advisor dashboard */}
-        <Route path="/advisor/dashboard" element={<AdvisorDashboardPage />} />
+        <Route
+          path="/advisor/dashboard"
+          element={<AdvisorDashboardPage />}
+        />
 
         {/* Advisor profile */}
-        <Route path="/advisor/profile" element={<AdvisorProfilePage />} />
+        <Route
+          path="/advisor/profile"
+          element={<AdvisorProfilePage />}
+        />
 
         {/* Advisor change password */}
         <Route
@@ -219,15 +309,30 @@ function App() {
         />
 
         {/* Forgot password */}
-        <Route path="/advisor/forgot-password" element={<ForgotPassword />} />
+        <Route
+          path="/advisor/forgot-password"
+          element={<ForgotPassword />}
+        />
 
         {/* OTP verification */}
-        <Route path="/advisor/verify-otp" element={<VerifyOtp />} />
+        <Route
+          path="/advisor/verify-otp"
+          element={<VerifyOtp />}
+        />
 
         {/* Reset password */}
-        <Route path="/advisor/reset-password" element={<ResetPassword />} />
-        <Route path="/advisor/messages" element={<AdvisorMessages />} />
+        <Route
+          path="/advisor/reset-password"
+          element={<ResetPassword />}
+        />
 
+        {/* Advisor messages */}
+        <Route
+          path="/advisor/messages"
+          element={<AdvisorMessages />}
+        />
+
+        {/* Advisor → Admin Chat */}
         <Route
           path="/advisor/messages/:conversationId"
           element={<AdvisorAdminChat />}
@@ -237,7 +342,10 @@ function App() {
             ADMIN LOGIN
         ====================================================== */}
 
-        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/admin/login"
+          element={<AdminLogin />}
+        />
 
         {/* =====================================================
             PROTECTED ADMIN ROUTES
@@ -245,31 +353,56 @@ function App() {
 
         <Route element={<AdminProtectedRoute />}>
           <Route element={<AdminLayout />}>
+
             {/* Admin Dashboard */}
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route
+              path="/admin/dashboard"
+              element={<AdminDashboard />}
+            />
 
             {/* Awareness */}
-            <Route path="/admin/awareness" element={<AdminAwareness />} />
+            <Route
+              path="/admin/awareness"
+              element={<AdminAwareness />}
+            />
 
             {/* Users */}
-            <Route path="/admin/users" element={<div>Users</div>} />
+            <Route
+              path="/admin/users"
+              element={<div>Users</div>}
+            />
 
             {/* Reports */}
-            <Route path="/admin/reports" element={<div>Reports</div>} />
+            <Route
+              path="/admin/reports"
+              element={<div>Reports</div>}
+            />
 
             {/* Resources */}
-            <Route path="/admin/resources" element={<div>Resources</div>} />
+            <Route
+              path="/admin/resources"
+              element={<div>Resources</div>}
+            />
 
             {/* Settings */}
-            <Route path="/admin/settings" element={<div>Settings</div>} />
+            <Route
+              path="/admin/settings"
+              element={<div>Settings</div>}
+            />
 
             {/* =================================================
                 ADVISOR MANAGEMENT
             ================================================== */}
 
-            <Route path="/admin/advisors/create" element={<CreateAdvisor />} />
+            <Route
+              path="/admin/advisors/create"
+              element={<CreateAdvisor />}
+            />
 
-            <Route path="/admin/advisors" element={<Advisors />} />
+            <Route
+              path="/admin/advisors"
+              element={<Advisors />}
+            />
 
             {/* =================================================
                 ADMIN → ADVISOR CHAT
@@ -284,7 +417,10 @@ function App() {
                 ADMIN MESSAGES
             ================================================== */}
 
-            <Route path="/admin/messages" element={<AdminMessages />} />
+            <Route
+              path="/admin/messages"
+              element={<AdminMessages />}
+            />
           </Route>
         </Route>
 
@@ -292,14 +428,18 @@ function App() {
             FALLBACK
         ====================================================== */}
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-        
+        <Route
+          path="*"
+          element={<Navigate to="/" replace />}
+        />
       </Routes>
 
-      {/* Global Assistant 
-      <Assistant />*/}
+      {/* Global Assistant
+      <Assistant />
+      */}
     </BrowserRouter>
   );
 }
 
 export default App;
+
