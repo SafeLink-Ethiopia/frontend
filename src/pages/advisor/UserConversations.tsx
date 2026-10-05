@@ -10,25 +10,15 @@ export default function UserConversations() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const advisorProfile = localStorage.getItem("advisor_profile");
-
   useEffect(() => {
-    if (!advisorProfile || !localStorage.getItem("advisor_token")) {
+    if (!localStorage.getItem("advisor_token")) {
       navigate("/advisor/login");
       return;
     }
 
     const loadConversations = async () => {
       try {
-        const profile = JSON.parse(advisorProfile);
-
-        const allConversations = await getPendingConversations();
-
-        const myConversations = allConversations.filter(
-          (conversation) => conversation.advisor_id === profile.advisor_id,
-        );
-
-        setConversations(myConversations);
+        setConversations(await getPendingConversations());
       } catch (err) {
         console.error(err);
         setError("Failed to load user conversations.");
@@ -38,7 +28,7 @@ export default function UserConversations() {
     };
 
     loadConversations();
-  }, [navigate, advisorProfile]);
+  }, [navigate]);
 
   if (loading) {
     return <div>Loading conversations...</div>;
