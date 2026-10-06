@@ -37,10 +37,7 @@ export default function AdminSidebar() {
       label: "Create Advisor",
       path: "/admin/advisors/create",
     },
-    {
-      label: "Reports",
-      path: "/admin/reports",
-    },
+
     {
       label: "Advisors",
       path: "/admin/advisors",
@@ -48,10 +45,6 @@ export default function AdminSidebar() {
     {
       label: "Messages",
       path: "/admin/messages",
-    },
-    {
-      label: "Settings",
-      path: "/admin/settings",
     },
   ];
 

@@ -209,4 +209,3 @@ export const markConversationSeen = async (
 
   return response.data.conversation;
 };
-

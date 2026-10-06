@@ -1254,4 +1254,3 @@ export default function UserAdvisorChat() {
     </main>
   );
 }
-
