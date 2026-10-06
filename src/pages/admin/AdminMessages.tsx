@@ -29,21 +29,6 @@ export default function AdminMessages() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  /*
-   * ============================================================
-   * LOAD ADMIN CONVERSATIONS
-   * ============================================================
-   *
-   * IMPORTANT:
-   *
-   * Advisor route:
-   * GET /api/advisor-admin-conversations
-   *
-   * Admin route:
-   * GET /api/advisor-admin-conversations/admin
-   *
-   * Since this is the ADMIN page, we must use /admin.
-   */
   useEffect(() => {
     const fetchConversations = async () => {
       try {
@@ -59,7 +44,7 @@ export default function AdminMessages() {
         }
 
         const response = await axios.get<ConversationsResponse>(
-          "http://localhost:5000/api/advisor-admin-conversations/admin",
+          "http://localhost:5000/api/advisor-admin-conversations",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -83,9 +68,9 @@ export default function AdminMessages() {
           if (error.response?.status === 401) {
             setError("Your admin session has expired. Please log in again.");
           } else if (error.response?.status === 403) {
-            setError(
-              "You do not have permission to access admin conversations.",
-            );
+            localStorage.removeItem("adminToken");
+            localStorage.removeItem("adminId");
+            navigate("/admin/login", { replace: true });
           } else if (error.response?.status === 404) {
             setError("Admin conversations endpoint was not found.");
           } else {
@@ -102,7 +87,7 @@ export default function AdminMessages() {
     };
 
     fetchConversations();
-  }, []);
+  }, [navigate]);
 
   /*
    * ============================================================

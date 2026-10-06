@@ -107,11 +107,11 @@ export default function AdvisorAdminChat() {
          * Example:
          *
          * GET
-         * /api/advisor-admin-conversations/65abc123
+         * /api/advisor/admin-conversations/65abc123
          */
 
         const response = await axios.get<ConversationResponse>(
-          `http://localhost:5000/api/advisor-admin-conversations/${conversationId}`,
+          `http://localhost:5000/api/advisor/admin-conversations/${conversationId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

@@ -44,7 +44,7 @@ export default function AdvisorMessages() {
         setError("");
 
         const response = await axios.get<ConversationsResponse>(
-          "http://localhost:5000/api/advisor-admin-conversations",
+          "http://localhost:5000/api/advisor/admin-conversations",
           {
             headers: {
               Authorization: `Bearer ${token}`,
