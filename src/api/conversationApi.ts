@@ -48,6 +48,10 @@ interface ConversationResponse {
   conversation: Conversation;
 }
 
+interface ConversationsResponse {
+  conversations: Conversation[];
+}
+
 interface RequestConversationResponse {
   conversation: Conversation;
 }
@@ -96,6 +100,21 @@ export const getUserConversation = async (
 
     throw error;
   }
+};
+
+// =========================
+// GET ALL USER CONVERSATIONS
+// =========================
+
+export const getUserConversations = async (
+  session_id: string,
+): Promise<Conversation[]> => {
+  const response =
+    await axios.get<ConversationsResponse>(
+      `${API_URL}/session/${session_id}/all`,
+    );
+
+  return response.data.conversations;
 };
 
 // =========================
