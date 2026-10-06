@@ -1,14 +1,11 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft,
   Check,
   CheckCheck,
   Edit3,
-  LogOut,
   Send,
   Trash2,
-  User,
   X,
 } from "lucide-react";
 import axios from "axios";
@@ -814,89 +811,49 @@ export default function AdvisorAdminChat() {
 
   return (
     <main className="min-h-screen bg-[#33484D]">
-      {/* HEADER */}
-
-      <header className="flex items-center justify-between bg-[#5C838A] px-6 py-4">
-        {/* BACK */}
-
-        <button
-          type="button"
-          onClick={() => navigate("/advisor/messages")}
-          className="flex items-center gap-2 rounded-full border border-white/20 px-3 py-1.5 text-sm text-white transition hover:bg-white/10"
-        >
-          <ArrowLeft size={16} />
-          Messages
-        </button>
-
-        {/* TITLE */}
-
-        <div className="text-center">
-          <h1 className="text-lg font-semibold text-white">SafeLink Admin</h1>
-
-          <div className="mt-1 flex items-center justify-center gap-2">
-            <span
-              className={`h-2 w-2 rounded-full ${
-                connected ? "bg-[#A9CFBA]" : "bg-[#D96C6C]"
-              }`}
-            />
-
-            <span className="text-xs text-white/70">
-              {connected ? "Connected" : "Disconnected"}
-            </span>
-          </div>
-        </div>
-
-        {/* RIGHT ACTIONS */}
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setConfirmDeleteConversation(true)}
-            title="Hide conversation"
-            className="flex items-center gap-1.5 rounded-full border border-white/20 px-3 py-1.5 text-sm text-white transition hover:bg-white/10"
-          >
-            <Trash2 size={15} />
-            Delete
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate("/advisor/profile")}
-            className="flex items-center gap-1.5 rounded-full border border-white/20 px-3 py-1.5 text-sm text-white transition hover:bg-white/10"
-          >
-            <User size={15} />
-            Profile
-          </button>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 rounded-full border border-white/20 px-3 py-1.5 text-sm text-white transition hover:bg-white/10"
-          >
-            <LogOut size={15} />
-            Logout
-          </button>
-        </div>
-      </header>
-
-      {/* CHAT */}
+      {/* ========================================
+          CHAT
+      ======================================== */}
 
       <section className="mx-auto max-w-3xl px-5 py-8">
         <div className="overflow-hidden rounded-3xl bg-[#F4F7F7] shadow-xl">
           {/* CHAT HEADER */}
 
-          <div className="border-b border-[#33484D]/10 px-6 py-5">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#5C838A]">
-              Administrator
-            </p>
+          <div className="flex items-start justify-between gap-4 border-b border-[#33484D]/10 px-6 py-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#5C838A]">
+                Administrator
+              </p>
 
-            <h2 className="mt-1 text-xl font-semibold text-[#33484D]">
-              Admin Support
-            </h2>
+              <h2 className="mt-1 text-xl font-semibold text-[#33484D]">
+                Admin Support
+              </h2>
 
-            <p className="mt-1 text-xs text-[#6B7A7C]">
-              {conversation.conversation_id}
-            </p>
+              <p className="mt-1 text-xs text-[#6B7A7C]">
+                {conversation.conversation_id}
+              </p>
+
+              <div className="mt-2 flex items-center gap-2">
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    connected ? "bg-[#4A9B71]" : "bg-[#D96C6C]"
+                  }`}
+                />
+                <span className="text-xs text-[#6B7A7C]">
+                  {connected ? "Connected" : "Disconnected"}
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setConfirmDeleteConversation(true)}
+              title="Hide conversation"
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#D96C6C]/30 px-3 py-1.5 text-sm text-[#B94C4C] transition hover:bg-[#FFF1F1]"
+            >
+              <Trash2 size={15} />
+              Delete
+            </button>
           </div>
 
           {/* MESSAGES */}

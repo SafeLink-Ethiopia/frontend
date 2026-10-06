@@ -304,12 +304,17 @@ export async function recommendFacility(
 export async function getPendingConversations(): Promise<
   Conversation[]
 > {
+  const token = localStorage.getItem("advisor_token");
   const response = await fetch(
-    `${API_URL}/conversations/pending`
+    `${API_URL}/conversations/pending`,
+    {
+      headers: {
+        Authorization: `Bearer ${token ?? ""}`,
+      },
+    }
   );
 
   const data = await handleResponse<{
-    success: boolean;
     conversations: Conversation[];
   }>(response);
 
