@@ -1,4 +1,13 @@
 import { useEffect, useState } from "react";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 interface DashboardStatistics {
   advisors: {
@@ -6,11 +15,13 @@ interface DashboardStatistics {
     active: number;
     inactive: number;
   };
+
   sessions: {
     total: number;
     withPassword: number;
     withoutPassword: number;
   };
+
   conversations: {
     total: number;
     withMessages: number;
@@ -37,12 +48,16 @@ interface DashboardResponse {
   sessionLanguageDistribution: SessionLanguageDistribution[];
 }
 
+interface StatisticsChartData {
+  name: string;
+  total: number;
+}
+
 export default function AdminDashboard() {
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const adminId = localStorage.getItem("adminId");
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -91,16 +106,25 @@ export default function AdminDashboard() {
     fetchDashboard();
   }, []);
 
+  /* ============================================================
+     LOADING
+  ============================================================ */
+
   if (loading) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600" />
+
           <p className="text-sm text-gray-500">Loading dashboard...</p>
         </div>
       </div>
     );
   }
+
+  /* ============================================================
+     ERROR
+  ============================================================ */
 
   if (error) {
     return (
@@ -109,11 +133,16 @@ export default function AdminDashboard() {
           <h2 className="text-lg font-semibold text-red-700">
             Failed to load dashboard
           </h2>
+
           <p className="mt-2 text-sm text-red-600">{error}</p>
         </div>
       </div>
     );
   }
+
+  /* ============================================================
+     NO DATA
+  ============================================================ */
 
   if (!dashboard) {
     return (
@@ -127,6 +156,10 @@ export default function AdminDashboard() {
 
   const { statistics, advisorTypeDistribution, sessionLanguageDistribution } =
     dashboard;
+
+  /* ============================================================
+     STATISTICS
+  ============================================================ */
 
   const advisorActivePercentage =
     statistics.advisors.total > 0
@@ -151,12 +184,33 @@ export default function AdminDashboard() {
         )
       : 0;
 
+  /* ============================================================
+     LINE GRAPH DATA
+  ============================================================ */
+
+  const statisticsChartData: StatisticsChartData[] = [
+    {
+      name: "Advisors",
+      total: statistics.advisors.total,
+    },
+    {
+      name: "Sessions",
+      total: statistics.sessions.total,
+    },
+    {
+      name: "Conversations",
+      total: statistics.conversations.total,
+    },
+  ];
+
   return (
     <div className="min-h-full bg-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8">
-          <p className="text-sm font-medium text-blue-600">Welcome back</p>
+        {/* ========================================================
+            HEADER
+        ======================================================== */}
 
+        <div className="mb-8">
           <h1 className="mt-1 text-3xl font-bold text-gray-900">
             Admin Dashboard
           </h1>
@@ -166,157 +220,112 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">
-                  Total Advisors
-                </p>
-                <p className="mt-3 text-3xl font-bold text-gray-900">
-                  {statistics.advisors.total}
-                </p>
-              </div>
+        {/* ========================================================
+            SYSTEM STATISTICS LINE GRAPH
+        ======================================================== */}
 
-              <div className="rounded-xl bg-blue-50 px-3 py-2 text-blue-600">
-                Advisors
-              </div>
-            </div>
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-gray-900">
+              System Statistics
+            </h2>
 
-            <div className="mt-5 flex items-center justify-between text-sm">
-              <span className="text-green-600">
-                {statistics.advisors.active} active
-              </span>
+            <p className="mt-1 text-sm text-gray-500">
+              Total advisors, sessions, and conversations.
+            </p>
+          </div>
 
-              <span className="text-gray-500">
-                {statistics.advisors.inactive} inactive
-              </span>
-            </div>
-
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
-              <div
-                className="h-full rounded-full bg-green-500"
-                style={{
-                  width: `${advisorActivePercentage}%`,
+          <div className="h-[350px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={statisticsChartData}
+                margin={{
+                  top: 10,
+                  right: 20,
+                  left: 0,
+                  bottom: 10,
                 }}
-              />
-            </div>
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+
+                <XAxis
+                  dataKey="name"
+                  tick={{
+                    fontSize: 13,
+                  }}
+                />
+
+                <YAxis
+                  allowDecimals={false}
+                  tick={{
+                    fontSize: 13,
+                  }}
+                />
+
+                <Tooltip
+                  formatter={(value) => [value, "Total"]}
+                  labelFormatter={(label) => `${label}`}
+                />
+
+                <Line
+                  type="monotone"
+                  dataKey="total"
+                  stroke="#2563eb"
+                  strokeWidth={3}
+                  dot={{
+                    r: 6,
+                  }}
+                  activeDot={{
+                    r: 8,
+                  }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">
-                  Total Sessions
-                </p>
+          {/* Graph values */}
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="rounded-xl bg-blue-50 p-4">
+              <p className="text-sm font-medium text-blue-600">
+                Total Advisors
+              </p>
 
-                <p className="mt-3 text-3xl font-bold text-gray-900">
-                  {statistics.sessions.total}
-                </p>
-              </div>
-
-              <div className="rounded-xl bg-purple-50 px-3 py-2 text-purple-600">
-                Sessions
-              </div>
+              <p className="mt-1 text-2xl font-bold text-gray-900">
+                {statistics.advisors.total}
+              </p>
             </div>
 
-            <div className="mt-5 flex items-center justify-between text-sm">
-              <span className="text-green-600">
-                {statistics.sessions.withPassword} secured
-              </span>
+            <div className="rounded-xl bg-purple-50 p-4">
+              <p className="text-sm font-medium text-purple-600">
+                Total Sessions
+              </p>
 
-              <span className="text-gray-500">
-                {statistics.sessions.withoutPassword} without password
-              </span>
+              <p className="mt-1 text-2xl font-bold text-gray-900">
+                {statistics.sessions.total}
+              </p>
             </div>
 
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
-              <div
-                className="h-full rounded-full bg-purple-500"
-                style={{
-                  width: `${sessionPasswordPercentage}%`,
-                }}
-              />
+            <div className="rounded-xl bg-orange-50 p-4">
+              <p className="text-sm font-medium text-orange-600">
+                Total Conversations
+              </p>
+
+              <p className="mt-1 text-2xl font-bold text-gray-900">
+                {statistics.conversations.total}
+              </p>
             </div>
-          </div>
-
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">
-                  Total Conversations
-                </p>
-
-                <p className="mt-3 text-3xl font-bold text-gray-900">
-                  {statistics.conversations.total}
-                </p>
-              </div>
-
-              <div className="rounded-xl bg-orange-50 px-3 py-2 text-orange-600">
-                Conversations
-              </div>
-            </div>
-
-            <div className="mt-5 flex items-center justify-between text-sm">
-              <span className="text-blue-600">
-                {statistics.conversations.withMessages} active
-              </span>
-
-              <span className="text-gray-500">
-                {statistics.conversations.withoutMessages} empty
-              </span>
-            </div>
-
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
-              <div
-                className="h-full rounded-full bg-orange-500"
-                style={{
-                  width: `${conversationMessagePercentage}%`,
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-gray-500">Total Messages</p>
-
-            <p className="mt-3 text-3xl font-bold text-gray-900">
-              {statistics.conversations.totalMessages}
-            </p>
-
-            <p className="mt-4 text-sm text-gray-500">
-              Messages exchanged between users and advisors.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-gray-500">Recommendations</p>
-
-            <p className="mt-3 text-3xl font-bold text-gray-900">
-              {statistics.conversations.withRecommendations}
-            </p>
-
-            <p className="mt-4 text-sm text-gray-500">
-              Conversations that received a facility recommendation.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-gray-500">
-              Conversations Without Recommendations
-            </p>
-
-            <p className="mt-3 text-3xl font-bold text-gray-900">
-              {statistics.conversations.withoutRecommendations}
-            </p>
-
-            <p className="mt-4 text-sm text-gray-500">
-              Conversations that have no recommendation yet.
-            </p>
           </div>
         </div>
 
+        {/* ========================================================
+            DISTRIBUTION SECTIONS
+        ======================================================== */}
+
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* ======================================================
+              ADVISORS BY TYPE
+          ====================================================== */}
+
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-gray-900">
@@ -369,14 +378,18 @@ export default function AdminDashboard() {
             </div>
           </div>
 
+          {/* ======================================================
+              CONVERSATIONS BY LANGUAGE
+          ====================================================== */}
+
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-gray-900">
-                Sessions by Language
+                Conversations by Language
               </h2>
 
               <p className="mt-1 text-sm text-gray-500">
-                Distribution of SafeLink sessions by language.
+                Distribution of SafeLink conversations by language.
               </p>
             </div>
 
@@ -427,44 +440,6 @@ export default function AdminDashboard() {
                   );
                 })
               )}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Conversation Overview
-            </h2>
-
-            <p className="mt-1 text-sm text-gray-500">
-              Current conversation activity.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="rounded-xl bg-gray-50 p-5">
-              <p className="text-sm text-gray-500">With Messages</p>
-
-              <p className="mt-2 text-2xl font-bold text-gray-900">
-                {statistics.conversations.withMessages}
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-gray-50 p-5">
-              <p className="text-sm text-gray-500">Without Messages</p>
-
-              <p className="mt-2 text-2xl font-bold text-gray-900">
-                {statistics.conversations.withoutMessages}
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-gray-50 p-5">
-              <p className="text-sm text-gray-500">Total Messages</p>
-
-              <p className="mt-2 text-2xl font-bold text-gray-900">
-                {statistics.conversations.totalMessages}
-              </p>
             </div>
           </div>
         </div>

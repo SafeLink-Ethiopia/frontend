@@ -55,9 +55,7 @@ interface ConversationResponse {
 type DeleteType = "me" | "everyone";
 
 export default function AdminAdvisorChat() {
-  const { advisorId } = useParams<{
-    advisorId: string;
-  }>();
+  const { advisorId } = useParams<{ advisorId: string }>();
 
   const navigate = useNavigate();
 
@@ -83,24 +81,29 @@ export default function AdminAdvisorChat() {
     useState(false);
 
   const [loading, setLoading] = useState(true);
+
   const [sending, setSending] = useState(false);
+
   const [connected, setConnected] = useState(socket.connected);
+
   const [error, setError] = useState("");
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // ============================================
+  // ============================================================
   // SCROLL TO BOTTOM
-  // ============================================
+  // ============================================================
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
     });
   };
 
-  // ============================================
+  // ============================================================
   // LOAD CONVERSATION
-  // ============================================
+  // ============================================================
+
   useEffect(() => {
     const fetchConversation = async () => {
       if (!advisorId) {
@@ -121,8 +124,10 @@ export default function AdminAdvisorChat() {
           return;
         }
 
+        console.log("Loading admin conversation for advisor:", advisorId);
+
         const response = await axios.get<ConversationResponse>(
-          `http://localhost:5000/api/admin-advisor-conversations/advisor/${advisorId}`,
+          `http://localhost:5000/api/advisor-admin-conversations/admin/advisor/${advisorId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -130,12 +135,18 @@ export default function AdminAdvisorChat() {
           },
         );
 
+        console.log("Conversation response:", response.data);
+
         setConversation(response.data.conversation);
         setAdvisor(response.data.advisor);
       } catch (error) {
         console.error("Failed to load conversation:", error);
 
         if (axios.isAxiosError(error)) {
+          console.error("Status:", error.response?.status);
+
+          console.error("Response:", error.response?.data);
+
           setError(
             error.response?.data?.message || "Failed to load conversation.",
           );
@@ -150,32 +161,37 @@ export default function AdminAdvisorChat() {
     fetchConversation();
   }, [advisorId]);
 
-  // ============================================
+  // ============================================================
   // SOCKET CONNECTION
-  // ============================================
+  // ============================================================
+
   useEffect(() => {
     const handleConnect = () => {
-      console.log("Socket connected");
+      console.log("[Socket] Connected:", socket.id);
 
       setConnected(true);
+
       setError("");
     };
 
-    const handleDisconnect = () => {
-      console.log("Socket disconnected");
+    const handleDisconnect = (reason: string) => {
+      console.log("[Socket] Disconnected:", reason);
 
       setConnected(false);
     };
 
     const handleConnectError = (socketError: Error) => {
-      console.error("Socket connection error:", socketError);
+      console.error("[Socket] Connection error:", socketError);
 
       setConnected(false);
+
       setError("Could not connect to the messaging server.");
     };
 
     socket.on("connect", handleConnect);
+
     socket.on("disconnect", handleDisconnect);
+
     socket.on("connect_error", handleConnectError);
 
     if (!socket.connected) {
@@ -184,14 +200,17 @@ export default function AdminAdvisorChat() {
 
     return () => {
       socket.off("connect", handleConnect);
+
       socket.off("disconnect", handleDisconnect);
+
       socket.off("connect_error", handleConnectError);
     };
   }, []);
 
-  // ============================================
+  // ============================================================
   // JOIN CONVERSATION + SOCKET EVENTS
-  // ============================================
+  // ============================================================
+
   useEffect(() => {
     if (!conversation?.conversation_id) {
       return;
@@ -199,19 +218,24 @@ export default function AdminAdvisorChat() {
 
     const conversationId = conversation.conversation_id;
 
+    // ----------------------------------------------------------
+    // JOIN
+    // ----------------------------------------------------------
+
     const joinConversation = () => {
       socket.emit("join_conversation", conversationId);
 
-      console.log("Joined conversation:", conversationId);
+      console.log("[Socket] Joined conversation:", conversationId);
     };
 
     const handleConnect = () => {
       joinConversation();
     };
 
-    // ==========================================
+    // ----------------------------------------------------------
     // NEW MESSAGE
-    // ==========================================
+    // ----------------------------------------------------------
+
     const handleNewMessage = (data: {
       conversation_id: string;
       message: Message;
@@ -235,7 +259,9 @@ export default function AdminAdvisorChat() {
 
         return {
           ...currentConversation,
+
           messages: [...currentConversation.messages, data.message],
+
           updatedAt: data.message.timestamp,
         };
       });
@@ -244,6 +270,7 @@ export default function AdminAdvisorChat() {
       if (data.message.sender === "advisor") {
         socket.emit("mark_message_delivered", {
           conversation_id: conversationId,
+
           message_id: data.message.message_id,
         });
       }
@@ -254,9 +281,10 @@ export default function AdminAdvisorChat() {
       }
     };
 
-    // ==========================================
+    // ----------------------------------------------------------
     // MESSAGE EDITED
-    // ==========================================
+    // ----------------------------------------------------------
+
     const handleMessageEdited = (data: {
       conversation_id: string;
       message: Message;
@@ -272,6 +300,7 @@ export default function AdminAdvisorChat() {
 
         return {
           ...currentConversation,
+
           messages: currentConversation.messages.map((message) =>
             message.message_id === data.message.message_id
               ? data.message
@@ -285,9 +314,10 @@ export default function AdminAdvisorChat() {
       setSelectedMessageId(null);
     };
 
-    // ==========================================
+    // ----------------------------------------------------------
     // DELETE FOR ME
-    // ==========================================
+    // ----------------------------------------------------------
+
     const handleMessageDeletedForMe = (data: {
       conversation_id: string;
       message_id: string;
@@ -296,7 +326,6 @@ export default function AdminAdvisorChat() {
         return;
       }
 
-      // Remove the message from Admin's current view.
       setConversation((currentConversation) => {
         if (!currentConversation) {
           return currentConversation;
@@ -304,6 +333,7 @@ export default function AdminAdvisorChat() {
 
         return {
           ...currentConversation,
+
           messages: currentConversation.messages.filter(
             (message) => message.message_id !== data.message_id,
           ),
@@ -314,9 +344,10 @@ export default function AdminAdvisorChat() {
       setConfirmDeleteMessageId(null);
     };
 
-    // ==========================================
+    // ----------------------------------------------------------
     // DELETE FOR EVERYONE
-    // ==========================================
+    // ----------------------------------------------------------
+
     const handleMessageDeletedForEveryone = (data: {
       conversation_id: string;
       message_id: string;
@@ -332,15 +363,16 @@ export default function AdminAdvisorChat() {
 
         return {
           ...currentConversation,
+
           messages: currentConversation.messages.map((message) =>
             message.message_id === data.message_id
               ? {
                   ...message,
 
-                  // IMPORTANT:
-                  // Keep message.text unchanged.
                   deleted: true,
+
                   deletedForEveryone: true,
+
                   edited: false,
                 }
               : message,
@@ -350,13 +382,15 @@ export default function AdminAdvisorChat() {
 
       setSelectedMessageId(null);
       setConfirmDeleteMessageId(null);
+
       setEditingMessageId(null);
       setEditingText("");
     };
 
-    // ==========================================
+    // ----------------------------------------------------------
     // BACKWARD COMPATIBILITY
-    // ==========================================
+    // ----------------------------------------------------------
+
     const handleMessageDeleted = (data: {
       conversation_id: string;
       message_id: string;
@@ -372,12 +406,16 @@ export default function AdminAdvisorChat() {
 
         return {
           ...currentConversation,
+
           messages: currentConversation.messages.map((message) =>
             message.message_id === data.message_id
               ? {
                   ...message,
+
                   deleted: true,
+
                   deletedForEveryone: true,
+
                   edited: false,
                 }
               : message,
@@ -389,9 +427,10 @@ export default function AdminAdvisorChat() {
       setConfirmDeleteMessageId(null);
     };
 
-    // ==========================================
+    // ----------------------------------------------------------
     // MESSAGE DELIVERED
-    // ==========================================
+    // ----------------------------------------------------------
+
     const handleMessageDelivered = (data: {
       conversation_id: string;
       message_id: string;
@@ -408,10 +447,12 @@ export default function AdminAdvisorChat() {
 
         return {
           ...currentConversation,
+
           messages: currentConversation.messages.map((message) =>
             message.message_id === data.message_id
               ? {
                   ...message,
+
                   deliveredAt: data.deliveredAt,
                 }
               : message,
@@ -420,9 +461,10 @@ export default function AdminAdvisorChat() {
       });
     };
 
-    // ==========================================
+    // ----------------------------------------------------------
     // MESSAGE READ
-    // ==========================================
+    // ----------------------------------------------------------
+
     const handleMessageRead = (data: {
       conversation_id: string;
       message_id: string;
@@ -439,10 +481,12 @@ export default function AdminAdvisorChat() {
 
         return {
           ...currentConversation,
+
           messages: currentConversation.messages.map((message) =>
             message.message_id === data.message_id
               ? {
                   ...message,
+
                   readAt: data.readAt,
                 }
               : message,
@@ -451,9 +495,10 @@ export default function AdminAdvisorChat() {
       });
     };
 
-    // ==========================================
+    // ----------------------------------------------------------
     // CONVERSATION HIDDEN
-    // ==========================================
+    // ----------------------------------------------------------
+
     const handleConversationDeleted = (data: {
       conversation_id: string;
       deletedFor: "admin" | "advisor";
@@ -467,9 +512,10 @@ export default function AdminAdvisorChat() {
       }
     };
 
-    // ==========================================
+    // ----------------------------------------------------------
     // SOCKET ERROR
-    // ==========================================
+    // ----------------------------------------------------------
+
     const handleMessageError = (data: { message?: string }) => {
       console.error("Message error:", data.message);
 
@@ -478,22 +524,33 @@ export default function AdminAdvisorChat() {
       setSending(false);
     };
 
+    // ----------------------------------------------------------
+    // REGISTER EVENTS
+    // ----------------------------------------------------------
+
     socket.on("connect", handleConnect);
 
     socket.on("new_message", handleNewMessage);
+
     socket.on("message_edited", handleMessageEdited);
 
     socket.on("message_deleted_for_me", handleMessageDeletedForMe);
 
     socket.on("message_deleted_for_everyone", handleMessageDeletedForEveryone);
 
-    // Keep this for old messages/events.
     socket.on("message_deleted", handleMessageDeleted);
 
     socket.on("message_delivered", handleMessageDelivered);
+
     socket.on("message_read", handleMessageRead);
+
     socket.on("conversation_deleted", handleConversationDeleted);
+
     socket.on("message_error", handleMessageError);
+
+    // ----------------------------------------------------------
+    // CONNECT / JOIN
+    // ----------------------------------------------------------
 
     if (socket.connected) {
       joinConversation();
@@ -501,10 +558,15 @@ export default function AdminAdvisorChat() {
       socket.connect();
     }
 
+    // ----------------------------------------------------------
+    // CLEANUP
+    // ----------------------------------------------------------
+
     return () => {
       socket.off("connect", handleConnect);
 
       socket.off("new_message", handleNewMessage);
+
       socket.off("message_edited", handleMessageEdited);
 
       socket.off("message_deleted_for_me", handleMessageDeletedForMe);
@@ -526,9 +588,10 @@ export default function AdminAdvisorChat() {
     };
   }, [conversation?.conversation_id, navigate]);
 
-  // ============================================
+  // ============================================================
   // MARK ADVISOR MESSAGES AS READ
-  // ============================================
+  // ============================================================
+
   useEffect(() => {
     if (!conversation) {
       return;
@@ -544,21 +607,24 @@ export default function AdminAdvisorChat() {
     unreadAdvisorMessages.forEach((message) => {
       socket.emit("mark_message_read", {
         conversation_id: conversation.conversation_id,
+
         message_id: message.message_id,
       });
     });
   }, [conversation?.messages.length]);
 
-  // ============================================
+  // ============================================================
   // AUTO SCROLL
-  // ============================================
+  // ============================================================
+
   useEffect(() => {
     scrollToBottom();
   }, [conversation?.messages.length]);
 
-  // ============================================
+  // ============================================================
   // SEND MESSAGE
-  // ============================================
+  // ============================================================
+
   const handleSendMessage = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -582,16 +648,19 @@ export default function AdminAdvisorChat() {
 
     socket.emit("send_message", {
       conversation_id: conversation.conversation_id,
+
       sender: "admin",
+
       text,
     });
 
     setMessageText("");
   };
 
-  // ============================================
+  // ============================================================
   // START EDITING
-  // ============================================
+  // ============================================================
+
   const startEditing = (message: Message) => {
     if (
       message.sender !== "admin" ||
@@ -602,22 +671,27 @@ export default function AdminAdvisorChat() {
     }
 
     setEditingMessageId(message.message_id);
+
     setEditingText(message.text);
+
     setSelectedMessageId(null);
+
     setConfirmDeleteMessageId(null);
   };
 
-  // ============================================
+  // ============================================================
   // CANCEL EDITING
-  // ============================================
+  // ============================================================
+
   const cancelEditing = () => {
     setEditingMessageId(null);
     setEditingText("");
   };
 
-  // ============================================
+  // ============================================================
   // SAVE EDIT
-  // ============================================
+  // ============================================================
+
   const saveEdit = () => {
     if (!conversation || !editingMessageId || !editingText.trim()) {
       return;
@@ -630,23 +704,29 @@ export default function AdminAdvisorChat() {
 
     socket.emit("edit_message", {
       conversation_id: conversation.conversation_id,
+
       message_id: editingMessageId,
+
       sender: "admin",
+
       text: editingText.trim(),
     });
   };
 
-  // ============================================
+  // ============================================================
   // REQUEST DELETE
-  // ============================================
+  // ============================================================
+
   const requestDeleteMessage = (messageId: string) => {
     setSelectedMessageId(null);
+
     setConfirmDeleteMessageId(messageId);
   };
 
-  // ============================================
+  // ============================================================
   // DELETE MESSAGE
-  // ============================================
+  // ============================================================
+
   const deleteMessage = (messageId: string, deleteType: DeleteType) => {
     if (!conversation) {
       return;
@@ -659,8 +739,11 @@ export default function AdminAdvisorChat() {
 
     socket.emit("delete_message", {
       conversation_id: conversation.conversation_id,
+
       message_id: messageId,
+
       sender: "admin",
+
       deleteType,
     });
 
@@ -668,9 +751,10 @@ export default function AdminAdvisorChat() {
     setSelectedMessageId(null);
   };
 
-  // ============================================
+  // ============================================================
   // HIDE WHOLE CONVERSATION
-  // ============================================
+  // ============================================================
+
   const deleteConversation = () => {
     if (!conversation) {
       return;
@@ -683,15 +767,17 @@ export default function AdminAdvisorChat() {
 
     socket.emit("delete_conversation", {
       conversation_id: conversation.conversation_id,
+
       sender: "admin",
     });
 
     setConfirmDeleteConversation(false);
   };
 
-  // ============================================
+  // ============================================================
   // MESSAGE STATUS
-  // ============================================
+  // ============================================================
+
   const renderMessageStatus = (message: Message) => {
     if (message.sender !== "admin") {
       return null;
@@ -708,9 +794,10 @@ export default function AdminAdvisorChat() {
     return <Check size={15} className="text-white/60" />;
   };
 
-  // ============================================
+  // ============================================================
   // FORMAT TIME
-  // ============================================
+  // ============================================================
+
   const formatMessageTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString([], {
       hour: "2-digit",
@@ -718,9 +805,10 @@ export default function AdminAdvisorChat() {
     });
   };
 
-  // ============================================
+  // ============================================================
   // LOADING
-  // ============================================
+  // ============================================================
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#efeae2]">
@@ -733,9 +821,10 @@ export default function AdminAdvisorChat() {
     );
   }
 
-  // ============================================
+  // ============================================================
   // ERROR WITHOUT CONVERSATION
-  // ============================================
+  // ============================================================
+
   if (error && !conversation) {
     return (
       <div className="min-h-screen bg-[#efeae2] p-6">
@@ -765,12 +854,12 @@ export default function AdminAdvisorChat() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#efeae2]">
-      {/* ========================================
+      {/* =====================================================
           HEADER
-      ======================================== */}
+      ===================================================== */}
+
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white shadow-sm">
         <div className="mx-auto flex h-[72px] w-full max-w-6xl items-center px-4">
-          {/* Back */}
           <button
             type="button"
             onClick={() => navigate("/admin/messages")}
@@ -780,12 +869,10 @@ export default function AdminAdvisorChat() {
             <ArrowLeft size={22} />
           </button>
 
-          {/* Avatar */}
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold text-white">
             {advisorName.charAt(0).toUpperCase()}
           </div>
 
-          {/* Advisor information */}
           <div className="ml-3 min-w-0">
             <h1 className="truncate text-base font-semibold text-slate-900">
               {advisorName}
@@ -804,7 +891,6 @@ export default function AdminAdvisorChat() {
             </div>
           </div>
 
-          {/* Header actions */}
           <div className="relative ml-auto">
             <button
               type="button"
@@ -851,9 +937,10 @@ export default function AdminAdvisorChat() {
         </div>
       </header>
 
-      {/* ========================================
+      {/* =====================================================
           ERROR
-      ======================================== */}
+      ===================================================== */}
+
       {error && (
         <div className="mx-auto mt-3 w-full max-w-6xl px-4">
           <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -866,12 +953,14 @@ export default function AdminAdvisorChat() {
         </div>
       )}
 
-      {/* ========================================
+      {/* =====================================================
           CHAT AREA
-      ======================================== */}
+      ===================================================== */}
+
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-0 sm:px-4 sm:py-4">
         <div className="flex flex-1 flex-col overflow-hidden bg-[#efeae2] sm:rounded-xl sm:shadow-sm">
           {/* Messages */}
+
           <div className="flex-1 overflow-y-auto px-3 py-5 sm:px-6">
             {conversation.messages.length === 0 ? (
               <div className="flex min-h-[500px] items-center justify-center">
@@ -917,9 +1006,8 @@ export default function AdminAdvisorChat() {
                           isAdmin ? "justify-end" : "justify-start"
                         }`}
                       >
-                        {/* =========================
-                              DELETE OPTIONS
-                          ========================= */}
+                        {/* DELETE OPTIONS */}
+
                         {isConfirmingDelete && (
                           <div
                             className={`absolute bottom-full z-50 mb-2 w-72 rounded-xl border border-slate-200 bg-white p-4 shadow-2xl ${
@@ -935,7 +1023,6 @@ export default function AdminAdvisorChat() {
                             </p>
 
                             <div className="mt-4 space-y-2">
-                              {/* Delete for me */}
                               <button
                                 type="button"
                                 onClick={() =>
@@ -952,7 +1039,6 @@ export default function AdminAdvisorChat() {
                                 </span>
                               </button>
 
-                              {/* Delete for everyone */}
                               <button
                                 type="button"
                                 onClick={() =>
@@ -981,9 +1067,8 @@ export default function AdminAdvisorChat() {
                           </div>
                         )}
 
-                        {/* =========================
-                              ACTION MENU
-                          ========================= */}
+                        {/* ACTION MENU */}
+
                         {isSelected && isAdmin && !isDeleted && (
                           <div className="absolute bottom-full right-0 z-40 mb-2 flex overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
                             <button
@@ -1008,9 +1093,8 @@ export default function AdminAdvisorChat() {
                           </div>
                         )}
 
-                        {/* =========================
-                              EDIT MODE
-                          ========================= */}
+                        {/* EDIT MODE */}
+
                         {isEditing ? (
                           <div className="w-[380px] max-w-[85vw] rounded-2xl bg-emerald-600 p-3 shadow-md">
                             <textarea
@@ -1044,9 +1128,6 @@ export default function AdminAdvisorChat() {
                             </div>
                           </div>
                         ) : (
-                          /* =========================
-                               MESSAGE BUBBLE
-                            ========================= */
                           <div
                             className={`group relative ${
                               isAdmin
@@ -1054,7 +1135,8 @@ export default function AdminAdvisorChat() {
                                 : "rounded-2xl rounded-bl-md bg-white"
                             } px-3 py-2 shadow-sm`}
                           >
-                            {/* Click admin message to open actions */}
+                            {/* Click admin message */}
+
                             {isAdmin && !isDeleted && (
                               <button
                                 type="button"
@@ -1070,12 +1152,14 @@ export default function AdminAdvisorChat() {
                               />
                             )}
 
-                            {/* Message sender */}
+                            {/* Sender */}
+
                             <p className="relative z-0 mb-0.5 text-[10px] font-semibold text-slate-500">
                               {isAdmin ? "You" : advisorName}
                             </p>
 
-                            {/* Message content */}
+                            {/* Content */}
+
                             {isDeleted ? (
                               <p className="relative z-0 pr-1 text-sm italic leading-5 text-slate-500">
                                 This message was deleted
@@ -1087,6 +1171,7 @@ export default function AdminAdvisorChat() {
                             )}
 
                             {/* Time + status */}
+
                             <div className="relative z-20 mt-1 flex items-center justify-end gap-1">
                               {message.edited && !isDeleted && (
                                 <span className="text-[9px] text-slate-400">
@@ -1112,9 +1197,8 @@ export default function AdminAdvisorChat() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* ========================================
-              INPUT
-          ======================================== */}
+          {/* INPUT */}
+
           <form
             onSubmit={handleSendMessage}
             className="border-t border-slate-200 bg-[#f0f2f5] px-3 py-3 sm:px-4"
