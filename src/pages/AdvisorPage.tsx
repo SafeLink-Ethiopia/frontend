@@ -163,7 +163,11 @@ export default function AdvisorPage() {
         ).values()
       );
 
-      setConversations(unique);
+      setConversations((current) =>
+        JSON.stringify(current) === JSON.stringify(unique)
+          ? current
+          : unique
+      );
 
       if (selectedConversation) {
         const updated = unique.find(
@@ -173,7 +177,11 @@ export default function AdvisorPage() {
         );
 
         if (updated) {
-          setSelectedConversation(updated);
+          setSelectedConversation((current) =>
+            current && JSON.stringify(current) === JSON.stringify(updated)
+              ? current
+              : updated
+          );
         }
       }
     } catch (error) {
@@ -204,7 +212,11 @@ export default function AdvisorPage() {
           selectedConversation.conversation_id
         );
 
-        setSelectedConversation(updated);
+        setSelectedConversation((current) =>
+          current && JSON.stringify(current) === JSON.stringify(updated)
+            ? current
+            : updated
+        );
       } catch (error) {
         console.error(
           "Failed to refresh selected conversation:",

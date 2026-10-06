@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MessageCircle, LogOut, User } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import axios from "axios";
 
 interface Message {
@@ -70,50 +70,8 @@ export default function AdvisorMessages() {
     loadConversations();
   }, [token, navigate]);
 
-  function handleLogout() {
-    localStorage.removeItem("advisor_token");
-    localStorage.removeItem("advisor_profile");
-    navigate("/advisor/login");
-  }
-
   return (
     <main className="min-h-screen bg-[#33484D]">
-      <header className="flex items-center justify-between bg-[#5C838A] px-6 py-4">
-        <div className="flex items-center gap-3">
-          <MessageCircle size={21} className="text-white" />
-
-          <h1 className="text-lg font-semibold text-white">Admin Messages</h1>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => navigate("/advisor/dashboard")}
-            className="rounded-full border border-white/20 px-3 py-1.5 text-sm text-white hover:bg-white/10"
-          >
-            Dashboard
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate("/advisor/profile")}
-            className="flex items-center gap-1.5 rounded-full border border-white/20 px-3 py-1.5 text-sm text-white hover:bg-white/10"
-          >
-            <User size={15} />
-            Profile
-          </button>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 rounded-full border border-white/20 px-3 py-1.5 text-sm text-white hover:bg-white/10"
-          >
-            <LogOut size={15} />
-            Logout
-          </button>
-        </div>
-      </header>
-
       <section className="mx-auto max-w-2xl px-5 py-8">
         <div className="mb-6">
           <h2 className="text-2xl font-semibold text-white">
