@@ -127,7 +127,7 @@ export default function AdminAdvisorChat() {
         console.log("Loading admin conversation for advisor:", advisorId);
 
         const response = await axios.get<ConversationResponse>(
-          `http://localhost:5000/api/advisor-admin-conversations/admin/advisor/${advisorId}`,
+          `http://localhost:5000/api/advisor-admin-conversations/advisor/${advisorId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

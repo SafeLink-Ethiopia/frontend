@@ -13,5 +13,10 @@ export default function GeneralAdvisorPage() {
     }
   }
 
-  return <AdvisorChat advisorType="general" onConnectToType={handleConnectToType} />;
+  return (
+    <AdvisorChat
+      advisorType="general"
+      onConnectToType={handleConnectToType}
+    />
+  );
 }

@@ -1,8 +1,9 @@
-
 import { useState } from "react";
+import { ArrowLeft, Eye, EyeOff, LockKeyhole, ShieldCheck } from "lucide-react";
 import { createSession } from "../api/sessionApi";
 
 import type { Language } from "../types/session";
+
 interface CreateSessionPageProps {
   onSessionCreated: (safelinkId: string) => void;
   onBack: () => void;
@@ -49,284 +50,282 @@ function CreateSessionPage({
   };
 
   return (
-    <main className="min-h-screen bg-[#faf8f3] text-[#12304a] relative overflow-hidden">
+    <main className="min-h-screen bg-[#f7f5f6] text-[#3e1919]">
+      {/* Top navigation */}
+      <header className="border-b border-[#a79093]/30 bg-[#f7f5f6]">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 sm:px-8">
+          <button
+            type="button"
+            onClick={onBack}
+            className="group flex items-center gap-2 text-sm font-medium text-[#a79093] transition hover:text-[#3e1919]"
+          >
+            <ArrowLeft
+              size={17}
+              className="transition-transform group-hover:-translate-x-1"
+            />
+            Back
+          </button>
 
-      {/* Soft background decoration */}
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#d9efe5] rounded-full blur-3xl opacity-70" />
-
-      <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#dceef4] rounded-full blur-3xl opacity-70" />
-
-      {/* Header */}
-      <header className="relative z-10 max-w-7xl mx-auto px-6 py-6">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-[#126d85] font-medium hover:gap-3 transition-all"
-        >
-          <span>←</span>
-          Back
-        </button>
-      </header>
-
-      {/* Main */}
-      <section className="relative z-10 min-h-[calc(100vh-96px)] flex items-center justify-center px-6 py-10">
-
-        <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-10 items-center">
-
-          {/* Left information */}
-          <div className="hidden lg:block">
-
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#239b78] to-[#1685a5] flex items-center justify-center shadow-lg">
-                <span className="text-white text-2xl">
-                  ♡
-                </span>
-              </div>
-
-              <div>
-                <p className="font-bold text-xl">
-                  SafeLink
-                </p>
-
-                <p className="text-xs tracking-[0.3em] text-[#239b78] font-semibold">
-                  ETHIOPIA
-                </p>
-              </div>
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center bg-[#3e1919]">
+              <LockKeyhole
+                size={15}
+                className="text-[#f0e2d6]"
+              />
             </div>
 
-            <h1 className="text-5xl font-bold leading-tight">
-              Create your
-              <span className="block text-[#239b78]">
-                private space.
-              </span>
-            </h1>
+            <span className="text-sm font-semibold tracking-wide">
+              SafeLink
+            </span>
+          </div>
+        </div>
+      </header>
 
-            <p className="mt-6 text-gray-600 text-lg leading-relaxed max-w-md">
-              You don't need to provide your name, phone number, or email.
-              Your SafeLink ID lets you access your private session.
+      {/* Main content */}
+      <section className="mx-auto max-w-6xl px-6 py-12 sm:px-8 sm:py-16">
+        <div className="grid items-start gap-14 lg:grid-cols-[1fr_460px] lg:gap-20">
+          {/* Introduction */}
+          <div className="pt-2">
+            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#a79093]">
+              Private access
             </p>
 
-            <div className="mt-8 space-y-4">
+            <h1 className="max-w-xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
+              Create your private space.
+            </h1>
 
+            <p className="mt-6 max-w-xl text-base leading-7 text-[#a79093]">
+              Start a private SafeLink session without sharing your
+              name, phone number, or email address.
+            </p>
+
+            <div className="mt-10 max-w-xl border-t border-[#a79093]/30">
               <PrivacyItem
-                icon="🔒"
-                title="Private"
-                text="No personal information required."
+                icon={<LockKeyhole size={19} />}
+                title="Private by design"
+                text="No personal information is required to create a session."
               />
 
               <PrivacyItem
-                icon="🛡️"
-                title="Protected"
-                text="Your optional PIN is securely hashed."
+                icon={<ShieldCheck size={19} />}
+                title="Optional PIN"
+                text="Add a PIN if you want an additional layer of protection."
               />
 
               <PrivacyItem
-                icon="🌐"
+                icon={
+                  <span className="text-sm font-semibold">Aa</span>
+                }
                 title="Your language"
-                text="Choose English, Amharic or Afaan Oromoo."
+                text="Choose English, Amharic, or Afaan Oromoo."
               />
-
             </div>
           </div>
 
-          {/* Form card */}
-          <div className="bg-white/90 backdrop-blur-xl border border-white rounded-[2rem] shadow-2xl p-7 md:p-9">
-
-            {/* Mobile logo */}
-            <div className="lg:hidden flex items-center gap-3 mb-7">
-
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#239b78] to-[#1685a5] flex items-center justify-center">
-                <span className="text-white text-xl">
-                  ♡
-                </span>
-              </div>
-
-              <div>
-                <p className="font-bold text-lg">
-                  SafeLink
-                </p>
-
-                <p className="text-[10px] tracking-[0.3em] text-[#239b78] font-semibold">
-                  ETHIOPIA
-                </p>
-              </div>
-
-            </div>
-
-            <div className="mb-8">
-              <p className="text-sm font-semibold text-[#239b78] mb-2">
-                PRIVATE SESSION
+          {/* Form */}
+          <div className="bg-white border border-[#a79093]/30">
+            <div className="border-b border-[#a79093]/30 px-6 py-6 sm:px-8">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+                New session
               </p>
 
-              <h2 className="text-3xl font-bold">
-                Let's get you started
+              <h2 className="mt-2 text-2xl font-semibold">
+                Get started
               </h2>
 
-              <p className="text-gray-500 mt-3 leading-relaxed">
-                Choose your language and optionally add a PIN to protect
-                your session.
+              <p className="mt-2 text-sm leading-6 text-[#a79093]">
+                Choose your language and optionally create a PIN.
               </p>
             </div>
 
-            {/* Language */}
-            <div className="mb-6">
-
-              <label
-                htmlFor="language"
-                className="block font-semibold mb-2"
-              >
-                Language
-              </label>
-
-              <select
-                id="language"
-                value={language}
-                onChange={(e) =>
-                  setLanguage(e.target.value as Language)
-                }
-                className="
-                  w-full
-                  border border-gray-200
-                  rounded-xl
-                  px-4 py-3.5
-                  bg-[#fafcfb]
-                  outline-none
-                  focus:ring-2
-                  focus:ring-[#239b78]/30
-                  focus:border-[#239b78]
-                  transition
-                "
-              >
-                <option value="en">English</option>
-                <option value="am">Amharic</option>
-                <option value="om">Afaan Oromoo</option>
-              </select>
-
-            </div>
-
-            {/* PIN */}
-            <div className="mb-6">
-
-              <div className="flex items-center justify-between mb-2">
-
+            <div className="px-6 py-7 sm:px-8 sm:py-8">
+              {/* Language */}
+              <div className="mb-7">
                 <label
-                  htmlFor="password"
-                  className="font-semibold"
+                  htmlFor="language"
+                  className="mb-2 block text-sm font-semibold"
                 >
-                  Optional PIN
+                  Language
                 </label>
 
-                <span className="text-xs text-gray-400">
-                  Optional
-                </span>
-
-              </div>
-
-              <div className="relative">
-
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create a PIN"
-                  maxLength={20}
+                <select
+                  id="language"
+                  value={language}
+                  onChange={(e) =>
+                    setLanguage(e.target.value as Language)
+                  }
                   className="
                     w-full
-                    border border-gray-200
-                    rounded-xl
-                    px-4 py-3.5 pr-16
-                    bg-[#fafcfb]
+                    border border-[#a79093]/40
+                    bg-[#f7f5f6]
+                    px-4 py-3.5
+                    text-sm
+                    text-[#3e1919]
                     outline-none
-                    focus:ring-2
-                    focus:ring-[#239b78]/30
-                    focus:border-[#239b78]
                     transition
+                    focus:border-[#3e1919]
+                    focus:ring-1
+                    focus:ring-[#3e1919]
                   "
-                />
-
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[#126d85] font-medium"
                 >
-                  {showPassword ? "Hide" : "Show"}
-                </button>
-
+                  <option value="en">English</option>
+                  <option value="am">Amharic</option>
+                  <option value="om">Afaan Oromoo</option>
+                </select>
               </div>
 
-              <p className="text-xs text-gray-500 mt-2">
-                Use 4–20 characters. You can leave this empty.
-              </p>
+              {/* PIN */}
+              <div className="mb-7">
+                <div className="mb-2 flex items-center justify-between">
+                  <label
+                    htmlFor="password"
+                    className="text-sm font-semibold"
+                  >
+                    Optional PIN
+                  </label>
 
-            </div>
-
-            {/* Error */}
-            {error && (
-              <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {error}
-              </div>
-            )}
-
-            {/* Create */}
-            <button
-              onClick={handleCreateSession}
-              disabled={isCreating}
-              className="
-                w-full
-                flex items-center justify-center gap-3
-                bg-[#126d85]
-                hover:bg-[#0d5d73]
-                disabled:bg-gray-400
-                text-white
-                py-4
-                rounded-xl
-                font-semibold
-                shadow-lg
-                shadow-[#126d85]/20
-                transition-all
-              "
-            >
-              {isCreating ? (
-                <>
-                  <span className="animate-spin">
-                    ◌
+                  <span className="text-xs text-[#a79093]">
+                    Optional
                   </span>
-                  Creating your private session...
-                </>
-              ) : (
-                <>
-                  Create Private Session
-                  <span>→</span>
-                </>
-              )}
-            </button>
+                </div>
 
-            {/* Privacy notice */}
-            <div className="mt-6 pt-6 border-t border-gray-100">
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Create a PIN"
+                    maxLength={20}
+                    className="
+                      w-full
+                      border border-[#a79093]/40
+                      bg-[#f7f5f6]
+                      px-4 py-3.5 pr-12
+                      text-sm
+                      text-[#3e1919]
+                      placeholder:text-[#a79093]
+                      outline-none
+                      transition
+                      focus:border-[#3e1919]
+                      focus:ring-1
+                      focus:ring-[#3e1919]
+                    "
+                  />
 
-              <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={
+                      showPassword
+                        ? "Hide PIN"
+                        : "Show PIN"
+                    }
+                    className="
+                      absolute
+                      right-3
+                      top-1/2
+                      -translate-y-1/2
+                      p-1
+                      text-[#a79093]
+                      transition
+                      hover:text-[#3e1919]
+                    "
+                  >
+                    {showPassword ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
+                  </button>
+                </div>
 
-                <span className="text-lg">
-                  🔒
-                </span>
-
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  SafeLink does not require your name, phone number, or
-                  email to create a private session. Keep your SafeLink ID
-                  safe so you can access your session again.
+                <p className="mt-2 text-xs leading-5 text-[#a79093]">
+                  Use 4–20 characters. You can leave this empty.
                 </p>
-
               </div>
 
-            </div>
+              {/* Error */}
+              {error && (
+                <div className="mb-6 border-l-4 border-[#3e1919] bg-[#f0e2d6] px-4 py-3">
+                  <p className="text-sm leading-5 text-[#3e1919]">
+                    {error}
+                  </p>
+                </div>
+              )}
 
+              {/* Create button */}
+              <button
+                type="button"
+                onClick={handleCreateSession}
+                disabled={isCreating}
+                className="
+                  flex
+                  w-full
+                  items-center
+                  justify-center
+                  gap-2
+                  bg-[#3e1919]
+                  px-5
+                  py-4
+                  text-sm
+                  font-semibold
+                  text-[#f7f5f6]
+                  transition
+                  hover:bg-[#a79093]
+                  disabled:cursor-not-allowed
+                  disabled:opacity-60
+                "
+              >
+                {isCreating ? (
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#f7f5f6]/30 border-t-[#f7f5f6]" />
+                    Creating session...
+                  </>
+                ) : (
+                  <>
+                    Create private session
+                    <span aria-hidden="true">→</span>
+                  </>
+                )}
+              </button>
+
+              {/* Privacy note */}
+              <div className="mt-7 border-t border-[#a79093]/30 pt-6">
+                <div className="flex items-start gap-3">
+                  <LockKeyhole
+                    size={17}
+                    className="mt-0.5 shrink-0 text-[#a79093]"
+                  />
+
+                  <p className="text-xs leading-5 text-[#a79093]">
+                    SafeLink does not require your name, phone number,
+                    or email to create a private session. Keep your
+                    SafeLink ID safe so you can access your session
+                    again.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
+
+      {/* Bottom information */}
+      <footer className="border-t border-[#a79093]/30">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+          <p className="text-xs font-medium text-[#3e1919]">
+            SafeLink
+          </p>
+
+          <p className="text-xs text-[#a79093]">
+            Your privacy matters.
+          </p>
+        </div>
+      </footer>
     </main>
   );
 }
-
 
 /* ================= PRIVACY ITEM ================= */
 
@@ -335,30 +334,27 @@ function PrivacyItem({
   title,
   text,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   title: string;
   text: string;
 }) {
   return (
-    <div className="flex items-center gap-4">
-
-      <div className="w-11 h-11 rounded-full bg-white shadow-sm flex items-center justify-center">
+    <div className="flex gap-4 border-b border-[#a79093]/30 py-5 last:border-b-0">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#f0e2d6] text-[#3e1919]">
         {icon}
       </div>
 
       <div>
-        <p className="font-semibold">
+        <p className="text-sm font-semibold text-[#3e1919]">
           {title}
         </p>
 
-        <p className="text-sm text-gray-500">
+        <p className="mt-1 text-sm leading-6 text-[#a79093]">
           {text}
         </p>
       </div>
-
     </div>
   );
 }
 
 export default CreateSessionPage;
-

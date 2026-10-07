@@ -146,7 +146,8 @@ export default function AdminMessages() {
     /*
      * Otherwise use the last message timestamp.
      */
-    const lastMessage = conversation.messages[conversation.messages.length - 1];
+    const lastMessage =
+      conversation.messages[conversation.messages.length - 1];
 
     if (!lastMessage.timestamp) {
       return "";
@@ -168,15 +169,33 @@ export default function AdminMessages() {
    */
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 p-6 lg:p-8">
-        <div className="mx-auto max-w-5xl">
-          <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+      <main className="min-h-screen bg-[#f7f5f6] text-[#3e1919]">
+        <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
+          <header className="border-b border-[#a79093]/30 pb-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#a79093]">
+              SafeLink Administration
+            </p>
 
-            <p className="mt-4 text-sm text-slate-500">Loading messages...</p>
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#3e1919]">
+              Messages
+            </h1>
+
+            <p className="mt-3 text-sm text-[#a79093]">
+              View and manage conversations with advisors.
+            </p>
+          </header>
+
+          <div className="flex min-h-[45vh] items-center justify-center">
+            <div className="text-center">
+              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-[#a79093]/30 border-t-[#3e1919]" />
+
+              <p className="mt-4 text-sm text-[#a79093]">
+                Loading conversations...
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -186,30 +205,63 @@ export default function AdminMessages() {
    * ============================================================
    */
   return (
-    <div className="min-h-screen bg-slate-50 p-6 lg:p-8">
-      <div className="mx-auto max-w-5xl">
+    <main className="min-h-screen bg-[#f7f5f6] text-[#3e1919]">
+      <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
         {/* ======================================================
             HEADER
         ====================================================== */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-900">Messages</h1>
 
-          <p className="mt-1 text-sm text-slate-500">
-            View and manage your conversations with advisors.
+        <header className="border-b border-[#a79093]/30 pb-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#a79093]">
+            SafeLink Administration
           </p>
-        </div>
+
+          <div className="mt-3 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight text-[#3e1919] sm:text-4xl">
+                Messages
+              </h1>
+
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#a79093]">
+                View and manage your conversations with SafeLink advisors.
+              </p>
+            </div>
+
+            <div className="border-l-2 border-[#3e1919] pl-4">
+              <p className="text-xs uppercase tracking-wider text-[#a79093]">
+                Conversations
+              </p>
+
+              <p className="mt-1 text-sm font-medium text-[#3e1919]">
+                {conversations.length}{" "}
+                {conversations.length === 1
+                  ? "conversation"
+                  : "conversations"}
+              </p>
+            </div>
+          </div>
+        </header>
 
         {/* ======================================================
             ERROR MESSAGE
         ====================================================== */}
+
         {error && (
-          <div className="mb-5 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            <span>{error}</span>
+          <div className="mt-6 flex items-start justify-between gap-5 border-l-4 border-[#3e1919] bg-[#f0e2d6] px-5 py-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#a79093]">
+                Notice
+              </p>
+
+              <p className="mt-1 text-sm leading-6 text-[#3e1919]">
+                {error}
+              </p>
+            </div>
 
             <button
               type="button"
               onClick={() => setError("")}
-              className="ml-4 font-medium hover:text-red-900"
+              className="shrink-0 text-lg leading-none text-[#a79093] transition hover:text-[#3e1919]"
               aria-label="Close error"
             >
               ×
@@ -220,47 +272,72 @@ export default function AdminMessages() {
         {/* ======================================================
             NO CONVERSATIONS
         ====================================================== */}
+
         {conversations.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
-              <svg
-                className="h-8 w-8 text-blue-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          <section className="mt-10 border-y border-[#a79093]/30 py-14">
+            <div className="max-w-xl">
+              <div className="flex h-12 w-12 items-center justify-center border border-[#a79093]/40 bg-[#f0e2d6]">
+                <svg
+                  className="h-6 w-6 text-[#3e1919]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.7}
+                    d="M8 10h.01M12 10h.01M16 10h.01M9 16h6m2 4H7a4 4 0 01-4-4V8a4 4 0 014-4h10a4 4 0 014 4v8a4 4 0 01-4 4z"
+                  />
+                </svg>
+              </div>
+
+              <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+                Inbox
+              </p>
+
+              <h2 className="mt-2 text-2xl font-semibold text-[#3e1919]">
+                No conversations yet
+              </h2>
+
+              <p className="mt-3 max-w-md text-sm leading-6 text-[#a79093]">
+                Conversations with advisors will appear here once they become
+                available.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => navigate("/admin/advisors")}
+                className="mt-7 border border-[#3e1919] bg-[#3e1919] px-5 py-2.5 text-sm font-medium text-[#f7f5f6] transition hover:bg-[#3e1919]/90"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 10h.01M12 10h.01M16 10h.01M9 16h6m2 4H7a4 4 0 01-4-4V8a4 4 0 014-4h10a4 4 0 014 4v8a4 4 0 01-4 4z"
-                />
-              </svg>
+                Go to Advisors
+              </button>
             </div>
-
-            <h2 className="mt-4 text-lg font-semibold text-slate-900">
-              No conversations yet
-            </h2>
-
-            <p className="mt-2 text-sm text-slate-500">
-              Conversations with advisors will appear here.
-            </p>
-
-            <button
-              type="button"
-              onClick={() => navigate("/admin/advisors")}
-              className="mt-5 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
-            >
-              Go to Advisors
-            </button>
-          </div>
+          </section>
         ) : (
           /* ====================================================
              CONVERSATION LIST
           ==================================================== */
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="divide-y divide-slate-100">
-              {conversations.map((conversation) => {
+
+          <section className="mt-10">
+            <div className="mb-4 flex items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+                  Inbox
+                </p>
+
+                <h2 className="mt-1 text-xl font-semibold text-[#3e1919]">
+                  Advisor conversations
+                </h2>
+              </div>
+
+              <span className="text-xs text-[#a79093]">
+                Select a conversation to open it
+              </span>
+            </div>
+
+            <div className="border-y border-[#a79093]/30">
+              {conversations.map((conversation, index) => {
                 const hasAdvisorId = Boolean(conversation.advisor_id);
 
                 return (
@@ -269,12 +346,21 @@ export default function AdminMessages() {
                     type="button"
                     onClick={() => openConversation(conversation)}
                     disabled={!hasAdvisorId}
-                    className="flex w-full items-center gap-4 px-6 py-5 text-left transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    className={`group flex w-full items-center gap-4 px-2 py-5 text-left transition sm:px-4 ${
+                      index !== conversations.length - 1
+                        ? "border-b border-[#a79093]/20"
+                        : ""
+                    } ${
+                      hasAdvisorId
+                        ? "hover:bg-[#f0e2d6]/60"
+                        : "cursor-not-allowed opacity-60"
+                    }`}
                   >
                     {/* ==================================================
                         AVATAR
                     ================================================== */}
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
+
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-[#3e1919] text-xs font-semibold tracking-wide text-[#f7f5f6]">
                       {conversation.advisor_id
                         ? conversation.advisor_id.slice(0, 2).toUpperCase()
                         : "AD"}
@@ -283,25 +369,26 @@ export default function AdminMessages() {
                     {/* ==================================================
                         CONVERSATION INFORMATION
                     ================================================== */}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-4">
-                        <div>
-                          <h2 className="font-semibold text-slate-900">
-                            Advisor
-                          </h2>
 
-                          <p className="mt-0.5 text-xs text-slate-400">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                        <div className="min-w-0">
+                          <h3 className="text-sm font-semibold text-[#3e1919]">
+                            Advisor
+                          </h3>
+
+                          <p className="mt-0.5 truncate text-xs text-[#a79093]">
                             {conversation.advisor_id ||
                               "Advisor ID unavailable"}
                           </p>
                         </div>
 
-                        <span className="shrink-0 text-xs text-slate-400">
+                        <span className="shrink-0 text-xs text-[#a79093]">
                           {getLastMessageTime(conversation)}
                         </span>
                       </div>
 
-                      <p className="mt-2 truncate text-sm text-slate-500">
+                      <p className="mt-2 truncate text-sm text-[#a79093]">
                         {getLastMessage(conversation)}
                       </p>
                     </div>
@@ -309,8 +396,9 @@ export default function AdminMessages() {
                     {/* ==================================================
                         ARROW
                     ================================================== */}
+
                     <svg
-                      className="h-5 w-5 shrink-0 text-slate-400"
+                      className="h-5 w-5 shrink-0 text-[#a79093] transition-transform group-hover:translate-x-1 group-hover:text-[#3e1919]"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -318,7 +406,7 @@ export default function AdminMessages() {
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth={2}
+                        strokeWidth={1.8}
                         d="M9 5l7 7-7 7"
                       />
                     </svg>
@@ -326,9 +414,20 @@ export default function AdminMessages() {
                 );
               })}
             </div>
-          </div>
+          </section>
         )}
+
+        {/* ======================================================
+            FOOTER
+        ====================================================== */}
+
+        <footer className="mt-10 border-t border-[#a79093]/30 pt-6">
+          <p className="text-xs leading-5 text-[#a79093]">
+            SafeLink administration · Advisor conversations are handled
+            securely through the administrator interface.
+          </p>
+        </footer>
       </div>
-    </div>
+    </main>
   );
 }

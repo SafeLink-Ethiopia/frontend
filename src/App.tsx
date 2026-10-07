@@ -26,7 +26,6 @@ import LoginPage from "./pages/LoginPage";
 import PrivateSupportPage from "./pages/PrivateSupportPage";
 import HelpingPage from "./pages/HelpingPage";
 import QuickExitPage from "./pages/QuickExitPage";
-import MedicalFlowPage from "./pages/MedicalFlowPage";
 
 // =========================
 // Advisor Pages
@@ -112,7 +111,7 @@ function SessionCreatedRoute({ safelinkId }: { safelinkId: string }) {
   return (
     <SessionCreatedPage
       safelinkId={safelinkId}
-      onContinue={() => navigate("/support")}
+      onContinue={() => navigate("/user/dashboard")}
     />
   );
 }
@@ -120,18 +119,6 @@ function SessionCreatedRoute({ safelinkId }: { safelinkId: string }) {
 // =========================
 // Support Route
 // =========================
-
-function SupportRoute({ safelinkId }: { safelinkId: string }) {
-  const navigate = useNavigate();
-
-  return (
-    <PrivateSupportPage
-      safelinkId={safelinkId}
-      onQuickExit={() => navigate("/quick-exit")}
-      onMedicalHelp={() => navigate("/medical")}
-    />
-  );
-}
 
 // =========================
 // Helping Route
@@ -208,16 +195,11 @@ function App() {
           element={<Navigate to="/user/dashboard/chat" replace />}
         />
 
-        <Route
-          path="/support"
-          element={<SupportRoute safelinkId={safelinkId} />}
-        />
-
         <Route path="/helping" element={<HelpingRoute />} />
 
         <Route path="/quick-exit" element={<QuickExitPage />} />
 
-        <Route path="/medical" element={<MedicalFlowPage />} />
+    
 
         {/* =====================================================
             ADVISOR ROUTES

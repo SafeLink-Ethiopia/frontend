@@ -1,4 +1,3 @@
-
 interface SessionCreatedPageProps {
   safelinkId: string;
   onContinue: () => void;
@@ -17,75 +16,96 @@ function SessionCreatedPage({
   };
 
   return (
-    <main className="min-h-screen bg-[#faf8f3] text-[#12304a] flex items-center justify-center p-6 relative overflow-hidden">
+    <main className="min-h-screen bg-[#f7f5f6] text-[#3e1919] flex items-center justify-center px-5 py-10">
+      <div className="w-full max-w-xl">
+        {/* Brand */}
+        <div className="flex items-center justify-center gap-3 mb-8">
+          <div className="w-11 h-11 bg-[#3e1919] flex items-center justify-center">
+            <span className="text-[#f0e2d6] text-2xl">♡</span>
+          </div>
 
-      {/* Background decoration */}
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#d9efe5] rounded-full blur-3xl opacity-70" />
+          <span className="text-lg font-semibold tracking-tight text-[#3e1919]">
+            SafeLink
+          </span>
+        </div>
 
-      <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#dceef4] rounded-full blur-3xl opacity-70" />
+        {/* Main content */}
+        <div className="bg-white border border-[#a79093]/25">
+          {/* Success header */}
+          <div className="px-7 py-8 md:px-10 md:py-9 border-b border-[#a79093]/20">
+            <div className="flex items-start gap-5">
+              <div className="w-12 h-12 shrink-0 bg-[#f0e2d6] flex items-center justify-center">
+                <span className="text-xl font-semibold text-[#3e1919]">
+                  ✓
+                </span>
+              </div>
 
-      <div className="relative z-10 w-full max-w-lg">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+                  Private session created
+                </p>
 
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#239b78] to-[#1685a5] flex items-center justify-center shadow-lg">
-            <span className="text-white text-3xl">
-              ♡
-            </span>
+                <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[#3e1919] mt-2">
+                  Your SafeLink ID
+                </h1>
+
+                <p className="text-sm md:text-base text-[#a79093] mt-3 leading-6 max-w-md">
+                  Your private session is ready. Keep this ID safe because
+                  you'll need it to access your session again.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* ID section */}
+          <div className="px-7 py-8 md:px-10">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#a79093]">
+              Your private ID
+            </p>
+
+            <div className="mt-3 bg-[#f0e2d6] border border-[#a79093]/25 px-5 py-6 text-center">
+              <p className="text-2xl md:text-3xl font-mono font-semibold tracking-wider text-[#3e1919] break-all">
+                {safelinkId}
+              </p>
+            </div>
+
+            {/* Copy */}
+            <button
+              onClick={handleCopy}
+              className="mt-4 text-sm font-semibold text-[#3e1919] hover:text-[#a79093] underline underline-offset-4 transition-colors"
+            >
+              Copy SafeLink ID
+            </button>
+
+            {/* Continue */}
+            <button
+              onClick={onContinue}
+              className="w-full mt-8 bg-[#3e1919] hover:bg-[#2d1111] text-white py-4 px-6 font-semibold transition-colors"
+            >
+              Continue to Private Support
+              <span className="ml-2">→</span>
+            </button>
+
+            {/* Privacy information */}
+            <div className="mt-7 pt-6 border-t border-[#a79093]/20">
+              <div className="flex items-start gap-3">
+                <span className="text-sm mt-0.5 text-[#3e1919]">🔒</span>
+
+                <p className="text-xs text-[#a79093] leading-5">
+                  No name, phone number, or email is attached to this
+                  session. Your SafeLink ID is what you use to return to
+                  your private session.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Card */}
-        <div className="bg-white rounded-[2rem] shadow-2xl p-8 md:p-10 text-center">
-
-          <div className="w-16 h-16 mx-auto rounded-full bg-[#e5f4ed] flex items-center justify-center text-3xl mb-6">
-            ✓
-          </div>
-
-          <p className="text-sm font-semibold text-[#239b78] mb-2">
-            PRIVATE SESSION CREATED
+        {/* Footer note */}
+        <div className="mt-6 text-center">
+          <p className="text-xs text-[#a79093]">
+            Keep your SafeLink ID somewhere private and accessible to you.
           </p>
-
-          <h1 className="text-3xl md:text-4xl font-bold">
-            Your SafeLink ID
-          </h1>
-
-          <p className="text-gray-500 mt-4 leading-relaxed">
-            This is your private session ID. Keep it safe because you can
-            use it to access your session again.
-          </p>
-
-          {/* SafeLink ID */}
-          <div className="mt-7 bg-[#f1f8f5] border border-[#d6ebe2] rounded-2xl p-6">
-            <p className="text-2xl md:text-3xl font-mono font-bold tracking-wider text-[#126d85] break-all">
-              {safelinkId}
-            </p>
-          </div>
-
-          {/* Copy */}
-          <button
-            onClick={handleCopy}
-            className="mt-4 text-sm font-semibold text-[#126d85] hover:text-[#0d5d73]"
-          >
-            Copy SafeLink ID
-          </button>
-
-          {/* Continue */}
-          <button
-            onClick={onContinue}
-            className="w-full mt-8 bg-[#126d85] hover:bg-[#0d5d73] text-white py-4 rounded-xl font-semibold shadow-lg shadow-[#126d85]/20 transition"
-          >
-            Continue to Private Support →
-          </button>
-
-          {/* Privacy */}
-          <div className="mt-6 pt-6 border-t border-gray-100">
-            <p className="text-xs text-gray-500 leading-relaxed">
-              🔒 No name, phone number, or email is attached to this
-              session.
-            </p>
-          </div>
-
         </div>
       </div>
     </main>
@@ -93,4 +113,3 @@ function SessionCreatedPage({
 }
 
 export default SessionCreatedPage;
-

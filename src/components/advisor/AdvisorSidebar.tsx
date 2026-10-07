@@ -20,16 +20,16 @@ export default function AdvisorSidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-[300px] flex-col bg-white px-5 py-9">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-[300px] flex-col bg-[#3e1919] px-5 py-9">
 
       {/* Logo */}
       {/* ...your existing logo code... */}
 
-      <p className="mb-4 px-5 text-[12px] font-bold tracking-[2px] text-[#91A8AD]">
+      <p className="mb-4 px-5 text-[12px] font-bold tracking-[2px] text-[#a79093]">
         YOUR SPACE
       </p>
 
-      {/* 👇 ADD/REPLACE THE NAVIGATION HERE */}
+      {/* Navigation */}
       <nav className="space-y-2">
         {[
           {
@@ -73,8 +73,8 @@ export default function AdvisorSidebar() {
               className={({ isActive }) =>
                 `flex items-center gap-5 rounded-2xl px-5 py-5 text-[17px] transition ${
                   isActive
-                    ? "bg-[#E4F5F3] text-[#009F99]"
-                    : "text-[#435D64] hover:bg-[#F2F7F7]"
+                    ? "bg-[#f0e2d6] text-[#3e1919]"
+                    : "text-[#f0e2d6] hover:bg-[#f0e2d6]/80 hover:text-[#3e1919]"
                 }`
               }
             >
@@ -89,7 +89,20 @@ export default function AdvisorSidebar() {
       <button
         type="button"
         onClick={handleLogout}
-        className="mt-auto flex items-center gap-5 rounded-2xl px-5 py-4 text-[16px] text-[#435D64] transition hover:bg-[#F2F7F7]"
+        className="
+          mt-auto
+          flex
+          items-center
+          gap-5
+          rounded-2xl
+          px-5
+          py-4
+          text-[16px]
+          text-[#f0e2d6]
+          transition
+          hover:bg-[#f0e2d6]
+          hover:text-[#3e1919]
+        "
       >
         <LogOut size={20} />
         <span>Logout</span>

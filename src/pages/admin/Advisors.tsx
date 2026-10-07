@@ -30,17 +30,12 @@ export default function Advisors() {
   const [error, setError] = useState("");
 
   const [selectedAdvisor, setSelectedAdvisor] = useState<Advisor | null>(null);
-
   const [editingAdvisor, setEditingAdvisor] = useState<Advisor | null>(null);
-
   const [advisorToDelete, setAdvisorToDelete] = useState<Advisor | null>(null);
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  /*
-   * Fetch advisors
-   */
   const fetchAdvisors = async () => {
     try {
       setLoading(true);
@@ -80,9 +75,6 @@ export default function Advisors() {
     fetchAdvisors();
   }, []);
 
-  /*
-   * Toggle advisor active/inactive
-   */
   const handleToggleActive = async (advisor: Advisor) => {
     if (!advisor.advisor_id) {
       setError("Advisor ID is missing.");
@@ -139,9 +131,6 @@ export default function Advisors() {
     }
   };
 
-  /*
-   * Delete advisor
-   */
   const handleDeleteAdvisor = async () => {
     if (!advisorToDelete?.advisor_id) {
       setError("Advisor ID is missing.");
@@ -188,9 +177,6 @@ export default function Advisors() {
     }
   };
 
-  /*
-   * Update advisor
-   */
   const handleUpdateAdvisor = async () => {
     if (!editingAdvisor?.advisor_id) {
       setError("Advisor ID is missing.");
@@ -254,12 +240,7 @@ export default function Advisors() {
     }
   };
 
-  /*
-   * Open advisor chat
-   */
   const handleOpenChat = (advisor: Advisor) => {
-    console.log("Opening chat for advisor:", advisor.advisor_id);
-
     if (!advisor.advisor_id) {
       setError("This advisor does not have an advisor ID.");
       return;
@@ -269,345 +250,388 @@ export default function Advisors() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="mx-auto max-w-7xl">
+    <main className="min-h-screen bg-[#f7f5f6] text-[#3e1919]">
+      <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">Advisors</h1>
+        <header className="border-b border-[#a79093]/30 pb-8">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#a79093]">
+            SafeLink Administration
+          </p>
 
-            <p className="mt-1 text-sm text-slate-500">
-              Manage your advisors and communicate with them.
-            </p>
+          <div className="mt-4 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight text-[#3e1919] sm:text-4xl">
+                Advisors
+              </h1>
+
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#a79093]">
+                Manage advisor accounts, availability, information, and
+                communication from one place.
+              </p>
+            </div>
+
+            <div className="border-l-2 border-[#3e1919] pl-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+                Directory
+              </p>
+
+              <p className="mt-1 text-sm font-medium text-[#3e1919]">
+                {advisors.length}{" "}
+                {advisors.length === 1 ? "advisor" : "advisors"}
+              </p>
+            </div>
           </div>
-        </div>
+        </header>
 
         {/* Error */}
         {error && (
-          <div className="mb-5 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-            <span>{error}</span>
+          <div className="mt-6 flex items-start justify-between gap-5 border-l-4 border-[#3e1919] bg-[#f0e2d6] px-5 py-4">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+                Notice
+              </p>
+
+              <p className="mt-1 text-sm leading-6 text-[#3e1919]">
+                {error}
+              </p>
+            </div>
 
             <button
               type="button"
               onClick={() => setError("")}
-              className="font-medium text-red-700 hover:text-red-900"
+              className="shrink-0 text-xl leading-none text-[#a79093] transition hover:text-[#3e1919]"
+              aria-label="Close error"
             >
               ×
             </button>
           </div>
         )}
 
-        {/* Loading */}
-        {loading ? (
-          <div className="rounded-xl bg-white p-10 text-center shadow-sm">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+        {/* Content */}
+        <section className="mt-10">
+          {loading ? (
+            <div className="border-y border-[#a79093]/30 py-20 text-center">
+              <div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-[#a79093]/30 border-t-[#3e1919]" />
 
-            <p className="mt-4 text-sm text-slate-500">Loading advisors...</p>
-          </div>
-        ) : advisors.length === 0 ? (
-          /* Empty */
-          <div className="rounded-xl bg-white p-10 text-center shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-700">
-              No advisors found
-            </h2>
+              <p className="mt-4 text-sm text-[#a79093]">
+                Loading advisor directory...
+              </p>
+            </div>
+          ) : advisors.length === 0 ? (
+            <div className="border-y border-[#a79093]/30 py-16">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+                Directory
+              </p>
 
-            <p className="mt-2 text-sm text-slate-500">
-              There are currently no advisors available.
-            </p>
-          </div>
-        ) : (
-          /* Advisors table */
-          <div className="overflow-hidden rounded-xl bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Advisor
-                    </th>
+              <h2 className="mt-2 text-2xl font-semibold text-[#3e1919]">
+                No advisors found
+              </h2>
 
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Contact
-                    </th>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-[#a79093]">
+                There are currently no advisors available in the system.
+              </p>
+            </div>
+          ) : (
+            <div>
+              <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+                    Directory
+                  </p>
 
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Type
-                    </th>
+                  <h2 className="mt-1 text-xl font-semibold text-[#3e1919]">
+                    Advisor accounts
+                  </h2>
+                </div>
 
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Location
-                    </th>
+                <p className="text-xs text-[#a79093]">
+                  Manage status, profile information, and communication.
+                </p>
+              </div>
 
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Status
-                    </th>
+              <div className="overflow-x-auto border-y border-[#a79093]/30">
+                <table className="min-w-[1100px] w-full">
+                  <thead>
+                    <tr className="border-b border-[#a79093]/30">
+                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+                        Advisor
+                      </th>
 
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
+                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+                        Contact
+                      </th>
 
-                <tbody className="divide-y divide-slate-100">
-                  {advisors.map((advisor) => (
-                    <tr
-                      key={advisor.advisor_id || advisor._id || advisor.email}
-                      className="transition hover:bg-slate-50"
-                    >
-                      {/* Advisor */}
-                      <td className="whitespace-nowrap px-6 py-4">
-                        <div>
-                          <p className="font-medium text-slate-800">
-                            {advisor.name}
-                          </p>
+                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+                        Type
+                      </th>
 
-                          {advisor.advisor_id && (
-                            <p className="mt-1 text-xs text-slate-400">
-                              {advisor.advisor_id}
-                            </p>
-                          )}
-                        </div>
-                      </td>
+                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+                        Location
+                      </th>
 
-                      {/* Contact */}
-                      <td className="px-6 py-4">
-                        <div>
-                          <p className="text-sm text-slate-700">
+                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+                        Status
+                      </th>
+
+                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {advisors.map((advisor) => (
+                      <tr
+                        key={
+                          advisor.advisor_id || advisor._id || advisor.email
+                        }
+                        className="border-b border-[#a79093]/15 last:border-b-0 transition-colors hover:bg-[#f0e2d6]/40"
+                      >
+                        {/* Advisor */}
+                        <td className="px-4 py-5">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#3e1919] text-xs font-semibold text-[#f7f5f6]">
+                              {advisor.name
+                                ? advisor.name
+                                    .split(" ")
+                                    .map((part) => part[0])
+                                    .slice(0, 2)
+                                    .join("")
+                                    .toUpperCase()
+                                : "AD"}
+                            </div>
+
+                            <div>
+                              <p className="text-sm font-medium text-[#3e1919]">
+                                {advisor.name}
+                              </p>
+
+                              {advisor.advisor_id && (
+                                <p className="mt-1 text-[11px] text-[#a79093]">
+                                  {advisor.advisor_id}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Contact */}
+                        <td className="px-4 py-5">
+                          <p className="text-sm text-[#3e1919]">
                             {advisor.email}
                           </p>
 
                           {advisor.phone_number && (
-                            <p className="mt-1 text-xs text-slate-400">
+                            <p className="mt-1 text-xs text-[#a79093]">
                               {advisor.phone_number}
                             </p>
                           )}
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Type */}
-                      <td className="whitespace-nowrap px-6 py-4">
-                        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">
-                          {advisor.type}
-                        </span>
-                      </td>
+                        {/* Type */}
+                        <td className="px-4 py-5">
+                          <span className="border border-[#a79093]/35 bg-[#f0e2d6] px-2.5 py-1 text-[11px] font-medium capitalize text-[#3e1919]">
+                            {advisor.type}
+                          </span>
+                        </td>
 
-                      {/* Location */}
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-600">
-                        {advisor.location || "—"}
-                      </td>
+                        {/* Location */}
+                        <td className="px-4 py-5 text-sm text-[#a79093]">
+                          {advisor.location || "—"}
+                        </td>
 
-                      {/* Status */}
-                      <td className="whitespace-nowrap px-6 py-4">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleActive(advisor)}
-                          disabled={
-                            isUpdating || isDeleting || !advisor.advisor_id
-                          }
-                          className={`rounded-full px-3 py-1 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                            advisor.active
-                              ? "bg-green-50 text-green-600 hover:bg-green-100"
-                              : "bg-red-50 text-red-600 hover:bg-red-100"
-                          }`}
-                        >
-                          {advisor.active ? "Active" : "Inactive"}
-                        </button>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="whitespace-nowrap px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          {/* View */}
+                        {/* Status */}
+                        <td className="px-4 py-5">
                           <button
                             type="button"
-                            onClick={() => setSelectedAdvisor(advisor)}
-                            className="rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-100"
-                          >
-                            View
-                          </button>
-
-                          {/* Chat */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenChat(advisor)}
+                            onClick={() => handleToggleActive(advisor)}
                             disabled={
                               isUpdating || isDeleting || !advisor.advisor_id
                             }
-                            className="rounded-lg bg-green-50 px-4 py-2 text-sm font-medium text-green-600 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="group flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            Chat
-                          </button>
+                            <span
+                              className={`h-2 w-2 ${
+                                advisor.active
+                                  ? "bg-[#3e1919]"
+                                  : "bg-[#a79093]"
+                              }`}
+                            />
 
-                          {/* Edit */}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setEditingAdvisor({
-                                ...advisor,
-                                working_hours: advisor.working_hours || {
-                                  start: "",
-                                  end: "",
-                                },
-                              })
-                            }
-                            disabled={
-                              isUpdating || isDeleting || !advisor.advisor_id
-                            }
-                            className="rounded-lg bg-amber-50 px-4 py-2 text-sm font-medium text-amber-600 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            Edit
-                          </button>
+                            <span
+                              className={`text-xs font-medium ${
+                                advisor.active
+                                  ? "text-[#3e1919]"
+                                  : "text-[#a79093]"
+                              }`}
+                            >
+                              {advisor.active ? "Active" : "Inactive"}
+                            </span>
 
-                          {/* Delete */}
-                          <button
-                            type="button"
-                            onClick={() => setAdvisorToDelete(advisor)}
-                            disabled={
-                              isUpdating || isDeleting || !advisor.advisor_id
-                            }
-                            className="rounded-lg bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {isDeleting ? "Deleting..." : "Delete"}
+                            <span className="text-[10px] text-[#a79093] opacity-0 transition group-hover:opacity-100">
+                              Toggle
+                            </span>
                           </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-4 py-5">
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedAdvisor(advisor)}
+                              className="border border-[#a79093]/35 px-3 py-1.5 text-xs font-medium text-[#3e1919] transition hover:border-[#3e1919] hover:bg-[#f0e2d6]"
+                            >
+                              View
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleOpenChat(advisor)}
+                              disabled={
+                                isUpdating ||
+                                isDeleting ||
+                                !advisor.advisor_id
+                              }
+                              className="bg-[#3e1919] px-3 py-1.5 text-xs font-medium text-[#f7f5f6] transition hover:bg-[#3e1919]/90 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Chat
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditingAdvisor({
+                                  ...advisor,
+                                  working_hours: advisor.working_hours || {
+                                    start: "",
+                                    end: "",
+                                  },
+                                })
+                              }
+                              disabled={
+                                isUpdating ||
+                                isDeleting ||
+                                !advisor.advisor_id
+                              }
+                              className="border border-[#a79093]/35 px-3 py-1.5 text-xs font-medium text-[#3e1919] transition hover:border-[#3e1919] hover:bg-[#f0e2d6] disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setAdvisorToDelete(advisor)}
+                              disabled={
+                                isUpdating ||
+                                isDeleting ||
+                                !advisor.advisor_id
+                              }
+                              className="px-3 py-1.5 text-xs font-medium text-[#a79093] transition hover:bg-[#f0e2d6] hover:text-[#3e1919] disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {isDeleting ? "Deleting..." : "Delete"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </section>
 
         {/* View Modal */}
         {selectedAdvisor && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
-              <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-                <h2 className="text-lg font-semibold text-slate-800">
-                  Advisor Details
-                </h2>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3e1919]/60 p-4">
+            <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto bg-[#f7f5f6] shadow-2xl">
+              <div className="flex items-start justify-between border-b border-[#a79093]/30 px-6 py-5">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+                    Advisor profile
+                  </p>
+
+                  <h2 className="mt-1 text-xl font-semibold text-[#3e1919]">
+                    Advisor details
+                  </h2>
+                </div>
 
                 <button
                   type="button"
                   onClick={() => setSelectedAdvisor(null)}
-                  className="text-2xl text-slate-400 hover:text-slate-600"
+                  className="text-2xl leading-none text-[#a79093] transition hover:text-[#3e1919]"
+                  aria-label="Close"
                 >
                   ×
                 </button>
               </div>
 
-              <div className="space-y-4 p-6">
-                <div>
-                  <p className="text-xs font-medium uppercase text-slate-400">
-                    Advisor ID
-                  </p>
+              <div className="divide-y divide-[#a79093]/20 px-6">
+                {[
+                  ["Advisor ID", selectedAdvisor.advisor_id || "—"],
+                  ["Name", selectedAdvisor.name],
+                  ["Email", selectedAdvisor.email],
+                  ["Gender", selectedAdvisor.gender],
+                  ["Type", selectedAdvisor.type],
+                  ["Phone", selectedAdvisor.phone_number || "—"],
+                  ["Location", selectedAdvisor.location || "—"],
+                  [
+                    "Working hours",
+                    `${selectedAdvisor.working_hours?.start || "—"} - ${
+                      selectedAdvisor.working_hours?.end || "—"
+                    }`,
+                  ],
+                ].map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="flex items-start justify-between gap-6 py-4"
+                  >
+                    <p className="shrink-0 text-[10px] uppercase tracking-[0.14em] text-[#a79093]">
+                      {label}
+                    </p>
 
-                  <p className="mt-1 text-sm text-slate-700">
-                    {selectedAdvisor.advisor_id || "—"}
-                  </p>
-                </div>
+                    <p className="max-w-[62%] break-words text-right text-sm text-[#3e1919]">
+                      {value}
+                    </p>
+                  </div>
+                ))}
 
-                <div>
-                  <p className="text-xs font-medium uppercase text-slate-400">
-                    Name
-                  </p>
-
-                  <p className="mt-1 text-sm text-slate-700">
-                    {selectedAdvisor.name}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium uppercase text-slate-400">
-                    Email
-                  </p>
-
-                  <p className="mt-1 text-sm text-slate-700">
-                    {selectedAdvisor.email}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium uppercase text-slate-400">
-                    Gender
-                  </p>
-
-                  <p className="mt-1 text-sm text-slate-700">
-                    {selectedAdvisor.gender}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium uppercase text-slate-400">
-                    Type
-                  </p>
-
-                  <p className="mt-1 text-sm text-slate-700">
-                    {selectedAdvisor.type}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium uppercase text-slate-400">
-                    Phone
-                  </p>
-
-                  <p className="mt-1 text-sm text-slate-700">
-                    {selectedAdvisor.phone_number || "—"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium uppercase text-slate-400">
-                    Location
-                  </p>
-
-                  <p className="mt-1 text-sm text-slate-700">
-                    {selectedAdvisor.location || "—"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium uppercase text-slate-400">
-                    Working Hours
-                  </p>
-
-                  <p className="mt-1 text-sm text-slate-700">
-                    {selectedAdvisor.working_hours?.start || "—"} -{" "}
-                    {selectedAdvisor.working_hours?.end || "—"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium uppercase text-slate-400">
+                <div className="flex items-center justify-between gap-6 py-4">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-[#a79093]">
                     Status
                   </p>
 
-                  <p
-                    className={`mt-1 text-sm font-medium ${
-                      selectedAdvisor.active ? "text-green-600" : "text-red-600"
-                    }`}
-                  >
-                    {selectedAdvisor.active ? "Active" : "Inactive"}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`h-2 w-2 ${
+                        selectedAdvisor.active
+                          ? "bg-[#3e1919]"
+                          : "bg-[#a79093]"
+                      }`}
+                    />
+
+                    <p className="text-sm font-medium text-[#3e1919]">
+                      {selectedAdvisor.active ? "Active" : "Inactive"}
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
+              <div className="flex justify-end gap-3 border-t border-[#a79093]/30 px-6 py-5">
                 <button
                   type="button"
                   onClick={() => handleOpenChat(selectedAdvisor)}
                   disabled={!selectedAdvisor.advisor_id}
-                  className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="bg-[#3e1919] px-5 py-2.5 text-sm font-medium text-[#f7f5f6] transition hover:bg-[#3e1919]/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Open Chat
+                  Open chat
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setSelectedAdvisor(null)}
-                  className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
+                  className="border border-[#a79093]/40 px-5 py-2.5 text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6]"
                 >
                   Close
                 </button>
@@ -618,26 +642,32 @@ export default function Advisors() {
 
         {/* Edit Modal */}
         {editingAdvisor && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white shadow-xl">
-              <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-                <h2 className="text-lg font-semibold text-slate-800">
-                  Edit Advisor
-                </h2>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3e1919]/60 p-4">
+            <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto bg-[#f7f5f6] shadow-2xl">
+              <div className="flex items-start justify-between border-b border-[#a79093]/30 px-6 py-5">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+                    Advisor management
+                  </p>
+
+                  <h2 className="mt-1 text-xl font-semibold text-[#3e1919]">
+                    Edit advisor
+                  </h2>
+                </div>
 
                 <button
                   type="button"
                   onClick={() => setEditingAdvisor(null)}
-                  className="text-2xl text-slate-400 hover:text-slate-600"
+                  className="text-2xl leading-none text-[#a79093] transition hover:text-[#3e1919]"
+                  aria-label="Close"
                 >
                   ×
                 </button>
               </div>
 
-              <div className="grid gap-4 p-6 md:grid-cols-2">
-                {/* Advisor ID */}
+              <div className="grid gap-x-6 gap-y-5 px-6 py-6 md:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
                     Advisor ID
                   </label>
 
@@ -645,13 +675,12 @@ export default function Advisors() {
                     type="text"
                     value={editingAdvisor.advisor_id || ""}
                     disabled
-                    className="w-full rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-sm text-slate-500"
+                    className="w-full border border-[#a79093]/25 bg-[#f0e2d6]/60 px-3 py-2.5 text-sm text-[#a79093] outline-none"
                   />
                 </div>
 
-                {/* Name */}
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
                     Name
                   </label>
 
@@ -664,13 +693,12 @@ export default function Advisors() {
                         name: event.target.value,
                       })
                     }
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
                   />
                 </div>
 
-                {/* Email */}
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
                     Email
                   </label>
 
@@ -683,13 +711,12 @@ export default function Advisors() {
                         email: event.target.value,
                       })
                     }
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
                   />
                 </div>
 
-                {/* Gender */}
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
                     Gender
                   </label>
 
@@ -701,7 +728,7 @@ export default function Advisors() {
                         gender: event.target.value,
                       })
                     }
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
                   >
                     <option value="">Select gender</option>
                     <option value="Male">Male</option>
@@ -710,9 +737,8 @@ export default function Advisors() {
                   </select>
                 </div>
 
-                {/* Type */}
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
                     Type
                   </label>
 
@@ -725,14 +751,13 @@ export default function Advisors() {
                         type: event.target.value,
                       })
                     }
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
                   />
                 </div>
 
-                {/* Phone */}
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
-                    Phone Number
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
+                    Phone number
                   </label>
 
                   <input
@@ -744,13 +769,12 @@ export default function Advisors() {
                         phone_number: event.target.value,
                       })
                     }
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
                   />
                 </div>
 
-                {/* Location */}
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
                     Location
                   </label>
 
@@ -763,14 +787,13 @@ export default function Advisors() {
                         location: event.target.value,
                       })
                     }
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
                   />
                 </div>
 
-                {/* Working hours start */}
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
-                    Working Hours Start
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
+                    Working hours start
                   </label>
 
                   <input
@@ -785,14 +808,13 @@ export default function Advisors() {
                         },
                       })
                     }
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
                   />
                 </div>
 
-                {/* Working hours end */}
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
-                    Working Hours End
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
+                    Working hours end
                   </label>
 
                   <input
@@ -807,40 +829,44 @@ export default function Advisors() {
                         },
                       })
                     }
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
                   />
                 </div>
 
-                {/* Active */}
-                <div className="flex items-center gap-3 md:col-span-2">
-                  <input
-                    id="advisor-active"
-                    type="checkbox"
-                    checked={editingAdvisor.active}
-                    onChange={(event) =>
-                      setEditingAdvisor({
-                        ...editingAdvisor,
-                        active: event.target.checked,
-                      })
-                    }
-                    className="h-4 w-4 rounded border-slate-300"
-                  />
+                <div className="border-t border-[#a79093]/20 pt-5 md:col-span-2">
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input
+                      id="advisor-active"
+                      type="checkbox"
+                      checked={editingAdvisor.active}
+                      onChange={(event) =>
+                        setEditingAdvisor({
+                          ...editingAdvisor,
+                          active: event.target.checked,
+                        })
+                      }
+                      className="h-4 w-4 accent-[#3e1919]"
+                    />
 
-                  <label
-                    htmlFor="advisor-active"
-                    className="text-sm font-medium text-slate-700"
-                  >
-                    Advisor is active
+                    <span>
+                      <span className="block text-sm font-medium text-[#3e1919]">
+                        Advisor is active
+                      </span>
+
+                      <span className="mt-0.5 block text-xs text-[#a79093]">
+                        Active advisors can receive and manage conversations.
+                      </span>
+                    </span>
                   </label>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
+              <div className="flex justify-end gap-3 border-t border-[#a79093]/30 px-6 py-5">
                 <button
                   type="button"
                   onClick={() => setEditingAdvisor(null)}
                   disabled={isUpdating}
-                  className="rounded-lg bg-slate-100 px-5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200 disabled:opacity-50"
+                  className="border border-[#a79093]/40 px-5 py-2.5 text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6] disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -849,60 +875,69 @@ export default function Advisors() {
                   type="button"
                   onClick={handleUpdateAdvisor}
                   disabled={isUpdating}
-                  className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="bg-[#3e1919] px-5 py-2.5 text-sm font-medium text-[#f7f5f6] transition hover:bg-[#3e1919]/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isUpdating ? "Saving..." : "Save Changes"}
+                  {isUpdating ? "Saving..." : "Save changes"}
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Delete Confirmation Modal */}
+        {/* Delete Modal */}
         {advisorToDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
-              <div className="p-6">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
-                  <span className="text-xl text-red-600">!</span>
-                </div>
-
-                <h2 className="text-lg font-semibold text-slate-800">
-                  Delete Advisor
-                </h2>
-
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Are you sure you want to delete{" "}
-                  <span className="font-semibold text-slate-700">
-                    {advisorToDelete.name}
-                  </span>
-                  ? This action cannot be undone.
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3e1919]/60 p-4">
+            <div className="w-full max-w-md bg-[#f7f5f6] shadow-2xl">
+              <div className="border-b border-[#a79093]/30 px-6 py-5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+                  Confirmation required
                 </p>
 
-                <div className="mt-6 flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setAdvisorToDelete(null)}
-                    disabled={isDeleting}
-                    className="rounded-lg bg-slate-100 px-5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200 disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
+                <h2 className="mt-2 text-xl font-semibold text-[#3e1919]">
+                  Delete advisor
+                </h2>
+              </div>
 
-                  <button
-                    type="button"
-                    onClick={handleDeleteAdvisor}
-                    disabled={isDeleting}
-                    className="rounded-lg bg-red-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {isDeleting ? "Deleting..." : "Delete Advisor"}
-                  </button>
+              <div className="px-6 py-6">
+                <p className="text-sm leading-6 text-[#a79093]">
+                  Are you sure you want to delete{" "}
+                  <span className="font-semibold text-[#3e1919]">
+                    {advisorToDelete.name}
+                  </span>
+                  ?
+                </p>
+
+                <div className="mt-5 border-l-2 border-[#3e1919] bg-[#f0e2d6] px-4 py-3">
+                  <p className="text-xs leading-5 text-[#3e1919]">
+                    This action cannot be undone. The advisor will be removed
+                    from the administration directory.
+                  </p>
                 </div>
+              </div>
+
+              <div className="flex justify-end gap-3 border-t border-[#a79093]/30 px-6 py-5">
+                <button
+                  type="button"
+                  onClick={() => setAdvisorToDelete(null)}
+                  disabled={isDeleting}
+                  className="border border-[#a79093]/40 px-5 py-2.5 text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6] disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDeleteAdvisor}
+                  disabled={isDeleting}
+                  className="bg-[#3e1919] px-5 py-2.5 text-sm font-medium text-[#f7f5f6] transition hover:bg-[#3e1919]/90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isDeleting ? "Deleting..." : "Delete advisor"}
+                </button>
               </div>
             </div>
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }

@@ -1,149 +1,3 @@
-// import { useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
-// import { AlertTriangle, LogOut, MessageCircle, User } from "lucide-react";
-// import { getMyConversations } from "../api/advisorPortalApi";
-// import type { Conversation } from "../types/advisor";
-
-// export default function AdvisorDashboardPage() {
-//   const navigate = useNavigate();
-
-//   const [conversations, setConversations] = useState<Conversation[]>([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState("");
-
-//   const token = localStorage.getItem("advisor_token") ?? "";
-
-//   useEffect(() => {
-//     if (!token) {
-//       navigate("/advisor/login");
-//       return;
-//     }
-
-//     async function load() {
-//       try {
-//         setLoading(true);
-//         setError("");
-
-//         const { conversations } = await getMyConversations(token);
-
-//         setConversations(conversations);
-//       } catch (err) {
-//         setError(
-//           err instanceof Error ? err.message : "Could not load conversations.",
-//         );
-//       } finally {
-//         setLoading(false);
-//       }
-//     }
-
-//     load();
-
-//     const interval = window.setInterval(load, 5000);
-
-//     return () => window.clearInterval(interval);
-//   }, [token, navigate]);
-
-//   function handleLogout() {
-//     localStorage.removeItem("advisor_token");
-//     localStorage.removeItem("advisor_profile");
-
-//     navigate("/advisor/login");
-//   }
-
-//   return (
-//     <main className="min-h-screen bg-[#33484D]">
-//       {/* Header */}
-//       <header className="flex items-center justify-between bg-[#5C838A] px-6 py-4">
-//         <h1 className="text-lg font-semibold text-white">My Conversations</h1>
-
-//         <div className="flex items-center gap-2">
-//           {/* Messages */}
-//           <button
-//             type="button"
-//             onClick={() => navigate("/advisor/messages")}
-//             className="flex items-center gap-1.5 rounded-full border border-white/20 px-3 py-1.5 text-sm text-white transition hover:bg-white/10"
-//           >
-//             <MessageCircle size={15} />
-//             Messages
-//           </button>
-
-//           {/* Profile */}
-//           <button
-//             type="button"
-//             onClick={() => navigate("/advisor/profile")}
-//             className="flex items-center gap-1.5 rounded-full border border-white/20 px-3 py-1.5 text-sm text-white transition hover:bg-white/10"
-//           >
-//             <User size={15} />
-//             Profile
-//           </button>
-
-//           {/* Logout */}
-//           <button
-//             type="button"
-//             onClick={handleLogout}
-//             className="flex items-center gap-1.5 rounded-full border border-white/20 px-3 py-1.5 text-sm text-white transition hover:bg-white/10"
-//           >
-//             <LogOut size={15} />
-//             Logout
-//           </button>
-//         </div>
-//       </header>
-
-//       {/* Conversations */}
-//       {/* <section className="mx-auto max-w-2xl px-5 py-6">
-//         {loading && <p className="text-center text-white/70">Loading...</p>}
-
-//         {error && <p className="text-center text-[#F3B9B9]">{error}</p>}
-
-//         {!loading && conversations.length === 0 && (
-//           <p className="text-center text-white/60">No conversations yet.</p>
-//         )} */}
-
-//         {/* <div className="space-y-3">
-//           {conversations.map((conv) => {
-//             const lastMessage = conv.messages[conv.messages.length - 1];
-
-//             return (
-//               <button
-//                 key={conv.conversation_id}
-//                 type="button"
-//                 onClick={() =>
-//                   navigate(`/advisor/conversation/${conv.conversation_id}`)
-//                 }
-//                 className="flex w-full items-center justify-between rounded-2xl bg-[#F4F7F7] px-5 py-4 text-left shadow transition hover:shadow-md"
-//               >
-//                 <div className="min-w-0">
-//                   <div className="flex items-center gap-2">
-//                     <p className="font-semibold text-[#33484D]">
-//                       Session {conv.session_id.slice(0, 8)}...
-//                     </p>
-
-//                     {conv.urgent && (
-//                       <span className="flex items-center gap-1 rounded-full bg-[#D96C6C]/15 px-2 py-0.5 text-[11px] font-semibold text-[#D96C6C]">
-//                         <AlertTriangle size={11} />
-//                         Urgent
-//                       </span>
-//                     )}
-//                   </div>
-
-//                   <p className="mt-1 truncate text-sm text-[#6B7A7C]">
-//                     {lastMessage ? lastMessage.text : "No messages yet"}
-//                   </p>
-//                 </div>
-
-//                 <span className="ml-4 shrink-0 text-xs font-semibold text-[#5C838A]">
-//                   Open →
-//                 </span>
-//               </button>
-//             );
-//           })}
-//         </div> */}
-//       {/* </section> */}
-//     </main>
-//   );
-// }
-
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -212,25 +66,23 @@ export default function AdvisorDashboardPage() {
   ).length;
 
   const activeConversations = conversations.filter(
-    (conversation) =>
-      conversation.messages.length > 0,
+    (conversation) => conversation.messages.length > 0,
   ).length;
 
-  const waitingConversations =
-    conversations.filter(
-      (conversation) => conversation.messages.length === 0,
-    ).length;
+  const waitingConversations = conversations.filter(
+    (conversation) => conversation.messages.length === 0,
+  ).length;
 
   return (
-    <section className="min-h-screen px-8 py-8">
+    <section className="min-h-screen bg-[#f7f5f6] px-8 py-8">
 
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">
+        <h1 className="text-3xl font-bold text-[#3e1919]">
           Advisor Dashboard
         </h1>
 
-        <p className="mt-2 text-white/60">
+        <p className="mt-2 text-[#a79093]">
           Welcome back. Here is an overview of your
           support sessions.
         </p>
@@ -238,7 +90,7 @@ export default function AdvisorDashboardPage() {
 
       {/* Error */}
       {error && (
-        <div className="mb-6 rounded-xl bg-[#D96C6C]/15 px-5 py-4 text-[#F3B9B9]">
+        <div className="mb-6 rounded-xl border border-[#a79093]/30 bg-[#f0e2d6] px-5 py-4 text-[#3e1919]">
           {error}
         </div>
       )}
@@ -282,11 +134,11 @@ export default function AdvisorDashboardPage() {
 
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-white">
+            <h2 className="text-xl font-semibold text-[#3e1919]">
               Recent Conversations
             </h2>
 
-            <p className="mt-1 text-sm text-white/50">
+            <p className="mt-1 text-sm text-[#a79093]">
               Sessions that may need your attention.
             </p>
           </div>
@@ -294,7 +146,7 @@ export default function AdvisorDashboardPage() {
           <button
             type="button"
             onClick={() => navigate("/advisor/messages")}
-            className="flex items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-sm text-white transition hover:bg-white/10"
+            className="flex items-center gap-2 rounded-full border border-[#a79093]/40 px-4 py-2 text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6]"
           >
             View all
             <ArrowRight size={15} />
@@ -303,8 +155,8 @@ export default function AdvisorDashboardPage() {
 
         {/* Loading */}
         {loading && (
-          <div className="rounded-2xl bg-white/10 p-8 text-center">
-            <p className="text-white/60">
+          <div className="rounded-2xl border border-[#f0e2d6] bg-white p-8 text-center">
+            <p className="text-[#a79093]">
               Loading conversations...
             </p>
           </div>
@@ -314,17 +166,17 @@ export default function AdvisorDashboardPage() {
         {!loading &&
           !error &&
           conversations.length === 0 && (
-            <div className="rounded-2xl bg-white/10 p-8 text-center">
+            <div className="rounded-2xl border border-[#f0e2d6] bg-white p-8 text-center">
               <MessageCircle
                 size={35}
-                className="mx-auto mb-3 text-white/40"
+                className="mx-auto mb-3 text-[#a79093]"
               />
 
-              <p className="text-white/70">
+              <p className="text-[#3e1919]">
                 No conversations yet.
               </p>
 
-              <p className="mt-1 text-sm text-white/40">
+              <p className="mt-1 text-sm text-[#a79093]">
                 New support sessions will appear here.
               </p>
             </div>
@@ -349,7 +201,7 @@ export default function AdvisorDashboardPage() {
                       `/advisor/messages/${conv.conversation_id}`,
                     )
                   }
-                  className="flex w-full items-center justify-between rounded-2xl bg-[#F4F7F7] px-5 py-5 text-left transition hover:bg-white hover:shadow-lg"
+                  className="flex w-full items-center justify-between rounded-2xl border border-[#f0e2d6] bg-white px-5 py-5 text-left transition hover:bg-[#f0e2d6]/60 hover:shadow-md"
                 >
 
                   <div className="min-w-0">
@@ -357,13 +209,13 @@ export default function AdvisorDashboardPage() {
                     {/* Session + urgent */}
                     <div className="flex items-center gap-2">
 
-                      <p className="font-semibold text-[#33484D]">
+                      <p className="font-semibold text-[#3e1919]">
                         Session{" "}
                         {conv.session_id.slice(0, 8)}...
                       </p>
 
                       {conv.urgent && (
-                        <span className="flex items-center gap-1 rounded-full bg-[#D96C6C]/15 px-2 py-1 text-[11px] font-semibold text-[#D96C6C]">
+                        <span className="flex items-center gap-1 rounded-full bg-[#3e1919]/10 px-2 py-1 text-[11px] font-semibold text-[#3e1919]">
                           <AlertTriangle size={11} />
                           Urgent
                         </span>
@@ -372,7 +224,7 @@ export default function AdvisorDashboardPage() {
                     </div>
 
                     {/* Last message */}
-                    <p className="mt-2 truncate text-sm text-[#6B7A7C]">
+                    <p className="mt-2 truncate text-sm text-[#a79093]">
                       {lastMessage
                         ? lastMessage.text
                         : "No messages yet"}
@@ -380,7 +232,7 @@ export default function AdvisorDashboardPage() {
 
                   </div>
 
-                  <div className="ml-4 flex shrink-0 items-center gap-2 text-sm font-semibold text-[#5C838A]">
+                  <div className="ml-4 flex shrink-0 items-center gap-2 text-sm font-semibold text-[#3e1919]">
                     Open
                     <ArrowRight size={16} />
                   </div>
@@ -416,27 +268,27 @@ function StatCard({
   urgent = false,
 }: StatCardProps) {
   return (
-    <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-sm">
+    <div className="rounded-2xl border border-[#f0e2d6] bg-white p-5 shadow-sm">
 
       <div className="flex items-center justify-between">
 
         <div
           className={`flex h-10 w-10 items-center justify-center rounded-xl ${
             urgent
-              ? "bg-[#D96C6C]/15 text-[#F3B9B9]"
-              : "bg-[#19A7A0]/15 text-[#6ED8D2]"
+              ? "bg-[#3e1919]/10 text-[#3e1919]"
+              : "bg-[#f0e2d6] text-[#3e1919]"
           }`}
         >
           {icon}
         </div>
 
-        <span className="text-3xl font-bold text-white">
+        <span className="text-3xl font-bold text-[#3e1919]">
           {value}
         </span>
 
       </div>
 
-      <p className="mt-4 text-sm text-white/60">
+      <p className="mt-4 text-sm text-[#a79093]">
         {title}
       </p>
 

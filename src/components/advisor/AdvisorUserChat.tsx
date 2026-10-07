@@ -37,7 +37,8 @@ export default function AdvisorUserChat({
   advisorId,
   onBack,
 }: Props) {
-  const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [conversation, setConversation] =
+    useState<Conversation | null>(null);
 
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -65,7 +66,8 @@ export default function AdvisorUserChat({
         `/api/advisor/user-conversations/${conversationId}`,
       );
 
-      const loadedConversation: Conversation = response.data.conversation;
+      const loadedConversation: Conversation =
+        response.data.conversation;
 
       setConversation(loadedConversation);
 
@@ -73,7 +75,10 @@ export default function AdvisorUserChat({
     } catch (error: any) {
       console.error("Error loading conversation:", error);
 
-      setError(error.response?.data?.message || "Failed to load conversation.");
+      setError(
+        error.response?.data?.message ||
+          "Failed to load conversation.",
+      );
     } finally {
       setLoading(false);
     }
@@ -87,7 +92,12 @@ export default function AdvisorUserChat({
   const sendMessage = () => {
     const text = messageText.trim();
 
-    if (!text || !conversation || conversation.status !== "active" || sending) {
+    if (
+      !text ||
+      !conversation ||
+      conversation.status !== "active" ||
+      sending
+    ) {
       return;
     }
 
@@ -116,14 +126,18 @@ export default function AdvisorUserChat({
       conversation_id: string;
       message: Message;
     }) => {
-      if (data.conversation_id !== conversationIdRef.current) {
+      if (
+        data.conversation_id !== conversationIdRef.current
+      ) {
         return;
       }
 
       setMessages((previous) => {
         if (
           previous.some(
-            (message) => message.message_id === data.message.message_id,
+            (message) =>
+              message.message_id ===
+              data.message.message_id,
           )
         ) {
           return previous;
@@ -156,7 +170,10 @@ export default function AdvisorUserChat({
     });
 
     return () => {
-      socket.emit("advisor_user_leave", conversationId);
+      socket.emit(
+        "advisor_user_leave",
+        conversationId,
+      );
     };
   }, [conversationId, advisorId]);
 
@@ -179,8 +196,10 @@ export default function AdvisorUserChat({
    */
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <p className="text-sm text-gray-500">Loading conversation...</p>
+      <div className="flex h-full items-center justify-center bg-[#f7f5f6]">
+        <p className="text-sm text-[#a79093]">
+          Loading conversation...
+        </p>
       </div>
     );
   }
@@ -192,12 +211,18 @@ export default function AdvisorUserChat({
    */
   if (error && !conversation) {
     return (
-      <div className="flex h-full flex-col">
-        <div className="border-b p-4">
+      <div className="flex h-full flex-col bg-[#f7f5f6]">
+        <div className="border-b border-[#f0e2d6] p-4">
           {onBack && (
             <button
               onClick={onBack}
-              className="rounded-lg p-2 hover:bg-gray-100"
+              className="
+                rounded-lg
+                p-2
+                text-[#3e1919]
+                transition
+                hover:bg-[#f0e2d6]
+              "
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
@@ -205,7 +230,7 @@ export default function AdvisorUserChat({
         </div>
 
         <div className="flex flex-1 items-center justify-center p-6">
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="rounded-lg border border-[#a79093]/30 bg-[#f0e2d6] p-4 text-sm text-[#3e1919]">
             {error}
           </div>
         </div>
@@ -223,27 +248,40 @@ export default function AdvisorUserChat({
    * -----------------------------------------------
    */
   return (
-    <div className="flex h-full flex-col bg-white">
+    <div className="flex h-full flex-col bg-[#f7f5f6]">
+
       {/* Header */}
-      <div className="flex items-center gap-3 border-b px-4 py-3">
+      <div className="flex items-center gap-3 border-b border-[#f0e2d6] bg-white px-4 py-3">
+
         {onBack && (
-          <button onClick={onBack} className="rounded-lg p-2 hover:bg-gray-100">
-            <ArrowLeft className="h-5 w-5 text-gray-600" />
+          <button
+            onClick={onBack}
+            className="
+              rounded-lg
+              p-2
+              text-[#3e1919]
+              transition
+              hover:bg-[#f0e2d6]
+            "
+          >
+            <ArrowLeft className="h-5 w-5" />
           </button>
         )}
 
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-          <User className="h-5 w-5 text-blue-600" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f0e2d6]">
+          <User className="h-5 w-5 text-[#3e1919]" />
         </div>
 
         <div>
-          <h2 className="font-semibold text-gray-900">User</h2>
+          <h2 className="font-semibold text-[#3e1919]">
+            User
+          </h2>
 
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-[#a79093]">
             Session: {conversation.session_id}
           </p>
 
-          <p className="text-xs capitalize text-gray-400">
+          <p className="text-xs capitalize text-[#a79093]">
             {conversation.advisor_type} Advisor
           </p>
         </div>
@@ -251,51 +289,67 @@ export default function AdvisorUserChat({
 
       {/* Error */}
       {error && (
-        <div className="mx-4 mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="mx-4 mt-3 rounded-lg border border-[#a79093]/30 bg-[#f0e2d6] p-3 text-sm text-[#3e1919]">
           {error}
         </div>
       )}
 
       {/* Messages */}
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
+
         {messages.length === 0 && (
           <div className="flex h-full items-center justify-center text-center">
             <div>
-              <MessageCircle className="mx-auto mb-2 h-8 w-8 text-gray-300" />
+              <MessageCircle className="mx-auto mb-2 h-8 w-8 text-[#a79093]" />
 
-              <p className="text-sm text-gray-500">No messages yet.</p>
+              <p className="text-sm text-[#a79093]">
+                No messages yet.
+              </p>
             </div>
           </div>
         )}
 
         {messages.map((message) => {
-          const isAdvisor = message.sender === "advisor";
+          const isAdvisor =
+            message.sender === "advisor";
 
-          const isDeleted = message.deleted || message.deletedForEveryone;
+          const isDeleted =
+            message.deleted ||
+            message.deletedForEveryone;
 
           return (
             <div
               key={message.message_id}
-              className={`flex ${isAdvisor ? "justify-end" : "justify-start"}`}
+              className={`flex ${
+                isAdvisor
+                  ? "justify-end"
+                  : "justify-start"
+              }`}
             >
               <div
                 className={`max-w-[75%] rounded-2xl px-4 py-2 ${
                   isAdvisor
-                    ? "rounded-br-md bg-blue-600 text-white"
-                    : "rounded-bl-md bg-gray-100 text-gray-900"
+                    ? "rounded-br-md bg-[#3e1919] text-[#f7f5f6]"
+                    : "rounded-bl-md bg-[#f0e2d6] text-[#3e1919]"
                 }`}
               >
                 <p
                   className={`whitespace-pre-wrap break-words text-sm ${
-                    isDeleted ? "italic opacity-70" : ""
+                    isDeleted
+                      ? "italic opacity-70"
+                      : ""
                   }`}
                 >
-                  {isDeleted ? "Message deleted" : message.text}
+                  {isDeleted
+                    ? "Message deleted"
+                    : message.text}
                 </p>
 
                 <div
                   className={`mt-1 text-[10px] ${
-                    isAdvisor ? "text-blue-100" : "text-gray-400"
+                    isAdvisor
+                      ? "text-[#f0e2d6]"
+                      : "text-[#a79093]"
                   }`}
                 >
                   {formatTime(message.timestamp)}
@@ -308,37 +362,79 @@ export default function AdvisorUserChat({
 
       {/* Input */}
       {conversation.status === "active" ? (
-        <div className="border-t p-3">
+        <div className="border-t border-[#f0e2d6] bg-white p-3">
+
           <div className="flex items-end gap-2">
+
             <textarea
               value={messageText}
-              onChange={(event) => setMessageText(event.target.value)}
+              onChange={(event) =>
+                setMessageText(event.target.value)
+              }
               onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
+                if (
+                  event.key === "Enter" &&
+                  !event.shiftKey
+                ) {
                   event.preventDefault();
                   sendMessage();
                 }
               }}
               placeholder="Type your message..."
               rows={1}
-              className="max-h-32 min-h-[42px] flex-1 resize-none rounded-xl border px-4 py-2 text-sm outline-none focus:border-blue-500"
+              className="
+                max-h-32
+                min-h-[42px]
+                flex-1
+                resize-none
+                rounded-xl
+                border
+                border-[#f0e2d6]
+                bg-[#f7f5f6]
+                px-4
+                py-2
+                text-sm
+                text-[#3e1919]
+                outline-none
+                transition
+                placeholder:text-[#a79093]
+                focus:border-[#a79093]
+                focus:ring-2
+                focus:ring-[#a79093]/20
+              "
             />
 
             <button
               onClick={sendMessage}
-              disabled={!messageText.trim() || sending}
-              className="flex h-[42px] w-[42px] items-center justify-center rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={
+                !messageText.trim() || sending
+              }
+              className="
+                flex
+                h-[42px]
+                w-[42px]
+                items-center
+                justify-center
+                rounded-xl
+                bg-[#3e1919]
+                text-[#f7f5f6]
+                transition
+                hover:bg-[#a79093]
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
             >
               <Send className="h-5 w-5" />
             </button>
+
           </div>
 
-          <p className="mt-1 text-[11px] text-gray-400">
+          <p className="mt-1 text-[11px] text-[#a79093]">
             Enter to send · Shift + Enter for a new line
           </p>
         </div>
       ) : (
-        <div className="border-t bg-gray-50 p-4 text-center text-sm text-gray-500">
+        <div className="border-t border-[#f0e2d6] bg-[#f0e2d6] p-4 text-center text-sm text-[#a79093]">
           This conversation is closed.
         </div>
       )}

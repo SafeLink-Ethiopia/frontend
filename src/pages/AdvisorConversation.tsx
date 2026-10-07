@@ -71,9 +71,9 @@ export default function AdvisorConversation() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-50 p-6">
+      <main className="min-h-screen bg-[#f7f5f6] p-6">
         <div className="mx-auto max-w-4xl">
-          <p className="text-gray-600">Loading conversation...</p>
+          <p className="text-[#a79093]">Loading conversation...</p>
         </div>
       </main>
     );
@@ -81,10 +81,12 @@ export default function AdvisorConversation() {
 
   if (!conversation) {
     return (
-      <main className="min-h-screen bg-gray-50 p-6">
+      <main className="min-h-screen bg-[#f7f5f6] p-6">
         <div className="mx-auto max-w-4xl">
-          <div className="rounded-2xl bg-white p-8 shadow-sm">
-            <p className="text-red-600">{error || "Conversation not found."}</p>
+          <div className="rounded-2xl border border-[#f0e2d6] bg-white p-8 shadow-sm">
+            <p className="text-[#3e1919]">
+              {error || "Conversation not found."}
+            </p>
           </div>
         </div>
       </main>
@@ -92,33 +94,35 @@ export default function AdvisorConversation() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 p-6">
+    <main className="min-h-screen bg-[#f7f5f6] p-6">
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <div className="mb-6">
-          <p className="text-sm font-medium text-blue-600">SafeLink Advisor</p>
+          <p className="text-sm font-medium text-[#a79093]">
+            SafeLink Advisor
+          </p>
 
-          <h1 className="mt-1 text-2xl font-bold text-gray-900">
+          <h1 className="mt-1 text-2xl font-bold capitalize text-[#3e1919]">
             {conversation.advisor_type} Conversation
           </h1>
 
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-[#a79093]">
             {conversation.conversation_id}
           </p>
         </div>
 
         {error && (
-          <div className="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">
+          <div className="mb-4 rounded-xl border border-[#a79093]/30 bg-[#f0e2d6] p-4 text-sm text-[#3e1919]">
             {error}
           </div>
         )}
 
         {/* Chat */}
-        <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
-          <div className="h-[550px] space-y-4 overflow-y-auto p-6">
+        <section className="overflow-hidden rounded-2xl border border-[#f0e2d6] bg-white shadow-sm">
+          <div className="h-[550px] space-y-4 overflow-y-auto bg-[#f7f5f6] p-6">
             {conversation.messages.length === 0 ? (
               <div className="flex h-full items-center justify-center">
-                <p className="text-center text-gray-500">
+                <p className="text-center text-[#a79093]">
                   No messages yet.
                   <br />
                   Waiting for the user to send a message.
@@ -131,14 +135,16 @@ export default function AdvisorConversation() {
                   <div
                     key={msg.message_id}
                     className={`flex ${
-                      msg.sender === "advisor" ? "justify-end" : "justify-start"
+                      msg.sender === "advisor"
+                        ? "justify-end"
+                        : "justify-start"
                     }`}
                   >
                     <div
                       className={`max-w-[75%] rounded-2xl px-4 py-3 ${
                         msg.sender === "advisor"
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-100 text-gray-900"
+                          ? "bg-[#3e1919] text-[#f7f5f6]"
+                          : "bg-[#f0e2d6] text-[#3e1919]"
                       }`}
                     >
                       <p className="mb-1 text-xs font-semibold opacity-70">
@@ -160,7 +166,7 @@ export default function AdvisorConversation() {
           </div>
 
           {/* Message input */}
-          <div className="border-t border-gray-200 p-4">
+          <div className="border-t border-[#f0e2d6] bg-white p-4">
             <div className="flex gap-3">
               <input
                 type="text"
@@ -173,14 +179,14 @@ export default function AdvisorConversation() {
                   }
                 }}
                 placeholder="Type your reply..."
-                className="flex-1 rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="flex-1 rounded-xl border border-[#f0e2d6] bg-[#f7f5f6] px-4 py-3 text-[#3e1919] outline-none placeholder:text-[#a79093] focus:border-[#a79093] focus:ring-2 focus:ring-[#f0e2d6]"
               />
 
               <button
                 type="button"
                 onClick={handleSendMessage}
                 disabled={sending || !message.trim()}
-                className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl bg-[#3e1919] px-5 py-3 font-semibold text-[#f7f5f6] transition hover:bg-[#a79093] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {sending ? "..." : "Send"}
               </button>

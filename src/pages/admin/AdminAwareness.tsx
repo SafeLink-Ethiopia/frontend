@@ -327,75 +327,125 @@ export default function AdminAwareness() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 px-6 py-8">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              {editingPostId ? "Edit Awareness Post" : currentLabels.pageTitle}
-            </h1>
+    <main className="min-h-screen bg-[#f7f5f6] text-[#3e1919]">
+      <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
+        {/* PAGE HEADER */}
+        <header className="border-b border-[#a79093]/30 pb-8">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#a79093]">
+                SafeLink Administration
+              </p>
 
-            <p className="mt-2 text-gray-600">
-              {currentLabels.pageDescription}
-            </p>
+              <h1 className="text-3xl font-bold tracking-tight text-[#3e1919] sm:text-4xl">
+                {editingPostId
+                  ? "Edit Awareness Post"
+                  : currentLabels.pageTitle}
+              </h1>
+
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#a79093]">
+                {currentLabels.pageDescription}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => navigate("/admin/dashboard")}
+              className="self-start border border-[#a79093]/40 bg-transparent px-5 py-2.5 text-sm font-semibold text-[#3e1919] transition hover:bg-[#f0e2d6] sm:self-auto"
+            >
+              ← {currentLabels.backButton}
+            </button>
+          </div>
+        </header>
+
+        {/* STATUS MESSAGES */}
+        {(success || error) && (
+          <div className="mt-6">
+            {success && (
+              <div className="border-l-4 border-[#3e1919] bg-[#f0e2d6] px-5 py-4">
+                <p className="text-sm font-medium text-[#3e1919]">
+                  {success}
+                </p>
+              </div>
+            )}
+
+            {error && (
+              <div className="mt-3 border-l-4 border-[#3e1919] bg-[#f0e2d6] px-5 py-4">
+                <p className="text-sm font-medium text-[#3e1919]">
+                  {error}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* EDITOR */}
+        <section className="mt-10">
+          <div className="mb-6 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+                {editingPostId ? "Editing" : "New publication"}
+              </p>
+
+              <h2 className="mt-1 text-xl font-bold text-[#3e1919]">
+                {editingPostId
+                  ? "Update awareness content"
+                  : "Write an awareness post"}
+              </h2>
+            </div>
+
+            {editingPostId && (
+              <span className="border border-[#a79093]/40 bg-[#f0e2d6] px-3 py-1.5 text-xs font-semibold text-[#3e1919]">
+                Editing post
+              </span>
+            )}
           </div>
 
-          <button
-            type="button"
-            onClick={() => navigate("/admin/dashboard")}
-            className="rounded-lg bg-gray-200 px-4 py-2 font-medium text-gray-700 transition hover:bg-gray-300"
+          <form
+            onSubmit={handleSubmit}
+            className="border-y border-[#a79093]/30 bg-white"
           >
-            {currentLabels.backButton}
-          </button>
-        </div>
+            {/* LANGUAGE */}
+            <div className="grid border-b border-[#a79093]/25 sm:grid-cols-[180px_1fr]">
+              <div className="border-b border-[#a79093]/25 bg-[#f7f5f6] px-5 py-4 sm:border-b-0 sm:border-r">
+                <label
+                  htmlFor="language"
+                  className="text-xs font-semibold uppercase tracking-[0.12em] text-[#a79093]"
+                >
+                  {currentLabels.language}
+                </label>
+              </div>
 
-        {success && (
-          <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-700">
-            {success}
-          </div>
-        )}
+              <div className="px-5 py-4">
+                <select
+                  id="language"
+                  value={language}
+                  onChange={(event) =>
+                    handleLanguageChange(
+                      event.target.value as Language,
+                    )
+                  }
+                  className="w-full max-w-sm border border-[#a79093]/40 bg-[#f7f5f6] px-4 py-3 text-sm font-medium text-[#3e1919] outline-none transition focus:border-[#3e1919] focus:bg-white"
+                >
+                  <option value="en">English</option>
+                  <option value="am">አማርኛ</option>
+                  <option value="om">Afaan Oromoo</option>
+                </select>
+              </div>
+            </div>
 
-        {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="mb-12 space-y-6">
-          <section className="rounded-xl bg-white p-6 shadow-sm">
-            <label
-              htmlFor="language"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
-              {currentLabels.language}
-            </label>
-
-            <select
-              id="language"
-              value={language}
-              onChange={(event) =>
-                handleLanguageChange(event.target.value as Language)
-              }
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="en">English</option>
-
-              <option value="am">አማርኛ</option>
-
-              <option value="om">Afaan Oromoo</option>
-            </select>
-          </section>
-
-          <section className="rounded-xl bg-white p-6 shadow-sm">
-            <div className="space-y-6">
-              <div>
+            {/* TITLE */}
+            <div className="grid border-b border-[#a79093]/25 sm:grid-cols-[180px_1fr]">
+              <div className="border-b border-[#a79093]/25 bg-[#f7f5f6] px-5 py-4 sm:border-b-0 sm:border-r">
                 <label
                   htmlFor="title"
-                  className="mb-2 block text-sm font-medium text-gray-700"
+                  className="text-xs font-semibold uppercase tracking-[0.12em] text-[#a79093]"
                 >
                   {currentLabels.title}
                 </label>
+              </div>
 
+              <div className="px-5 py-4">
                 <input
                   id="title"
                   type="text"
@@ -403,18 +453,23 @@ export default function AdminAwareness() {
                   onChange={(event) => setTitle(event.target.value)}
                   placeholder={currentLabels.titlePlaceholder}
                   required
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full border-0 bg-transparent px-0 py-2 text-lg font-semibold text-[#3e1919] outline-none placeholder:text-[#a79093]/70 focus:ring-0"
                 />
               </div>
+            </div>
 
-              <div>
+            {/* CONTENT */}
+            <div className="grid sm:grid-cols-[180px_1fr]">
+              <div className="border-b border-[#a79093]/25 bg-[#f7f5f6] px-5 py-4 sm:border-b-0 sm:border-r">
                 <label
                   htmlFor="content"
-                  className="mb-2 block text-sm font-medium text-gray-700"
+                  className="text-xs font-semibold uppercase tracking-[0.12em] text-[#a79093]"
                 >
                   {currentLabels.content}
                 </label>
+              </div>
 
+              <div className="px-5 py-4">
                 <textarea
                   id="content"
                   value={content}
@@ -422,111 +477,155 @@ export default function AdminAwareness() {
                   placeholder={currentLabels.contentPlaceholder}
                   rows={12}
                   required
-                  className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full resize-y border-0 bg-transparent px-0 py-2 text-sm leading-7 text-[#3e1919] outline-none placeholder:text-[#a79093]/70 focus:ring-0"
                 />
               </div>
             </div>
-          </section>
 
-          <div className="flex justify-end gap-3">
-            {editingPostId && (
+            {/* ACTIONS */}
+            <div className="flex flex-col-reverse gap-3 border-t border-[#a79093]/25 bg-[#f7f5f6] px-5 py-4 sm:flex-row sm:justify-end">
+              {editingPostId && (
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="border border-[#a79093]/40 bg-white px-6 py-2.5 text-sm font-semibold text-[#3e1919] transition hover:bg-[#f0e2d6]"
+                >
+                  {currentLabels.cancelButton}
+                </button>
+              )}
+
               <button
-                type="button"
-                onClick={handleCancelEdit}
-                className="rounded-lg bg-gray-200 px-6 py-3 font-semibold text-gray-700 transition hover:bg-gray-300"
+                type="submit"
+                disabled={loading}
+                className="bg-[#3e1919] px-7 py-2.5 text-sm font-semibold text-[#f0e2d6] transition hover:bg-[#3e1919]/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {currentLabels.cancelButton}
+                {loading
+                  ? editingPostId
+                    ? currentLabels.updatingButton
+                    : currentLabels.creatingButton
+                  : editingPostId
+                    ? currentLabels.updateButton
+                    : currentLabels.createButton}
               </button>
-            )}
+            </div>
+          </form>
+        </section>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="rounded-lg bg-blue-600 px-8 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {loading
-                ? editingPostId
-                  ? currentLabels.updatingButton
-                  : currentLabels.creatingButton
-                : editingPostId
-                  ? currentLabels.updateButton
-                  : currentLabels.createButton}
-            </button>
-          </div>
-        </form>
+        {/* POSTS */}
+        <section className="mt-16">
+          <div className="flex flex-col gap-2 border-b border-[#a79093]/30 pb-5 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+                Published content
+              </p>
 
-        <section>
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              {currentLabels.postsTitle}
-            </h2>
+              <h2 className="mt-1 text-2xl font-bold text-[#3e1919]">
+                {currentLabels.postsTitle}
+              </h2>
+            </div>
 
-            <p className="mt-1 text-gray-600">
-              {currentLabels.postsDescription}
+            <p className="text-sm text-[#a79093]">
+              {posts.length} {posts.length === 1 ? "post" : "posts"}
             </p>
           </div>
 
+          <p className="mt-4 text-sm leading-6 text-[#a79093]">
+            {currentLabels.postsDescription}
+          </p>
+
           {postsLoading ? (
-            <div className="rounded-xl bg-white p-8 text-center text-gray-500 shadow-sm">
-              {currentLabels.loadingPosts}
+            <div className="border-y border-[#a79093]/25 py-14 text-center">
+              <div className="mx-auto mb-4 h-6 w-6 animate-spin rounded-full border-2 border-[#a79093]/30 border-t-[#3e1919]" />
+
+              <p className="text-sm text-[#a79093]">
+                {currentLabels.loadingPosts}
+              </p>
             </div>
           ) : posts.length === 0 ? (
-            <div className="rounded-xl bg-white p-8 text-center text-gray-500 shadow-sm">
-              {currentLabels.noPosts}
+            <div className="mt-8 border-y border-[#a79093]/25 py-14 text-center">
+              <p className="text-sm font-medium text-[#3e1919]">
+                {currentLabels.noPosts}
+              </p>
+
+              <p className="mt-2 text-xs text-[#a79093]">
+                Create your first awareness publication using the
+                editor above.
+              </p>
             </div>
           ) : (
-            <div className="space-y-5">
-              {posts.map((post) => (
+            <div className="mt-8 divide-y divide-[#a79093]/25 border-y border-[#a79093]/25">
+              {posts.map((post, index) => (
                 <article
                   key={post._id}
-                  className="rounded-xl bg-white p-6 shadow-sm"
+                  className="group bg-white px-5 py-7 transition hover:bg-[#f0e2d6]/30 sm:px-7"
                 >
-                  <div className="mb-4 flex items-start justify-between gap-4">
-                    <div>
-                      <span className="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
-                        {getLanguageName(post.language)}
-                      </span>
+                  <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                    {/* POST CONTENT */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                        <span className="text-xs font-bold uppercase tracking-[0.12em] text-[#3e1919]">
+                          {getLanguageName(post.language)}
+                        </span>
 
-                      <h3 className="mt-3 text-xl font-bold text-gray-900">
+                        <span className="h-1 w-1 rounded-full bg-[#a79093]" />
+
+                        <span className="text-xs text-[#a79093]">
+                          {new Date(
+                            post.created_at,
+                          ).toLocaleDateString()}
+                        </span>
+
+                        <span className="text-xs text-[#a79093]">
+                          #{String(index + 1).padStart(2, "0")}
+                        </span>
+                      </div>
+
+                      <h3 className="mt-4 text-xl font-bold leading-tight text-[#3e1919] sm:text-2xl">
                         {post.title}
                       </h3>
+
+                      <p className="mt-4 max-w-4xl whitespace-pre-wrap text-sm leading-7 text-[#a79093]">
+                        {post.content}
+                      </p>
                     </div>
 
-                    <span className="whitespace-nowrap text-sm text-gray-500">
-                      {new Date(post.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
+                    {/* ACTIONS */}
+                    <div className="flex shrink-0 items-center gap-2 lg:pt-1">
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(post)}
+                        className="border border-[#a79093]/40 bg-white px-4 py-2 text-sm font-semibold text-[#3e1919] transition hover:border-[#3e1919] hover:bg-[#f0e2d6]"
+                      >
+                        {currentLabels.editButton}
+                      </button>
 
-                  <p className="whitespace-pre-wrap text-gray-700">
-                    {post.content}
-                  </p>
-
-                  <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => handleEdit(post)}
-                      className="rounded-lg bg-blue-100 px-4 py-2 font-medium text-blue-700 transition hover:bg-blue-200"
-                    >
-                      {currentLabels.editButton}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(post._id)}
-                      disabled={deletingPostId === post._id}
-                      className="rounded-lg bg-red-100 px-4 py-2 font-medium text-red-700 transition hover:bg-red-200 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {deletingPostId === post._id
-                        ? "..."
-                        : currentLabels.deleteButton}
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(post._id)}
+                        disabled={deletingPostId === post._id}
+                        className="border border-[#a79093]/30 px-4 py-2 text-sm font-semibold text-[#a79093] transition hover:border-[#3e1919] hover:bg-[#f0e2d6] hover:text-[#3e1919] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {deletingPostId === post._id
+                          ? "..."
+                          : currentLabels.deleteButton}
+                      </button>
+                    </div>
                   </div>
                 </article>
               ))}
             </div>
           )}
         </section>
+
+        {/* FOOTER NOTE */}
+        <footer className="mt-12 border-t border-[#a79093]/25 pt-6">
+          <p className="text-xs leading-5 text-[#a79093]">
+            Awareness publications are managed by SafeLink
+            administrators and made available to users according to
+            their selected language.
+          </p>
+        </footer>
       </div>
-    </div>
+    </main>
   );
 }

@@ -73,7 +73,10 @@ export default function ChangePassword() {
       }, 1000);
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        setError(error.response?.data?.message || "Failed to change password.");
+        setError(
+          error.response?.data?.message ||
+            "Failed to change password.",
+        );
       } else {
         setError("Something went wrong. Please try again.");
       }
@@ -92,100 +95,141 @@ export default function ChangePassword() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-slate-900">
-              Change Your Password
+    <main className="min-h-screen bg-[#f7f5f6] px-5 py-10 text-[#3e1919] sm:px-6">
+      <div className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-lg items-center justify-center">
+        <div className="w-full">
+          {/* HEADER */}
+          <div className="mb-8 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#3e1919] text-2xl text-[#f0e2d6]">
+              🔐
+            </div>
+
+            <p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-[#a79093]">
+              Advisor Portal
+            </p>
+
+            <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#3e1919] sm:text-3xl">
+              Change your password
             </h1>
 
-            <p className="mt-3 text-sm leading-6 text-slate-500">
-              You are using a temporary password. Please create a new password
-              before continuing.
+            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#a79093]">
+              You are using a temporary password. Create a new
+              password before continuing to your advisor dashboard.
             </p>
           </div>
 
-          {error && (
-            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
+          {/* FORM AREA */}
+          <div className="border-y border-[#a79093]/30 bg-white px-6 py-7 sm:px-8 sm:py-8">
+            {/* ERROR */}
+            {error && (
+              <div className="mb-6 border-l-4 border-[#3e1919] bg-[#f0e2d6] px-4 py-3">
+                <p className="text-sm leading-5 text-[#3e1919]">
+                  {error}
+                </p>
+              </div>
+            )}
 
-          {success && (
-            <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-              {success}
-            </div>
-          )}
+            {/* SUCCESS */}
+            {success && (
+              <div className="mb-6 border-l-4 border-[#3e1919] bg-[#f0e2d6] px-4 py-3">
+                <p className="text-sm leading-5 text-[#3e1919]">
+                  {success}
+                </p>
+              </div>
+            )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label
-                htmlFor="newPassword"
-                className="mb-2 block text-sm font-medium text-slate-700"
-              >
-                New Password
-              </label>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* NEW PASSWORD */}
+              <div>
+                <label
+                  htmlFor="newPassword"
+                  className="mb-2 block text-sm font-semibold text-[#3e1919]"
+                >
+                  New Password
+                </label>
 
-              <input
-                id="newPassword"
-                type="password"
-                value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
-                placeholder="Enter your new password"
-                autoComplete="new-password"
+                <input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(event) =>
+                    setNewPassword(event.target.value)
+                  }
+                  placeholder="Enter your new password"
+                  autoComplete="new-password"
+                  disabled={loading}
+                  className="w-full border border-[#a79093]/40 bg-[#f7f5f6] px-4 py-3 text-sm text-[#3e1919] outline-none transition placeholder:text-[#a79093] focus:border-[#3e1919] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                />
+
+                <p className="mt-2 text-xs leading-5 text-[#a79093]">
+                  Use between 8 and 72 characters.
+                </p>
+              </div>
+
+              {/* CONFIRM PASSWORD */}
+              <div>
+                <label
+                  htmlFor="confirmPassword"
+                  className="mb-2 block text-sm font-semibold text-[#3e1919]"
+                >
+                  Confirm New Password
+                </label>
+
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(event) =>
+                    setConfirmPassword(event.target.value)
+                  }
+                  placeholder="Confirm your new password"
+                  autoComplete="new-password"
+                  disabled={loading}
+                  className="w-full border border-[#a79093]/40 bg-[#f7f5f6] px-4 py-3 text-sm text-[#3e1919] outline-none transition placeholder:text-[#a79093] focus:border-[#3e1919] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                />
+              </div>
+
+              {/* SUBMIT */}
+              <button
+                type="submit"
                 disabled={loading}
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
-              />
-
-              <p className="mt-2 text-xs text-slate-500">
-                Password must be between 8 and 72 characters.
-              </p>
-            </div>
-
-            <div>
-              <label
-                htmlFor="confirmPassword"
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="w-full bg-[#3e1919] px-4 py-3 text-sm font-semibold text-[#f0e2d6] transition hover:bg-[#3e1919]/90 focus:outline-none focus:ring-2 focus:ring-[#3e1919]/30 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Confirm New Password
-              </label>
+                {loading
+                  ? "Changing Password..."
+                  : "Change Password"}
+              </button>
+            </form>
 
-              <input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                placeholder="Confirm your new password"
-                autoComplete="new-password"
+            {/* LOGOUT */}
+            <div className="mt-6 border-t border-[#a79093]/20 pt-6">
+              <button
+                type="button"
+                onClick={handleLogout}
                 disabled={loading}
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
-              />
+                className="w-full border border-[#a79093]/50 bg-transparent px-4 py-3 text-sm font-semibold text-[#3e1919] transition hover:bg-[#f0e2d6] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Cancel and Logout
+              </button>
             </div>
+          </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {loading ? "Changing Password..." : "Change Password"}
-            </button>
-          </form>
+          {/* SECURITY NOTE */}
+          <div className="mt-6 flex items-start gap-3 px-2">
+            <span className="text-sm">🔒</span>
 
-          <button
-            type="button"
-            onClick={handleLogout}
-            disabled={loading}
-            className="mt-4 w-full rounded-lg border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            Cancel and Logout
-          </button>
+            <p className="text-xs leading-5 text-[#a79093]">
+              Choose a password that is difficult for others to
+              guess and keep it private. Your new password will be
+              required the next time you sign in.
+            </p>
+          </div>
+
+          <p className="mt-6 text-center text-xs text-[#a79093]">
+            SafeLink Advisor Portal
+          </p>
         </div>
-
-        <p className="mt-6 text-center text-xs text-slate-400">
-          SafeLink Advisor Portal
-        </p>
       </div>
-    </div>
+    </main>
   );
 }

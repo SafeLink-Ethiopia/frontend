@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import QuickExit from "../components/QuickExit";
@@ -117,10 +116,6 @@ export default function UserAdvisorChat() {
   /*
    * Load ONLY the conversation belonging to
    * the currently selected advisor.
-   *
-   * We use getUserConversations() instead of
-   * getUserConversation(), because the backend
-   * now returns all advisor conversations.
    */
   useEffect(() => {
     if (!sessionId) return;
@@ -137,12 +132,6 @@ export default function UserAdvisorChat() {
 
         if (cancelled) return;
 
-        /*
-         * Find only this advisor's conversation.
-         *
-         * If there are multiple old conversations
-         * for the same advisor, use the newest one.
-         */
         const advisorConversations =
           conversations
             .filter(
@@ -161,10 +150,6 @@ export default function UserAdvisorChat() {
           advisorConversations[0] ?? null;
 
         if (!matchingConversation) {
-          /*
-           * There is no conversation for this advisor yet.
-           * The user will see the Start Conversation screen.
-           */
           return;
         }
 
@@ -178,10 +163,6 @@ export default function UserAdvisorChat() {
           matchingConversation.conversation_id,
         );
 
-        /*
-         * Mark advisor messages as seen when
-         * the user opens this conversation.
-         */
         try {
           const seenConversation =
             await markConversationSeen(
@@ -275,9 +256,6 @@ export default function UserAdvisorChat() {
 
   /*
    * Change advisor.
-   *
-   * The selected advisor is saved separately for
-   * this user's private session.
    */
   const handleAdvisorChange = (
     advisorType: AdvisorType,
@@ -300,13 +278,6 @@ export default function UserAdvisorChat() {
 
   /*
    * Start/open the selected advisor conversation.
-   *
-   * IMPORTANT:
-   * First check whether this advisor already has
-   * a conversation.
-   *
-   * Only create a new conversation if none exists.
-   * This prevents duplicate chats.
    */
   const handleStartChat = async () => {
     if (!sessionId) {
@@ -337,10 +308,6 @@ export default function UserAdvisorChat() {
               new Date(a.created_at).getTime(),
           )[0] ?? null;
 
-      /*
-       * If the user already has a chat with this advisor,
-       * simply reopen it.
-       */
       if (existingConversation) {
         setConversation(existingConversation);
 
@@ -375,21 +342,12 @@ export default function UserAdvisorChat() {
         return;
       }
 
-      /*
-       * No conversation exists for this advisor,
-       * so create one.
-       */
       const newConversation =
         await requestAdvisor(
           sessionId,
           selectedAdvisor,
         );
 
-      /*
-       * Safety check:
-       * Never put another advisor's conversation
-       * into this chat.
-       */
       if (
         newConversation.advisor_type !==
         selectedAdvisor
@@ -604,37 +562,41 @@ export default function UserAdvisorChat() {
   );
 
   return (
-    <main className="min-h-screen bg-[#fbfcfc] text-[#0b4964]">
+    <main className="min-h-screen bg-[#f7f5f6] text-[#3e1919]">
       <div className="flex min-h-screen">
 
         {/* SIDEBAR */}
-        <aside className="hidden w-[250px] shrink-0 border-r border-[#e1eae7] bg-white lg:flex lg:flex-col">
+        <aside className="hidden w-[250px] shrink-0 border-r border-[#a79093]/25 bg-[#f7f5f6] lg:flex lg:flex-col">
 
-          <div className="px-7 pt-8 pb-7">
+          {/* Logo */}
+          <div className="px-7 pt-8 pb-8">
             <button
               onClick={() =>
                 navigate("/user/dashboard")
               }
               className="flex items-center gap-3"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e7f7f4]">
-                <div className="h-6 w-6 rounded-full border-[5px] border-[#079b9d] border-r-[#16a38b]" />
+              <div className="flex h-10 w-10 items-center justify-center bg-[#3e1919]">
+                <span className="text-xl text-[#f0e2d6]">
+                  ♡
+                </span>
               </div>
 
               <div className="text-left">
-                <p className="text-[19px] font-bold tracking-tight text-[#0b4964]">
+                <p className="text-[19px] font-semibold tracking-tight text-[#3e1919]">
                   SafeLink
                 </p>
 
-                <p className="text-[10px] font-medium tracking-[0.15em] text-[#8a9ba0]">
+                <p className="text-[9px] font-medium tracking-[0.18em] text-[#a79093]">
                   PRIVATE SUPPORT
                 </p>
               </div>
             </button>
           </div>
 
-          <nav className="flex-1 px-4">
-            <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#9aabad]">
+          {/* Navigation */}
+          <nav className="flex-1 px-5">
+            <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
               Workspace
             </p>
 
@@ -642,9 +604,12 @@ export default function UserAdvisorChat() {
               onClick={() =>
                 navigate("/user/dashboard")
               }
-              className="mb-2 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-[#607d85] transition hover:bg-[#f1f8f6]"
+              className="mb-1 flex w-full items-center gap-3 border-l-2 border-transparent px-3 py-3 text-sm font-medium text-[#a79093] transition hover:border-[#3e1919] hover:text-[#3e1919]"
             >
-              <span className="text-base">⌂</span>
+              <span className="text-base">
+                ⌂
+              </span>
+
               Dashboard
             </button>
 
@@ -652,9 +617,12 @@ export default function UserAdvisorChat() {
               onClick={() =>
                 navigate("/user/dashboard/chat")
               }
-              className="flex w-full items-center gap-3 rounded-xl bg-[#e7f7f4] px-4 py-3 text-sm font-semibold text-[#087f82]"
+              className="mb-1 flex w-full items-center gap-3 border-l-2 border-[#3e1919] bg-[#f0e2d6] px-3 py-3 text-sm font-semibold text-[#3e1919]"
             >
-              <span className="text-base">◌</span>
+              <span className="text-base">
+                ◌
+              </span>
+
               Advisor Chat
             </button>
 
@@ -662,32 +630,40 @@ export default function UserAdvisorChat() {
               onClick={() =>
                 navigate("/awareness")
               }
-              className="mt-2 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-[#607d85] transition hover:bg-[#f1f8f6]"
+              className="flex w-full items-center gap-3 border-l-2 border-transparent px-3 py-3 text-sm font-medium text-[#a79093] transition hover:border-[#3e1919] hover:text-[#3e1919]"
             >
-              <span className="text-base">▣</span>
+              <span className="text-base">
+                ▣
+              </span>
+
               Awareness
             </button>
           </nav>
 
-          <div className="px-4 pb-5">
-            <div className="rounded-2xl bg-[#075c72] p-4 text-white">
-              <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-lg bg-white/15">
-                !
+          {/* Safety area */}
+          <div className="px-5 pb-5">
+            <div className="border-t border-[#a79093]/25 pt-5">
+              <div className="flex items-start gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center bg-[#f0e2d6] text-sm font-semibold text-[#3e1919]">
+                  !
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-[#3e1919]">
+                    Your safety matters
+                  </p>
+
+                  <p className="mt-1 text-[11px] leading-5 text-[#a79093]">
+                    Your conversations are private.
+                  </p>
+                </div>
               </div>
-
-              <p className="text-sm font-semibold">
-                Your safety matters
-              </p>
-
-              <p className="mt-1 text-[11px] leading-5 text-white/70">
-                Your conversations are private.
-              </p>
 
               <button
                 onClick={() =>
                   navigate("/quick-exit")
                 }
-                className="mt-3 w-full rounded-lg bg-white/10 py-2 text-xs font-semibold transition hover:bg-white/20"
+                className="mt-4 w-full border border-[#3e1919] py-2.5 text-xs font-semibold text-[#3e1919] transition hover:bg-[#3e1919] hover:text-white"
               >
                 Quick Exit
               </button>
@@ -698,32 +674,33 @@ export default function UserAdvisorChat() {
         {/* MAIN */}
         <section className="flex min-h-screen min-w-0 flex-1 flex-col">
 
-          <header className="flex min-h-[76px] items-center justify-between border-b border-[#e6eeec] bg-white px-5 sm:px-8">
+          {/* Header */}
+          <header className="flex min-h-[76px] items-center justify-between border-b border-[#a79093]/25 bg-[#f7f5f6] px-5 sm:px-8">
 
             <div className="flex items-center gap-3">
               <button
                 onClick={() =>
                   navigate("/user/dashboard")
                 }
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#dce9e6] text-[#55757d] transition hover:bg-[#f1f8f6]"
+                className="flex h-9 w-9 items-center justify-center border border-[#a79093]/35 text-[#3e1919] transition hover:bg-[#f0e2d6]"
                 aria-label="Back to dashboard"
               >
                 ←
               </button>
 
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#9aaeb1]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#a79093]">
                   Private Support
                 </p>
 
-                <h1 className="text-base font-bold text-[#0b4964] sm:text-lg">
+                <h1 className="text-base font-semibold text-[#3e1919] sm:text-lg">
                   Advisor Conversations
                 </h1>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="hidden rounded-full bg-[#eaf8f5] px-3 py-1.5 text-[11px] font-semibold text-[#087f82] sm:block">
+              <div className="hidden border border-[#a79093]/30 px-3 py-1.5 text-[11px] font-semibold text-[#3e1919] sm:block">
                 Private session
               </div>
 
@@ -734,8 +711,8 @@ export default function UserAdvisorChat() {
           <div className="flex min-h-0 flex-1 flex-col">
 
             {/* ADVISOR SWITCHER */}
-            <div className="border-b border-[#e4ecea] bg-white px-4 py-3 sm:px-8">
-              <div className="mx-auto flex max-w-[1000px] gap-2 overflow-x-auto pb-1">
+            <div className="border-b border-[#a79093]/25 bg-[#f7f5f6] px-4 py-3 sm:px-8">
+              <div className="mx-auto flex max-w-[1000px] gap-1 overflow-x-auto pb-1">
 
                 {advisorOptions.map(
                   (advisor) => {
@@ -751,10 +728,10 @@ export default function UserAdvisorChat() {
                             advisor.type,
                           )
                         }
-                        className={`flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                        className={`flex shrink-0 items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-semibold transition ${
                           active
-                            ? "border-[#0b9fa0] bg-[#eaf8f5] text-[#087f82]"
-                            : "border-[#e1eae7] bg-white text-[#71888e] hover:bg-[#f5faf8]"
+                            ? "border-[#3e1919] bg-[#f0e2d6] text-[#3e1919]"
+                            : "border-transparent text-[#a79093] hover:border-[#a79093] hover:text-[#3e1919]"
                         }`}
                       >
                         <span>
@@ -776,48 +753,49 @@ export default function UserAdvisorChat() {
 
             {!conversation ? (
               /* START SELECTED ADVISOR CHAT */
-              <div className="flex flex-1 items-start justify-center overflow-y-auto px-5 py-8 sm:px-8 lg:items-center lg:py-10">
+              <div className="flex flex-1 items-start justify-center overflow-y-auto px-5 py-10 sm:px-8 lg:items-center lg:py-12">
                 <div className="w-full max-w-[850px]">
 
-                  <div className="mb-8">
-                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e7f7f4] text-2xl">
-                      {currentAdvisor?.icon || "💬"}
+                  <div className="border-b border-[#a79093]/25 pb-8">
+                    <div className="mb-5 flex h-12 w-12 items-center justify-center bg-[#f0e2d6] text-2xl">
+                      {currentAdvisor?.icon ||
+                        "💬"}
                     </div>
 
-                    <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-[#0b9fa0]">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#a79093]">
                       {currentAdvisor?.label ||
                         "Advisor"}
                     </p>
 
-                    <h2 className="max-w-[650px] text-3xl font-bold leading-tight tracking-tight text-[#0b4964] sm:text-4xl">
+                    <h2 className="max-w-[650px] text-3xl font-semibold leading-tight tracking-tight text-[#3e1919] sm:text-4xl">
                       Your private{" "}
                       {currentAdvisor?.label ||
                         "advisor"}{" "}
                       chat.
                     </h2>
 
-                    <p className="mt-3 max-w-[620px] text-sm leading-6 text-[#71888e]">
+                    <p className="mt-3 max-w-[620px] text-sm leading-6 text-[#a79093]">
                       This conversation is separate
                       from your conversations with
                       other advisors.
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-[#e1eae7] bg-white p-5">
+                  <div className="mt-7 border-y border-[#a79093]/25 py-6">
                     <div className="flex items-start gap-4">
 
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#e7f7f4] text-xl">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-[#f0e2d6] text-xl">
                         {currentAdvisor?.icon ||
                           "💬"}
                       </div>
 
                       <div>
-                        <h3 className="font-bold text-[#0b4964]">
+                        <h3 className="font-semibold text-[#3e1919]">
                           {currentAdvisor?.label ||
                             "Advisor"}
                         </h3>
 
-                        <p className="mt-1 text-sm leading-5 text-[#70888f]">
+                        <p className="mt-1 text-sm leading-5 text-[#a79093]">
                           {currentAdvisor?.description}
                         </p>
                       </div>
@@ -825,7 +803,7 @@ export default function UserAdvisorChat() {
                   </div>
 
                   {error && (
-                    <div className="mt-5 rounded-xl border border-[#f0d8dc] bg-[#fff5f6] px-4 py-3 text-sm text-[#a45c67]">
+                    <div className="mt-5 border-l-2 border-[#3e1919] bg-[#f0e2d6] px-4 py-3 text-sm text-[#3e1919]">
                       {error}
                     </div>
                   )}
@@ -833,7 +811,7 @@ export default function UserAdvisorChat() {
                   <button
                     onClick={handleStartChat}
                     disabled={startingChat}
-                    className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#079b9d] px-6 py-3.5 text-sm font-bold text-white shadow-[0_8px_20px_rgba(7,155,157,0.18)] transition hover:bg-[#07898b] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                    className="mt-7 flex w-full items-center justify-center gap-2 bg-[#3e1919] px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-[#2d1111] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                   >
                     {startingChat
                       ? "Connecting..."
@@ -844,7 +822,7 @@ export default function UserAdvisorChat() {
                     )}
                   </button>
 
-                  <p className="mt-4 text-xs leading-5 text-[#91a2a5]">
+                  <p className="mt-4 text-xs leading-5 text-[#a79093]">
                     Your{" "}
                     {currentAdvisor?.label?.toLowerCase() ||
                       "advisor"}{" "}
@@ -855,41 +833,41 @@ export default function UserAdvisorChat() {
               </div>
             ) : (
               /* CHAT */
-              <div className="flex min-h-0 flex-1 flex-col bg-[#fbfcfc]">
+              <div className="flex min-h-0 flex-1 flex-col bg-[#f7f5f6]">
 
                 {/* Chat header */}
-                <div className="border-b border-[#e4ecea] bg-white px-5 py-4 sm:px-8">
-                  <div className="flex items-center justify-between gap-4">
+                <div className="border-b border-[#a79093]/25 bg-[#f7f5f6] px-5 py-4 sm:px-8">
+                  <div className="mx-auto flex max-w-[1000px] items-center justify-between gap-4">
 
                     <div className="flex min-w-0 items-center gap-3">
 
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#e7f7f4] text-xl">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#f0e2d6] text-xl">
                         {currentAdvisor?.icon ||
                           "💬"}
                       </div>
 
                       <div className="min-w-0">
-                        <h2 className="truncate text-sm font-bold text-[#0b4964] sm:text-base">
+                        <h2 className="truncate text-sm font-semibold text-[#3e1919] sm:text-base">
                           {currentAdvisor?.label ||
                             "Advisor"}
                         </h2>
 
                         <div className="mt-0.5 flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-[#1eae83]" />
+                          <span className="h-1.5 w-1.5 bg-[#3e1919]" />
 
-                          <span className="text-xs text-[#7b9095]">
+                          <span className="text-xs text-[#a79093]">
                             Private conversation
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="hidden rounded-xl bg-[#f3f8f7] px-3 py-2 text-right sm:block">
-                      <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#9aabad]">
+                    <div className="hidden border-l border-[#a79093]/30 pl-4 text-right sm:block">
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#a79093]">
                         Advisor
                       </p>
 
-                      <p className="mt-0.5 text-xs font-semibold text-[#55757d]">
+                      <p className="mt-0.5 text-xs font-semibold text-[#3e1919]">
                         {currentAdvisor?.label.replace(
                           " Advisor",
                           "",
@@ -908,19 +886,19 @@ export default function UserAdvisorChat() {
                       <div className="flex min-h-[300px] items-center justify-center">
                         <div className="max-w-[420px] text-center">
 
-                          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e7f7f4] text-2xl">
+                          <div className="mx-auto flex h-12 w-12 items-center justify-center bg-[#f0e2d6] text-2xl">
                             {currentAdvisor?.icon ||
                               "💬"}
                           </div>
 
-                          <h3 className="mt-4 text-base font-bold text-[#0b4964]">
+                          <h3 className="mt-4 text-base font-semibold text-[#3e1919]">
                             Your{" "}
                             {currentAdvisor?.label ||
                               "advisor"}{" "}
                             conversation is ready
                           </h3>
 
-                          <p className="mt-2 text-sm leading-6 text-[#819398]">
+                          <p className="mt-2 text-sm leading-6 text-[#a79093]">
                             Send your first message
                             below. This chat is separate
                             from your other advisor
@@ -930,7 +908,7 @@ export default function UserAdvisorChat() {
                       </div>
                     )}
 
-                    <div className="space-y-5">
+                    <div className="space-y-6">
                       {conversation.messages.map(
                         (item) => {
                           const isUser =
@@ -950,10 +928,10 @@ export default function UserAdvisorChat() {
                                 }`}
                               >
                                 <div
-                                  className={`rounded-2xl px-4 py-3 text-xs italic ${
+                                  className={`border border-[#a79093]/20 px-4 py-3 text-xs italic text-[#a79093] ${
                                     isUser
-                                      ? "bg-[#f0f4f3] text-[#9aa8aa]"
-                                      : "bg-white text-[#9aa8aa]"
+                                      ? "bg-[#f0e2d6]"
+                                      : "bg-white"
                                   }`}
                                 >
                                   This message was
@@ -983,14 +961,14 @@ export default function UserAdvisorChat() {
                                       : "justify-start"
                                   }`}
                                 >
-                                  <span className="text-[10px] font-semibold text-[#94a4a7]">
+                                  <span className="text-[10px] font-semibold text-[#a79093]">
                                     {isUser
                                       ? "You"
                                       : currentAdvisor?.label ||
                                         "Advisor"}
                                   </span>
 
-                                  <span className="text-[10px] text-[#a6b3b5]">
+                                  <span className="text-[10px] text-[#a79093]/80">
                                     {new Date(
                                       item.timestamp,
                                     ).toLocaleTimeString(
@@ -1006,7 +984,7 @@ export default function UserAdvisorChat() {
 
                                 {editingMessageId ===
                                 item.message_id ? (
-                                  <div className="rounded-2xl border border-[#b9ddd6] bg-white p-3 shadow-sm">
+                                  <div className="border border-[#a79093]/35 bg-white p-3">
                                     <textarea
                                       value={
                                         editingText
@@ -1022,7 +1000,7 @@ export default function UserAdvisorChat() {
                                       }
                                       rows={3}
                                       autoFocus
-                                      className="w-full resize-none border-0 bg-transparent text-sm leading-6 text-[#365c67] outline-none"
+                                      className="w-full resize-none border-0 bg-transparent text-sm leading-6 text-[#3e1919] outline-none"
                                     />
 
                                     <div className="mt-2 flex justify-end gap-2">
@@ -1030,7 +1008,7 @@ export default function UserAdvisorChat() {
                                         onClick={
                                           cancelEditing
                                         }
-                                        className="rounded-lg px-3 py-1.5 text-xs font-semibold text-[#71888e] hover:bg-[#f2f6f5]"
+                                        className="px-3 py-1.5 text-xs font-semibold text-[#a79093] hover:text-[#3e1919]"
                                       >
                                         Cancel
                                       </button>
@@ -1041,7 +1019,7 @@ export default function UserAdvisorChat() {
                                             item.message_id,
                                           )
                                         }
-                                        className="rounded-lg bg-[#079b9d] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#07898b]"
+                                        className="bg-[#3e1919] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#2d1111]"
                                       >
                                         Save
                                       </button>
@@ -1049,10 +1027,10 @@ export default function UserAdvisorChat() {
                                   </div>
                                 ) : (
                                   <div
-                                    className={`rounded-2xl px-4 py-3.5 shadow-sm ${
+                                    className={`px-4 py-3.5 ${
                                       isUser
-                                        ? "rounded-br-md bg-[#079b9d] text-white"
-                                        : "rounded-bl-md border border-[#e1eae7] bg-white text-[#365c67]"
+                                        ? "bg-[#3e1919] text-white"
+                                        : "border border-[#a79093]/25 bg-white text-[#3e1919]"
                                     }`}
                                   >
                                     <p className="whitespace-pre-wrap text-sm leading-6">
@@ -1065,7 +1043,7 @@ export default function UserAdvisorChat() {
                                           className={`text-[9px] ${
                                             isUser
                                               ? "text-white/60"
-                                              : "text-[#a0afb2]"
+                                              : "text-[#a79093]"
                                           }`}
                                         >
                                           edited
@@ -1076,7 +1054,7 @@ export default function UserAdvisorChat() {
                                         <span
                                           className={`text-[11px] font-semibold ${
                                             item.seen_at
-                                              ? "text-white"
+                                              ? "text-[#f0e2d6]"
                                               : "text-white/60"
                                           }`}
                                           title={
@@ -1097,7 +1075,7 @@ export default function UserAdvisorChat() {
                                 {isUser &&
                                   editingMessageId !==
                                     item.message_id && (
-                                    <div className="mt-1.5 flex justify-end gap-2">
+                                    <div className="mt-1.5 flex justify-end gap-3">
                                       <button
                                         onClick={() =>
                                           startEditing(
@@ -1105,7 +1083,7 @@ export default function UserAdvisorChat() {
                                             item.text,
                                           )
                                         }
-                                        className="text-[10px] font-medium text-[#8ca0a4] transition hover:text-[#079b9d]"
+                                        className="text-[10px] font-medium text-[#a79093] transition hover:text-[#3e1919]"
                                       >
                                         Edit
                                       </button>
@@ -1116,7 +1094,7 @@ export default function UserAdvisorChat() {
                                             item.message_id,
                                           )
                                         }
-                                        className="text-[10px] font-medium text-[#8ca0a4] transition hover:text-[#c76c76]"
+                                        className="text-[10px] font-medium text-[#a79093] transition hover:text-[#3e1919]"
                                       >
                                         Delete
                                       </button>
@@ -1136,17 +1114,17 @@ export default function UserAdvisorChat() {
                 {/* Error */}
                 {error && (
                   <div className="px-4 sm:px-8">
-                    <div className="mx-auto mb-2 max-w-[850px] rounded-xl border border-[#f0d8dc] bg-[#fff5f6] px-4 py-2.5 text-xs text-[#a45c67]">
+                    <div className="mx-auto mb-2 max-w-[850px] border-l-2 border-[#3e1919] bg-[#f0e2d6] px-4 py-2.5 text-xs text-[#3e1919]">
                       {error}
                     </div>
                   </div>
                 )}
 
                 {/* Composer */}
-                <div className="border-t border-[#e4ecea] bg-white px-4 py-4 sm:px-8">
+                <div className="border-t border-[#a79093]/25 bg-[#f7f5f6] px-4 py-4 sm:px-8">
                   <div className="mx-auto max-w-[850px]">
 
-                    <div className="flex items-end gap-2 rounded-2xl border border-[#dce9e6] bg-[#fbfdfc] p-2 transition focus-within:border-[#8ccfca] focus-within:ring-2 focus-within:ring-[#e7f7f4]">
+                    <div className="flex items-end gap-2 border border-[#a79093]/35 bg-white p-2 transition focus-within:border-[#3e1919]">
 
                       <textarea
                         value={message}
@@ -1160,7 +1138,7 @@ export default function UserAdvisorChat() {
                         }
                         placeholder={`Write your message to the ${currentAdvisor?.label?.toLowerCase() || "advisor"}...`}
                         rows={1}
-                        className="max-h-32 min-h-[42px] flex-1 resize-none bg-transparent px-3 py-2.5 text-sm leading-5 text-[#365c67] outline-none placeholder:text-[#a3b2b4]"
+                        className="max-h-32 min-h-[42px] flex-1 resize-none bg-transparent px-3 py-2.5 text-sm leading-5 text-[#3e1919] outline-none placeholder:text-[#a79093]"
                       />
 
                       <button
@@ -1171,7 +1149,7 @@ export default function UserAdvisorChat() {
                           loading ||
                           !message.trim()
                         }
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#079b9d] text-white transition hover:bg-[#07898b] disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#3e1919] text-white transition hover:bg-[#2d1111] disabled:cursor-not-allowed disabled:opacity-40"
                         aria-label="Send message"
                       >
                         {loading ? "…" : "↑"}
@@ -1179,12 +1157,12 @@ export default function UserAdvisorChat() {
                     </div>
 
                     <div className="mt-2 flex items-center justify-between px-1">
-                      <p className="text-[10px] text-[#9aa8aa]">
+                      <p className="text-[10px] text-[#a79093]">
                         Enter to send · Shift + Enter
                         for a new line
                       </p>
 
-                      <p className="hidden text-[10px] text-[#9aa8aa] sm:block">
+                      <p className="hidden text-[10px] text-[#a79093] sm:block">
                         {currentAdvisor?.label ||
                           "Advisor"}{" "}
                         conversation is private
@@ -1199,14 +1177,14 @@ export default function UserAdvisorChat() {
       </div>
 
       {/* Mobile navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-[#e1eae7] bg-white px-3 py-2 lg:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-[#a79093]/25 bg-[#f7f5f6] px-3 py-2 lg:hidden">
         <div className="mx-auto flex max-w-md items-center justify-around">
 
           <button
             onClick={() =>
               navigate("/user/dashboard")
             }
-            className="flex flex-col items-center gap-1 px-4 py-1 text-[#71888e]"
+            className="flex flex-col items-center gap-1 px-4 py-1 text-[#a79093] transition hover:text-[#3e1919]"
           >
             <span>⌂</span>
             <span className="text-[9px] font-semibold">
@@ -1218,7 +1196,7 @@ export default function UserAdvisorChat() {
             onClick={() =>
               navigate("/user/dashboard/chat")
             }
-            className="flex flex-col items-center gap-1 px-4 py-1 text-[#079b9d]"
+            className="flex flex-col items-center gap-1 border-b-2 border-[#3e1919] px-4 py-1 text-[#3e1919]"
           >
             <span>◌</span>
             <span className="text-[9px] font-semibold">
@@ -1230,7 +1208,7 @@ export default function UserAdvisorChat() {
             onClick={() =>
               navigate("/awareness")
             }
-            className="flex flex-col items-center gap-1 px-4 py-1 text-[#71888e]"
+            className="flex flex-col items-center gap-1 px-4 py-1 text-[#a79093] transition hover:text-[#3e1919]"
           >
             <span>▣</span>
             <span className="text-[9px] font-semibold">
@@ -1242,7 +1220,7 @@ export default function UserAdvisorChat() {
             onClick={() =>
               navigate("/quick-exit")
             }
-            className="flex flex-col items-center gap-1 px-4 py-1 text-[#c76c76]"
+            className="flex flex-col items-center gap-1 px-4 py-1 text-[#3e1919]"
           >
             <span>×</span>
             <span className="text-[9px] font-semibold">

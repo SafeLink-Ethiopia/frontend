@@ -44,27 +44,28 @@ const advisorLabels: Record<AdvisorType, string> = {
   psychological: "Psychological Advisor",
 };
 
+const advisorDescriptions: Record<AdvisorType, string> = {
+  general: "I'm not sure which advisor I need",
+  legal: "Legal support and guidance",
+  medical: "Medical support and guidance",
+  psychological: "Psychological support and guidance",
+};
+
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
+export default function UserAdvisorChat({
+  sessionId,
+}: UserAdvisorChatProps) {
   const [conversation, setConversation] = useState<Conversation | null>(null);
-
   const [messages, setMessages] = useState<Message[]>([]);
-
   const [selectedType, setSelectedType] = useState<AdvisorType | null>(null);
-
   const [text, setText] = useState("");
-
   const [loading, setLoading] = useState(false);
-
   const [sending, setSending] = useState(false);
-
   const [error, setError] = useState("");
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
   const conversationIdRef = useRef<string | null>(null);
-
   const sessionIdRef = useRef(sessionId);
 
   /*
@@ -95,12 +96,7 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
     const handleConnect = () => {
       console.log("[UserAdvisorChat] Socket connected:", socket.id);
 
-      /*
-       * If a conversation is already open and the socket
-       * reconnects, join the room again.
-       */
       const currentConversationId = conversationIdRef.current;
-
       const currentSessionId = sessionIdRef.current?.trim();
 
       if (currentConversationId && currentSessionId) {
@@ -140,10 +136,6 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
 
   /*
    * Receive messages from the server.
-   *
-   * This receives messages from both:
-   * - the advisor
-   * - the current user after the backend broadcasts it
    */
   useEffect(() => {
     const handleMessage = (data: {
@@ -180,12 +172,10 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
     };
 
     socket.on("user_advisor_message", handleMessage);
-
     socket.on("user_advisor_error", handleSocketError);
 
     return () => {
       socket.off("user_advisor_message", handleMessage);
-
       socket.off("user_advisor_error", handleSocketError);
     };
   }, []);
@@ -212,7 +202,6 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
           "No SafeLink session ID was found. Please log in again.";
 
         console.error(message);
-
         setError(message);
 
         return;
@@ -222,17 +211,15 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
        * Make sure socket is connected before joining.
        */
       if (!socket.connected) {
-        console.log("[UserAdvisorChat] Socket is not connected. Connecting...");
+        console.log(
+          "[UserAdvisorChat] Socket is not connected. Connecting...",
+        );
 
         socket.connect();
 
-        /*
-         * Give Socket.IO a moment to establish the connection.
-         */
         await new Promise<void>((resolve, reject) => {
           const timeout = window.setTimeout(() => {
             cleanup();
-
             reject(new Error("Socket connection timed out."));
           }, 5000);
 
@@ -243,7 +230,6 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
 
           const handleError = () => {
             cleanup();
-
             reject(new Error("Unable to connect to the chat server."));
           };
 
@@ -288,7 +274,6 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
         const message = "The server did not return a conversation.";
 
         console.error(message, response.data);
-
         setError(message);
 
         return;
@@ -299,7 +284,6 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
           "The returned conversation does not belong to this session.";
 
         console.error(message, newConversation);
-
         setError(message);
 
         return;
@@ -309,9 +293,7 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
        * Store conversation.
        */
       setConversation(newConversation);
-
       setMessages(newConversation.messages || []);
-
       setSelectedType(newConversation.advisor_type);
 
       conversationIdRef.current = newConversation.conversation_id;
@@ -330,9 +312,7 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
       );
     } catch (error: any) {
       console.error("Open advisor conversation error:", error);
-
       console.error("Backend response:", error?.response?.data);
-
       console.error("HTTP status:", error?.response?.status);
 
       let errorMessage = "Unable to start the advisor conversation.";
@@ -369,13 +349,9 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
 
     if (!currentSessionId) {
       setError("Your SafeLink session is missing. Please log in again.");
-
       return;
     }
 
-    /*
-     * Socket must be connected.
-     */
     if (!socket.connected) {
       setError(
         "Chat connection is not available. Please wait a moment and try again.",
@@ -397,19 +373,11 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
       text: messageText,
     });
 
-    /*
-     * Socket.IO acknowledgement callback.
-     *
-     * The backend will call this after MongoDB
-     * successfully saves the message.
-     */
     socket.emit(
       "user_advisor_send_message",
       {
         conversation_id: conversation.conversation_id,
-
         session_id: currentSessionId,
-
         text: messageText,
       },
       (response: SendMessageResponse) => {
@@ -417,24 +385,15 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
 
         if (!response?.success) {
           setError(response?.error || "Failed to send message.");
-
           setSending(false);
-
           return;
         }
 
-        /*
-         * Add the server-confirmed message
-         * immediately to the user's chat.
-         *
-         * The server also broadcasts the same message
-         * through user_advisor_message, but our duplicate
-         * check prevents it from appearing twice.
-         */
         if (response.message) {
           setMessages((previous) => {
             const alreadyExists = previous.some(
-              (message) => message.message_id === response.message?.message_id,
+              (message) =>
+                message.message_id === response.message?.message_id,
             );
 
             if (alreadyExists) {
@@ -451,8 +410,7 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
     );
 
     /*
-     * Safety timeout in case the backend never
-     * acknowledges the message.
+     * Safety timeout in case the backend never acknowledges the message.
      */
     window.setTimeout(() => {
       setSending((current) => {
@@ -473,10 +431,11 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
    * Enter sends the message.
    * Shift + Enter creates a new line.
    */
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (
+    event: React.KeyboardEvent<HTMLTextAreaElement>,
+  ) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-
       sendMessage();
     }
   };
@@ -495,13 +454,9 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
     conversationIdRef.current = null;
 
     setConversation(null);
-
     setMessages([]);
-
     setSelectedType(null);
-
     setText("");
-
     setError("");
   };
 
@@ -520,9 +475,9 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
     }
 
     return (
-      <div className="border-t bg-gray-50 p-3">
-        <p className="mb-2 text-sm font-medium text-gray-700">
-          Recommended advisor:
+      <div className="border-t border-[#a79093]/30 bg-[#f7f5f6] px-4 py-4">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#a79093]">
+          Recommended advisor
         </p>
 
         <div className="flex flex-wrap gap-2">
@@ -532,7 +487,7 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
               type="button"
               onClick={() => openConversation(type)}
               disabled={loading}
-              className="rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className="border border-[#a79093] bg-white px-3 py-2 text-sm font-medium text-[#3e1919] transition hover:border-[#3e1919] hover:bg-[#f0e2d6] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {advisorLabels[type]}
             </button>
@@ -547,50 +502,65 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
    */
   if (!conversation) {
     return (
-      <div className="mx-auto flex w-full max-w-3xl flex-col rounded-xl border bg-white shadow-sm">
-        <div className="border-b p-5">
-          <h2 className="text-xl font-semibold">Talk to an Advisor</h2>
+      <div className="mx-auto w-full max-w-4xl bg-[#f7f5f6]">
+        <div className="border-b border-[#a79093]/40 pb-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+            SafeLink Support
+          </p>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Choose the type of advisor you need.
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#3e1919] sm:text-3xl">
+            Talk to an Advisor
+          </h2>
+
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#a79093]">
+            Choose the type of support that best matches what you need.
+            You can change to another advisor if necessary.
           </p>
 
           {sessionId && (
-            <p className="mt-2 text-xs text-gray-400">Session: {sessionId}</p>
+            <p className="mt-4 text-xs text-[#a79093]">
+              Session: <span className="text-[#3e1919]">{sessionId}</span>
+            </p>
           )}
         </div>
 
         {error && (
-          <div className="mx-5 mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="mt-5 border-l-4 border-[#3e1919] bg-[#f0e2d6] px-4 py-3 text-sm text-[#3e1919]">
             {error}
           </div>
         )}
 
-        <div className="grid gap-3 p-5 sm:grid-cols-2">
+        <div className="mt-8 divide-y divide-[#a79093]/30 border-y border-[#a79093]/30">
           {(Object.keys(advisorLabels) as AdvisorType[]).map((type) => (
             <button
               key={type}
               type="button"
               disabled={loading}
               onClick={() => openConversation(type)}
-              className="rounded-xl border p-5 text-left transition hover:border-blue-400 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className="group flex w-full items-center justify-between gap-6 px-4 py-5 text-left transition hover:bg-[#f0e2d6]/60 disabled:cursor-not-allowed disabled:opacity-50 sm:px-6"
             >
-              <div className="font-semibold">{advisorLabels[type]}</div>
+              <div className="min-w-0">
+                <div className="text-base font-semibold text-[#3e1919]">
+                  {advisorLabels[type]}
+                </div>
 
-              <div className="mt-1 text-sm text-gray-500">
-                {type === "general" && "I'm not sure which advisor I need"}
+                <div className="mt-1 text-sm text-[#a79093]">
+                  {advisorDescriptions[type]}
+                </div>
 
-                {type === "legal" && "Legal support and guidance"}
-
-                {type === "medical" && "Medical support and guidance"}
-
-                {type === "psychological" &&
-                  "Psychological support and guidance"}
+                {loading && selectedType === type && (
+                  <div className="mt-2 text-xs font-medium text-[#3e1919]">
+                    Connecting...
+                  </div>
+                )}
               </div>
 
-              {loading && selectedType === type && (
-                <div className="mt-2 text-xs text-blue-600">Connecting...</div>
-              )}
+              <span
+                aria-hidden="true"
+                className="shrink-0 text-xl text-[#a79093] transition group-hover:translate-x-1 group-hover:text-[#3e1919]"
+              >
+                →
+              </span>
             </button>
           ))}
         </div>
@@ -602,30 +572,35 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
    * Chat screen.
    */
   return (
-    <div className="mx-auto flex h-[700px] w-full max-w-3xl flex-col overflow-hidden rounded-xl border bg-white shadow-sm">
+    <div className="mx-auto flex h-[700px] w-full max-w-4xl flex-col overflow-hidden border border-[#a79093]/40 bg-white">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b p-4">
+      <div className="flex items-center gap-3 border-b border-[#a79093]/30 px-4 py-4 sm:px-5">
         <button
           type="button"
           onClick={leaveConversation}
-          className="rounded-lg p-2 hover:bg-gray-100"
+          className="flex h-9 w-9 shrink-0 items-center justify-center text-[#3e1919] transition hover:bg-[#f0e2d6]"
           title="Back"
+          aria-label="Back"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={20} strokeWidth={1.8} />
         </button>
 
         <div className="min-w-0 flex-1">
-          <h2 className="font-semibold">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#a79093]">
+            SafeLink Advisor
+          </p>
+
+          <h2 className="mt-0.5 truncate font-semibold text-[#3e1919]">
             {advisorLabels[conversation.advisor_type]}
           </h2>
 
-          <p className="truncate text-xs text-gray-500">
+          <p className="truncate text-xs text-[#a79093]">
             Advisor ID: {conversation.advisor_id}
           </p>
         </div>
 
         {conversation.status === "closed" && (
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-500">
+          <span className="shrink-0 border border-[#a79093]/50 bg-[#f7f5f6] px-3 py-1 text-xs font-medium text-[#a79093]">
             Closed
           </span>
         )}
@@ -633,49 +608,58 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
 
       {/* Error */}
       {error && (
-        <div className="border-b border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="border-b border-[#a79093]/30 bg-[#f0e2d6] px-4 py-3 text-sm text-[#3e1919]">
           {error}
         </div>
       )}
 
       {/* Messages */}
-      <div className="flex-1 space-y-3 overflow-y-auto p-4">
+      <div className="flex-1 space-y-4 overflow-y-auto bg-[#f7f5f6] px-4 py-5 sm:px-6">
         {messages.length === 0 && (
-          <div className="py-10 text-center text-sm text-gray-500">
-            Start the conversation.
+          <div className="py-16 text-center">
+            <p className="text-sm font-medium text-[#3e1919]">
+              Start the conversation
+            </p>
+            <p className="mt-1 text-xs text-[#a79093]">
+              Your messages will appear here.
+            </p>
           </div>
         )}
 
         {messages.map((message) => {
           const isUser = message.sender === "user";
-
-          const isDeleted = message.deletedForEveryone || message.deleted;
+          const isDeleted =
+            message.deletedForEveryone || message.deleted;
 
           return (
             <div
               key={message.message_id}
-              className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+              className={`flex ${
+                isUser ? "justify-end" : "justify-start"
+              }`}
             >
               <div
-                className={`max-w-[75%] rounded-2xl px-4 py-2 ${
+                className={`max-w-[82%] border px-4 py-3 sm:max-w-[70%] ${
                   isUser
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-900"
+                    ? "border-[#3e1919] bg-[#3e1919] text-[#f7f5f6]"
+                    : "border-[#a79093]/30 bg-white text-[#3e1919]"
                 }`}
               >
                 {isDeleted ? (
-                  <span className="italic opacity-70">
+                  <span className="text-sm italic opacity-65">
                     This message was deleted
                   </span>
                 ) : (
-                  <p className="whitespace-pre-wrap break-words">
+                  <p className="whitespace-pre-wrap break-words text-sm leading-6">
                     {message.text}
                   </p>
                 )}
 
                 <div
-                  className={`mt-1 text-[10px] ${
-                    isUser ? "text-blue-100" : "text-gray-500"
+                  className={`mt-2 text-[10px] ${
+                    isUser
+                      ? "text-[#f0e2d6]/80"
+                      : "text-[#a79093]"
                   }`}
                 >
                   {new Date(message.timestamp).toLocaleTimeString([], {
@@ -698,7 +682,7 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
 
       {/* Input */}
       {conversation.status === "active" ? (
-        <div className="border-t p-3">
+        <div className="border-t border-[#a79093]/30 bg-white px-4 py-4 sm:px-5">
           <div className="flex items-end gap-2">
             <textarea
               value={text}
@@ -707,25 +691,26 @@ export default function UserAdvisorChat({ sessionId }: UserAdvisorChatProps) {
               placeholder="Type your message..."
               rows={1}
               disabled={sending}
-              className="max-h-32 min-h-[44px] flex-1 resize-none rounded-xl border px-4 py-3 outline-none focus:border-blue-500 disabled:bg-gray-100"
+              className="max-h-32 min-h-[46px] flex-1 resize-none border border-[#a79093]/50 bg-[#f7f5f6] px-4 py-3 text-sm text-[#3e1919] outline-none placeholder:text-[#a79093] focus:border-[#3e1919] disabled:bg-[#f7f5f6]"
             />
 
             <button
               type="button"
               onClick={sendMessage}
               disabled={!text.trim() || sending}
-              className="rounded-xl bg-blue-600 p-3 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-[46px] w-[46px] shrink-0 items-center justify-center bg-[#3e1919] text-[#f7f5f6] transition hover:bg-[#2d1111] disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Send message"
             >
-              <Send size={20} />
+              <Send size={19} strokeWidth={1.8} />
             </button>
           </div>
 
-          <p className="mt-1 text-[10px] text-gray-400">
+          <p className="mt-2 text-[10px] text-[#a79093]">
             Enter to send • Shift + Enter for a new line
           </p>
         </div>
       ) : (
-        <div className="border-t bg-gray-50 p-4 text-center text-sm text-gray-500">
+        <div className="border-t border-[#a79093]/30 bg-[#f7f5f6] px-4 py-4 text-center text-sm text-[#a79093]">
           This conversation is closed.
         </div>
       )}

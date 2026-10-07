@@ -693,21 +693,21 @@ export default function AdvisorPage() {
     "SafeLink user";
 
   return (
-    <div className="h-screen w-full overflow-hidden bg-[#123d34] text-[#243c35]">
-      <div className="mx-auto flex h-full w-full max-w-[1600px] overflow-hidden bg-[#123d34]">
+    <div className="h-screen w-full overflow-hidden bg-[#f7f5f6] text-[#3e1919]">
+      <div className="mx-auto flex h-full w-full max-w-[1600px] overflow-hidden bg-[#f7f5f6]">
 
         <aside
           className={`${
             showMobileChat ? "hidden" : "flex"
-          } h-full w-full flex-col border-r border-white/10 bg-[#123d34] md:flex md:w-[350px] lg:w-[390px]`}
+          } h-full w-full flex-col border-r border-[#f0e2d6] bg-[#3e1919] md:flex md:w-[350px] lg:w-[390px]`}
         >
-          <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-5 py-4">
+          <div className="flex shrink-0 items-center justify-between border-b border-[#f0e2d6]/20 px-5 py-4">
             <div>
-              <h1 className="text-xl font-semibold tracking-tight text-white">
+              <h1 className="text-xl font-semibold tracking-tight text-[#f7f5f6]">
                 SafeLink
               </h1>
 
-              <p className="mt-0.5 text-xs text-white/50">
+              <p className="mt-0.5 text-xs text-[#a79093]">
                 Advisor conversations
               </p>
             </div>
@@ -718,14 +718,14 @@ export default function AdvisorPage() {
                 onClick={() =>
                   setShowListMenu((current) => !current)
                 }
-                className="flex h-10 w-10 items-center justify-center rounded-full text-xl text-white/70 transition hover:bg-white/10 hover:text-white"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-xl text-[#f0e2d6] transition hover:bg-[#f0e2d6] hover:text-[#3e1919]"
                 aria-label="Conversation list menu"
               >
                 ⋮
               </button>
 
               {showListMenu && (
-                <div className="absolute right-0 top-12 z-30 w-56 overflow-hidden rounded-2xl border border-black/10 bg-white shadow-2xl">
+                <div className="absolute right-0 top-12 z-30 w-56 overflow-hidden rounded-2xl border border-[#f0e2d6] bg-white shadow-2xl">
                   {!chatDeleteMode ? (
                     <>
                       <button
@@ -737,7 +737,7 @@ export default function AdvisorPage() {
                           setDeleteMode(false);
                           setSelectedMessageIds([]);
                         }}
-                        className="w-full px-4 py-3 text-left text-sm font-medium text-[#263d36] transition hover:bg-[#eef3ef]"
+                        className="w-full px-4 py-3 text-left text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6]"
                       >
                         Delete chats
                       </button>
@@ -751,7 +751,7 @@ export default function AdvisorPage() {
                           setChatDeleteMode(false);
                           setSelectedConversationIds([]);
                         }}
-                        className="w-full px-4 py-3 text-left text-sm font-medium text-[#263d36] transition hover:bg-[#eef3ef]"
+                        className="w-full px-4 py-3 text-left text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6]"
                       >
                         Delete messages
                       </button>
@@ -760,7 +760,7 @@ export default function AdvisorPage() {
                     <button
                       type="button"
                       onClick={cancelChatDeleteMode}
-                      className="w-full px-4 py-3 text-left text-sm font-medium text-[#263d36] transition hover:bg-[#eef3ef]"
+                      className="w-full px-4 py-3 text-left text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6]"
                     >
                       Cancel selection
                     </button>
@@ -771,8 +771,8 @@ export default function AdvisorPage() {
           </div>
 
           {chatDeleteMode && (
-            <div className="flex shrink-0 items-center justify-between border-b border-white/10 bg-[#19483e] px-4 py-3">
-              <span className="text-sm font-medium text-white">
+            <div className="flex shrink-0 items-center justify-between border-b border-[#f0e2d6]/20 bg-[#f0e2d6] px-4 py-3">
+              <span className="text-sm font-medium text-[#3e1919]">
                 {selectedConversationIds.length} selected
               </span>
 
@@ -785,7 +785,7 @@ export default function AdvisorPage() {
                 onClick={
                   confirmSelectedConversationsDeletion
                 }
-                className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-full bg-[#3e1919] px-3 py-1.5 text-xs font-semibold text-[#f7f5f6] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Delete selected
               </button>
@@ -793,8 +793,8 @@ export default function AdvisorPage() {
           )}
 
           {deleteMode && (
-            <div className="flex shrink-0 items-center justify-between border-b border-white/10 bg-[#19483e] px-4 py-3">
-              <span className="text-sm font-medium text-white">
+            <div className="flex shrink-0 items-center justify-between border-b border-[#f0e2d6]/20 bg-[#f0e2d6] px-4 py-3">
+              <span className="text-sm font-medium text-[#3e1919]">
                 {selectedMessageIds.length} selected
               </span>
 
@@ -804,25 +804,25 @@ export default function AdvisorPage() {
                   selectedMessageIds.length === 0 || loading
                 }
                 onClick={confirmSelectedDeletion}
-                className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[#19483e] disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-full bg-[#3e1919] px-3 py-1.5 text-xs font-semibold text-[#f7f5f6] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Delete selected
               </button>
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto bg-[#123d34]">
+          <div className="flex-1 overflow-y-auto bg-[#3e1919]">
             {conversations.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center px-8 text-center">
-                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xl text-white/60">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[#f0e2d6]/20 bg-[#f0e2d6]/10 text-xl text-[#a79093]">
                   ✦
                 </div>
 
-                <p className="font-semibold text-white/85">
+                <p className="font-semibold text-[#f7f5f6]">
                   No conversations yet
                 </p>
 
-                <p className="mt-1 text-sm leading-6 text-white/45">
+                <p className="mt-1 text-sm leading-6 text-[#a79093]">
                   New SafeLink support requests will appear here.
                 </p>
               </div>
@@ -851,20 +851,20 @@ export default function AdvisorPage() {
 
                       handleSelectConversation(conversation);
                     }}
-                    className={`flex w-full gap-3 border-b border-white/10 px-4 py-4 text-left transition ${
+                    className={`flex w-full gap-3 border-b border-[#f0e2d6]/20 px-4 py-4 text-left transition ${
                       isChatSelected
-                        ? "bg-[#315d50]"
+                        ? "bg-[#f0e2d6] text-[#3e1919]"
                         : isSelected
-                        ? "bg-[#19483e]"
-                        : "hover:bg-white/5"
+                        ? "bg-[#a79093] text-[#f7f5f6]"
+                        : "text-[#f7f5f6] hover:bg-[#f0e2d6]/20"
                     }`}
                   >
                     {chatDeleteMode && (
                       <div
                         className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs ${
                           isChatSelected
-                            ? "border-white bg-white text-[#19483e]"
-                            : "border-white/40 bg-white/10 text-white"
+                            ? "border-[#3e1919] bg-[#3e1919] text-[#f7f5f6]"
+                            : "border-[#f0e2d6]/50 bg-[#f0e2d6]/10 text-[#f7f5f6]"
                         }`}
                       >
                         {isChatSelected ? "✓" : ""}
@@ -873,26 +873,50 @@ export default function AdvisorPage() {
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-3">
-                        <p className="truncate font-semibold text-white">
+                        <p
+                          className={`truncate font-semibold ${
+                            isChatSelected
+                              ? "text-[#3e1919]"
+                              : "text-[#f7f5f6]"
+                          }`}
+                        >
                           {conversation.session_id}
                         </p>
 
-                        <span className="shrink-0 text-[11px] text-white/45">
+                        <span
+                          className={`shrink-0 text-[11px] ${
+                            isChatSelected
+                              ? "text-[#a79093]"
+                              : "text-[#a79093]"
+                          }`}
+                        >
                           {latestMessageTime(conversation)}
                         </span>
                       </div>
 
-                      <p className="mt-1 truncate font-mono text-[10px] text-white/35">
+                      <p
+                        className={`mt-1 truncate font-mono text-[10px] ${
+                          isChatSelected
+                            ? "text-[#a79093]"
+                            : "text-[#a79093]"
+                        }`}
+                      >
                         {conversation.conversation_id}
                       </p>
 
                       <div className="mt-1.5 flex items-center gap-2">
-                        <p className="min-w-0 flex-1 truncate text-sm text-white/55">
+                        <p
+                          className={`min-w-0 flex-1 truncate text-sm ${
+                            isChatSelected
+                              ? "text-[#3e1919]/70"
+                              : "text-[#f0e2d6]/70"
+                          }`}
+                        >
                           {latestMessage(conversation)}
                         </p>
 
                         {conversation.urgent && (
-                          <span className="shrink-0 rounded-full bg-red-400/15 px-2 py-0.5 text-[9px] font-bold text-red-200">
+                          <span className="shrink-0 rounded-full bg-[#f0e2d6] px-2 py-0.5 text-[9px] font-bold text-[#3e1919]">
                             URGENT
                           </span>
                         )}
@@ -908,49 +932,49 @@ export default function AdvisorPage() {
         <main
           className={`${
             showMobileChat ? "flex" : "hidden"
-          } relative h-full min-w-0 flex-1 flex-col md:flex`}
+          } relative h-full min-w-0 flex-1 flex-col bg-[#f7f5f6] md:flex`}
         >
           {!selectedConversation ? (
-            <div className="hidden h-full flex-col items-center justify-center bg-[#123d34] md:flex">
+            <div className="hidden h-full flex-col items-center justify-center bg-[#f7f5f6] md:flex">
               <div className="max-w-sm px-8 text-center">
-                <div className="mb-6 text-4xl text-white/50">
+                <div className="mb-6 text-4xl text-[#a79093]">
                   ✦
                 </div>
 
-                <h2 className="text-xl font-semibold text-white">
+                <h2 className="text-xl font-semibold text-[#3e1919]">
                   SafeLink Advisor
                 </h2>
 
-                <p className="mt-2 text-sm leading-6 text-white/45">
+                <p className="mt-2 text-sm leading-6 text-[#a79093]">
                   Select a conversation to connect with a SafeLink user.
                 </p>
               </div>
             </div>
           ) : (
             <>
-              <header className="relative z-20 flex shrink-0 items-center gap-3 border-b border-black/5 bg-[#f7f5f1] px-4 py-3 shadow-sm">
+              <header className="relative z-20 flex shrink-0 items-center gap-3 border-b border-[#f0e2d6] bg-white px-4 py-3 shadow-sm">
                 <button
                   type="button"
                   onClick={() => setShowMobileChat(false)}
-                  className="rounded-full p-2 text-xl text-[#39544b] transition hover:bg-[#e8ece9] md:hidden"
+                  className="rounded-full p-2 text-xl text-[#3e1919] transition hover:bg-[#f0e2d6] md:hidden"
                   aria-label="Back to conversations"
                 >
                   ←
                 </button>
 
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-[#243c35]">
+                  <p className="truncate font-semibold text-[#3e1919]">
                     {sessionDisplay}
                   </p>
 
-                  <p className="truncate font-mono text-[10px] text-[#789187]">
+                  <p className="truncate font-mono text-[10px] text-[#a79093]">
                     {selectedConversation.conversation_id}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="hidden rounded-full bg-[#e6f1eb] px-3 py-1 text-[10px] font-semibold text-[#39705b] sm:block">
-                    <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-[#5f9b7d]" />
+                  <span className="hidden rounded-full bg-[#f0e2d6] px-3 py-1 text-[10px] font-semibold text-[#3e1919] sm:block">
+                    <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-[#3e1919]" />
                     Connected
                   </span>
 
@@ -960,14 +984,14 @@ export default function AdvisorPage() {
                       onClick={() =>
                         setShowHeaderMenu((current) => !current)
                       }
-                      className="flex h-9 w-9 items-center justify-center rounded-full text-xl text-[#4e675e] transition hover:bg-[#e8ece9]"
+                      className="flex h-9 w-9 items-center justify-center rounded-full text-xl text-[#a79093] transition hover:bg-[#f0e2d6] hover:text-[#3e1919]"
                       aria-label="Conversation menu"
                     >
                       ⋮
                     </button>
 
                     {showHeaderMenu && (
-                      <div className="absolute right-0 top-11 z-40 w-52 overflow-hidden rounded-2xl border border-black/10 bg-white shadow-2xl">
+                      <div className="absolute right-0 top-11 z-40 w-52 overflow-hidden rounded-2xl border border-[#f0e2d6] bg-white shadow-2xl">
                         <button
                           type="button"
                           onClick={() => {
@@ -975,7 +999,7 @@ export default function AdvisorPage() {
                             setDeleteMode(true);
                             setSelectedMessageIds([]);
                           }}
-                          className="w-full px-4 py-3 text-left text-sm text-[#35433e] transition hover:bg-[#eef3ef]"
+                          className="w-full px-4 py-3 text-left text-sm text-[#3e1919] transition hover:bg-[#f0e2d6]"
                         >
                           Delete messages
                         </button>
@@ -986,12 +1010,12 @@ export default function AdvisorPage() {
                             setShowHeaderMenu(false);
                             setShowFacilities(true);
                           }}
-                          className="w-full px-4 py-3 text-left text-sm text-[#35433e] transition hover:bg-[#eef3ef]"
+                          className="w-full px-4 py-3 text-left text-sm text-[#3e1919] transition hover:bg-[#f0e2d6]"
                         >
                           Recommend facility
                         </button>
 
-                        <div className="my-1 border-t border-black/5" />
+                        <div className="my-1 border-t border-[#f0e2d6]" />
 
                         <button
                           type="button"
@@ -1002,7 +1026,7 @@ export default function AdvisorPage() {
                             setEditingMessageId(null);
                             setSelectedMessageIds([]);
                           }}
-                          className="w-full px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                          className="w-full px-4 py-3 text-left text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6]"
                         >
                           Log out
                         </button>
@@ -1012,10 +1036,10 @@ export default function AdvisorPage() {
                 </div>
               </header>
 
-              <div className="relative flex min-h-0 flex-1 flex-col bg-[#123d34] p-0 md:p-6">
-                <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#f7f5f1] text-[#565857] shadow-2xl md:rounded-[2rem] md:border md:border-white/10">
+              <div className="relative flex min-h-0 flex-1 flex-col bg-[#f7f5f6] p-0 md:p-6">
+                <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#f7f5f6] text-[#3e1919] shadow-2xl md:rounded-[2rem] md:border md:border-[#f0e2d6]">
                   <div className="pointer-events-none absolute inset-0 opacity-[0.03]">
-                    <div className="h-full w-full bg-[radial-gradient(circle_at_20%_20%,#123d34_1px,transparent_1px)] [background-size:24px_24px]" />
+                    <div className="h-full w-full bg-[radial-gradient(circle_at_20%_20%,#3e1919_1px,transparent_1px)] [background-size:24px_24px]" />
                   </div>
 
                   <div className="relative flex-1 overflow-y-auto px-3 py-5 sm:px-6">
@@ -1040,7 +1064,7 @@ export default function AdvisorPage() {
                                     : "justify-start"
                                 }`}
                               >
-                                <div className="rounded-2xl border border-black/5 bg-[#e8ece9] px-4 py-2.5 text-sm italic text-[#7a817e]">
+                                <div className="rounded-2xl border border-[#f0e2d6] bg-[#f0e2d6] px-4 py-2.5 text-sm italic text-[#a79093]">
                                   Message deleted
                                 </div>
                               </div>
@@ -1080,8 +1104,8 @@ export default function AdvisorPage() {
                                       }
                                       className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-xs transition ${
                                         isSelectedForDelete
-                                          ? "border-[#19483e] bg-[#19483e] text-white"
-                                          : "border-[#9db7aa] bg-white text-[#19483e]"
+                                          ? "border-[#3e1919] bg-[#3e1919] text-[#f7f5f6]"
+                                          : "border-[#a79093] bg-white text-[#3e1919]"
                                       }`}
                                       aria-label="Select message"
                                     >
@@ -1092,19 +1116,19 @@ export default function AdvisorPage() {
                                   <div
                                     className={`relative rounded-2xl px-4 py-2.5 shadow-sm ${
                                       isAdvisor
-                                        ? "rounded-br-md bg-[#19483e] text-white"
-                                        : "rounded-bl-md bg-[#e8ece9] text-[#35433e]"
+                                        ? "rounded-br-md bg-[#3e1919] text-[#f7f5f6]"
+                                        : "rounded-bl-md bg-[#f0e2d6] text-[#3e1919]"
                                     } ${
                                       isSelectedForDelete
-                                        ? "ring-2 ring-[#a9cfba]"
+                                        ? "ring-2 ring-[#a79093]"
                                         : ""
                                     }`}
                                   >
                                     <p
                                       className={`mb-1 text-[11px] font-semibold ${
                                         isAdvisor
-                                          ? "text-white/60"
-                                          : "text-[#7a817e]"
+                                          ? "text-[#f0e2d6]"
+                                          : "text-[#a79093]"
                                       }`}
                                     >
                                       {isAdvisor ? "Advisor" : "You"}
@@ -1126,7 +1150,7 @@ export default function AdvisorPage() {
                                                 : currentMessage.message_id
                                             )
                                           }
-                                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-lg leading-none text-white/70 opacity-0 transition hover:bg-white/10 group-hover:opacity-100"
+                                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-lg leading-none text-[#f0e2d6]/70 opacity-0 transition hover:bg-[#f0e2d6]/20 group-hover:opacity-100"
                                           aria-label="Message actions"
                                         >
                                           ⋮
@@ -1139,8 +1163,8 @@ export default function AdvisorPage() {
                                         <span
                                           className={`text-[11px] font-semibold leading-none ${
                                             currentMessage.seen_at
-                                              ? "text-[#a9cfba]"
-                                              : "text-white/50"
+                                              ? "text-[#a79093]"
+                                              : "text-[#f0e2d6]/60"
                                           }`}
                                           title={
                                             currentMessage.seen_at
@@ -1157,13 +1181,13 @@ export default function AdvisorPage() {
 
                                     {openMessageMenu ===
                                       currentMessage.message_id && (
-                                      <div className="absolute bottom-8 right-0 z-30 w-32 overflow-hidden rounded-xl border border-black/10 bg-white shadow-xl">
+                                      <div className="absolute bottom-8 right-0 z-30 w-32 overflow-hidden rounded-xl border border-[#f0e2d6] bg-white shadow-xl">
                                         <button
                                           type="button"
                                           onClick={() =>
                                             startEditing(currentMessage)
                                           }
-                                          className="w-full px-3 py-2.5 text-left text-xs text-[#35433e] hover:bg-[#eef3ef]"
+                                          className="w-full px-3 py-2.5 text-left text-xs text-[#3e1919] hover:bg-[#f0e2d6]"
                                         >
                                           Edit
                                         </button>
@@ -1173,7 +1197,7 @@ export default function AdvisorPage() {
                                           onClick={() =>
                                             deleteOneMessage(currentMessage)
                                           }
-                                          className="w-full px-3 py-2.5 text-left text-xs text-red-600 hover:bg-red-50"
+                                          className="w-full px-3 py-2.5 text-left text-xs text-[#3e1919] hover:bg-[#f0e2d6]"
                                         >
                                           Delete
                                         </button>
@@ -1182,7 +1206,7 @@ export default function AdvisorPage() {
                                   </div>
                                 </div>
 
-                                <div className="mt-1 flex flex-wrap items-center gap-1 px-1 text-[11px] text-[#789187]">
+                                <div className="mt-1 flex flex-wrap items-center gap-1 px-1 text-[11px] text-[#a79093]">
                                   <span>
                                     {formatDate(currentMessage.timestamp)}
                                   </span>
@@ -1221,13 +1245,13 @@ export default function AdvisorPage() {
 
                       {selectedConversation.recommendation && (
                         <div className="flex justify-end">
-                          <div className="max-w-[88%] rounded-2xl border border-[#a9cfba] bg-[#e6f1eb] p-4 shadow-sm sm:max-w-[70%]">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#39705b]">
+                          <div className="max-w-[88%] rounded-2xl border border-[#a79093] bg-[#f0e2d6] p-4 shadow-sm sm:max-w-[70%]">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#3e1919]">
                               ✓ Facility Recommended
                             </p>
 
-                            <div className="mt-2 space-y-1 text-[13px] text-[#243c35]">
-                              <p className="font-mono text-[10px] text-[#789187]">
+                            <div className="mt-2 space-y-1 text-[13px] text-[#3e1919]">
+                              <p className="font-mono text-[10px] text-[#a79093]">
                                 For: {selectedConversation.session_id}
                               </p>
 
@@ -1239,7 +1263,7 @@ export default function AdvisorPage() {
                                 }
                               </p>
 
-                              <p className="text-[#66766f]">
+                              <p className="text-[#a79093]">
                                 {
                                   selectedConversation
                                     .recommendation
@@ -1247,7 +1271,7 @@ export default function AdvisorPage() {
                                 }
                               </p>
 
-                              <p className="text-[#66766f]">
+                              <p className="text-[#a79093]">
                                 {
                                   selectedConversation
                                     .recommendation
@@ -1255,7 +1279,7 @@ export default function AdvisorPage() {
                                 }
                               </p>
 
-                              <p className="text-xs italic text-[#789187]">
+                              <p className="text-xs italic text-[#a79093]">
                                 {
                                   selectedConversation
                                     .recommendation
@@ -1263,7 +1287,7 @@ export default function AdvisorPage() {
                                 }
                               </p>
 
-                              <p className="pt-1 font-mono text-[10px] text-[#789187]">
+                              <p className="pt-1 font-mono text-[10px] text-[#a79093]">
                                 From: {selectedConversation.advisor_id}
                               </p>
                             </div>
@@ -1276,13 +1300,13 @@ export default function AdvisorPage() {
                   </div>
 
                   {editingMessageId && (
-                    <div className="relative flex shrink-0 items-center justify-between border-t border-black/5 bg-[#e8ece9] px-4 py-2.5">
+                    <div className="relative flex shrink-0 items-center justify-between border-t border-[#f0e2d6] bg-[#f0e2d6] px-4 py-2.5">
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-[#39705b]">
+                        <p className="text-xs font-semibold text-[#3e1919]">
                           Editing message
                         </p>
 
-                        <p className="truncate text-xs text-[#6f7e77]">
+                        <p className="truncate text-xs text-[#a79093]">
                           {editingText}
                         </p>
                       </div>
@@ -1290,14 +1314,14 @@ export default function AdvisorPage() {
                       <button
                         type="button"
                         onClick={cancelEditing}
-                        className="ml-4 rounded-full px-3 py-1.5 text-xs font-medium text-[#53655e] hover:bg-white"
+                        className="ml-4 rounded-full px-3 py-1.5 text-xs font-medium text-[#3e1919] hover:bg-white"
                       >
                         Cancel
                       </button>
                     </div>
                   )}
 
-                  <div className="relative shrink-0 border-t border-black/5 bg-[#f0f2ef] px-3 py-3 sm:px-5">
+                  <div className="relative shrink-0 border-t border-[#f0e2d6] bg-white px-3 py-3 sm:px-5">
                     <div className="mx-auto flex max-w-4xl items-end gap-2">
                       <textarea
                         value={
@@ -1328,7 +1352,7 @@ export default function AdvisorPage() {
                             ? "Edit your message..."
                             : "Type a message..."
                         }
-                        className="max-h-32 min-h-[46px] flex-1 resize-none rounded-2xl border border-black/5 bg-white px-4 py-3 text-sm text-[#243c35] outline-none placeholder:text-[#9aa8a2] focus:border-[#6f9c86] focus:ring-2 focus:ring-[#a9cfba]/30"
+                        className="max-h-32 min-h-[46px] flex-1 resize-none rounded-2xl border border-[#f0e2d6] bg-[#f7f5f6] px-4 py-3 text-sm text-[#3e1919] outline-none placeholder:text-[#a79093] focus:border-[#a79093] focus:ring-2 focus:ring-[#f0e2d6]"
                       />
 
                       {editingMessageId ? (
@@ -1338,7 +1362,7 @@ export default function AdvisorPage() {
                           disabled={
                             loading || !editingText.trim()
                           }
-                          className="flex h-11 shrink-0 items-center justify-center rounded-full bg-[#19483e] px-5 text-sm font-semibold text-white transition hover:bg-[#24594d] disabled:cursor-not-allowed disabled:opacity-40"
+                          className="flex h-11 shrink-0 items-center justify-center rounded-full bg-[#3e1919] px-5 text-sm font-semibold text-[#f7f5f6] transition hover:bg-[#a79093] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           Save
                         </button>
@@ -1347,7 +1371,7 @@ export default function AdvisorPage() {
                           type="button"
                           onClick={handleSendMessage}
                           disabled={loading || !message.trim()}
-                          className="flex h-11 shrink-0 items-center justify-center rounded-2xl bg-[#19483e] px-5 text-sm font-semibold text-white transition hover:bg-[#24594d] disabled:cursor-not-allowed disabled:opacity-40"
+                          className="flex h-11 shrink-0 items-center justify-center rounded-2xl bg-[#3e1919] px-5 text-sm font-semibold text-[#f7f5f6] transition hover:bg-[#a79093] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           {loading ? "..." : "Send"}
                         </button>
@@ -1362,7 +1386,7 @@ export default function AdvisorPage() {
 
         {showFacilities && (
           <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-[#3e1919]/50 p-4"
             onClick={() => {
               setShowFacilities(false);
               setShowCustomFacility(false);
@@ -1370,16 +1394,16 @@ export default function AdvisorPage() {
             }}
           >
             <div
-              className="max-h-[85vh] w-full max-w-xl overflow-hidden rounded-[2rem] bg-[#f7f5f1] shadow-2xl"
+              className="max-h-[85vh] w-full max-w-xl overflow-hidden rounded-[2rem] bg-[#f7f5f6] shadow-2xl"
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="flex items-center justify-between border-b border-black/5 px-5 py-4">
+              <div className="flex items-center justify-between border-b border-[#f0e2d6] px-5 py-4">
                 <div>
-                  <h3 className="font-semibold text-[#243c35]">
+                  <h3 className="font-semibold text-[#3e1919]">
                     Recommend a facility
                   </h3>
 
-                  <p className="text-xs text-[#789187]">
+                  <p className="text-xs text-[#a79093]">
                     Choose a support facility for this user.
                   </p>
                 </div>
@@ -1391,7 +1415,7 @@ export default function AdvisorPage() {
                     setShowCustomFacility(false);
                     setFacilitySearch("");
                   }}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-xl text-[#53655e] hover:bg-[#e8ece9]"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-xl text-[#a79093] hover:bg-[#f0e2d6] hover:text-[#3e1919]"
                   aria-label="Close facility panel"
                 >
                   ×
@@ -1405,12 +1429,12 @@ export default function AdvisorPage() {
                     setFacilitySearch(event.target.value)
                   }
                   placeholder="Search facility..."
-                  className="mb-4 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-[#6f9c86] focus:ring-2 focus:ring-[#a9cfba]/30"
+                  className="mb-4 w-full rounded-xl border border-[#f0e2d6] bg-white px-4 py-3 text-sm text-[#3e1919] outline-none placeholder:text-[#a79093] focus:border-[#a79093] focus:ring-2 focus:ring-[#f0e2d6]"
                 />
 
                 <div className="space-y-3">
                   {filteredFacilities.length === 0 ? (
-                    <div className="rounded-2xl bg-white p-5 text-center text-sm text-[#789187]">
+                    <div className="rounded-2xl bg-white p-5 text-center text-sm text-[#a79093]">
                       No facilities found.
                     </div>
                   ) : (
@@ -1428,25 +1452,25 @@ export default function AdvisorPage() {
                             notes: facility.notes || "",
                           })
                         }
-                        className="w-full rounded-2xl border border-black/5 bg-white p-4 text-left transition hover:border-[#a9cfba] hover:bg-[#f3f7f4] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="w-full rounded-2xl border border-[#f0e2d6] bg-white p-4 text-left transition hover:border-[#a79093] hover:bg-[#f0e2d6] disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <p className="font-mono text-xs font-semibold text-[#39705b]">
+                        <p className="font-mono text-xs font-semibold text-[#3e1919]">
                           {facility.facility_id}
                         </p>
 
-                        <p className="mt-1 font-semibold text-[#243c35]">
+                        <p className="mt-1 font-semibold text-[#3e1919]">
                           {facility.facility_name}
                         </p>
 
-                        <p className="mt-1 text-sm text-[#66766f]">
+                        <p className="mt-1 text-sm text-[#a79093]">
                           {facility.location}
                         </p>
 
-                        <p className="mt-1 text-xs text-[#789187]">
+                        <p className="mt-1 text-xs text-[#a79093]">
                           {facility.contact}
                         </p>
 
-                        <p className="mt-2 text-xs text-[#789187]">
+                        <p className="mt-2 text-xs text-[#a79093]">
                           {facility.notes}
                         </p>
                       </button>
@@ -1459,7 +1483,7 @@ export default function AdvisorPage() {
                   onClick={() =>
                     setShowCustomFacility((current) => !current)
                   }
-                  className="mt-4 w-full rounded-2xl border border-dashed border-[#9db7aa] bg-[#eef3ef] px-4 py-3 text-sm font-semibold text-[#39705b] hover:bg-[#e5eee8]"
+                  className="mt-4 w-full rounded-2xl border border-dashed border-[#a79093] bg-[#f0e2d6] px-4 py-3 text-sm font-semibold text-[#3e1919] hover:bg-[#a79093]/20"
                 >
                   {showCustomFacility
                     ? "− Hide manual facility"
@@ -1467,8 +1491,8 @@ export default function AdvisorPage() {
                 </button>
 
                 {showCustomFacility && (
-                  <div className="mt-4 rounded-2xl border border-black/5 bg-white p-4">
-                    <p className="mb-3 font-semibold text-[#243c35]">
+                  <div className="mt-4 rounded-2xl border border-[#f0e2d6] bg-white p-4">
+                    <p className="mb-3 font-semibold text-[#3e1919]">
                       New facility
                     </p>
 
@@ -1492,7 +1516,7 @@ export default function AdvisorPage() {
                             }))
                           }
                           placeholder={placeholder}
-                          className="w-full rounded-xl border border-black/10 px-3 py-2.5 text-sm outline-none focus:border-[#6f9c86]"
+                          className="w-full rounded-xl border border-[#f0e2d6] bg-[#f7f5f6] px-3 py-2.5 text-sm text-[#3e1919] outline-none placeholder:text-[#a79093] focus:border-[#a79093]"
                         />
                       ))}
                     </div>
@@ -1508,7 +1532,7 @@ export default function AdvisorPage() {
                         !customFacility.contact.trim() ||
                         !customFacility.notes.trim()
                       }
-                      className="mt-3 w-full rounded-xl bg-[#19483e] px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                      className="mt-3 w-full rounded-xl bg-[#3e1919] px-4 py-3 text-sm font-semibold text-[#f7f5f6] hover:bg-[#a79093] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       {loading
                         ? "Recommending..."

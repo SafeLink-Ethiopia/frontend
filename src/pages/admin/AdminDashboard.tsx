@@ -112,13 +112,17 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[70vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600" />
+      <main className="min-h-[70vh] bg-[#f7f5f6] px-5 py-12 text-[#3e1919] sm:px-8 lg:px-10">
+        <div className="mx-auto flex min-h-[55vh] max-w-7xl items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto mb-5 h-8 w-8 animate-spin rounded-full border-2 border-[#a79093]/30 border-t-[#3e1919]" />
 
-          <p className="text-sm text-gray-500">Loading dashboard...</p>
+            <p className="text-sm text-[#a79093]">
+              Loading dashboard...
+            </p>
+          </div>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -128,15 +132,23 @@ export default function AdminDashboard() {
 
   if (error) {
     return (
-      <div className="p-6">
-        <div className="rounded-xl border border-red-200 bg-red-50 p-5">
-          <h2 className="text-lg font-semibold text-red-700">
-            Failed to load dashboard
-          </h2>
+      <main className="min-h-screen bg-[#f7f5f6] px-5 py-8 text-[#3e1919] sm:px-8 lg:px-10 lg:py-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="border-l-4 border-[#3e1919] bg-[#f0e2d6] px-6 py-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+              Dashboard
+            </p>
 
-          <p className="mt-2 text-sm text-red-600">{error}</p>
+            <h2 className="mt-2 text-lg font-semibold text-[#3e1919]">
+              Failed to load dashboard
+            </h2>
+
+            <p className="mt-2 text-sm leading-6 text-[#3e1919]/70">
+              {error}
+            </p>
+          </div>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -146,11 +158,15 @@ export default function AdminDashboard() {
 
   if (!dashboard) {
     return (
-      <div className="p-6">
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <p className="text-gray-500">No dashboard data available.</p>
+      <main className="min-h-screen bg-[#f7f5f6] px-5 py-8 text-[#3e1919] sm:px-8 lg:px-10 lg:py-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="border-y border-[#a79093]/30 py-8">
+            <p className="text-sm text-[#a79093]">
+              No dashboard data available.
+            </p>
+          </div>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -204,246 +220,493 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-full bg-gray-50 p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-7xl">
+    <main className="min-h-screen bg-[#f7f5f6] text-[#3e1919]">
+      <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
         {/* ========================================================
             HEADER
         ======================================================== */}
 
-        <div className="mb-8">
-          <h1 className="mt-1 text-3xl font-bold text-gray-900">
-            Admin Dashboard
-          </h1>
-
-          <p className="mt-2 text-gray-500">
-            Monitor SafeLink activity and system statistics.
+        <header className="border-b border-[#a79093]/30 pb-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#a79093]">
+            SafeLink Administration
           </p>
-        </div>
+
+          <div className="mt-3 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight text-[#3e1919] sm:text-4xl">
+                Admin Dashboard
+              </h1>
+
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#a79093]">
+                Monitor SafeLink activity, advisor availability, sessions,
+                conversations, and overall system usage.
+              </p>
+            </div>
+
+            <div className="shrink-0 border-l-2 border-[#3e1919] pl-4">
+              <p className="text-xs uppercase tracking-wider text-[#a79093]">
+                System overview
+              </p>
+
+              <p className="mt-1 text-sm font-medium text-[#3e1919]">
+                Current statistics
+              </p>
+            </div>
+          </div>
+        </header>
 
         {/* ========================================================
-            SYSTEM STATISTICS LINE GRAPH
+            KEY STATISTICS
         ======================================================== */}
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
-              System Statistics
-            </h2>
-
-            <p className="mt-1 text-sm text-gray-500">
-              Total advisors, sessions, and conversations.
+        <section className="mt-10">
+          <div className="mb-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+              Overview
             </p>
+
+            <h2 className="mt-1 text-xl font-semibold text-[#3e1919]">
+              System activity
+            </h2>
           </div>
 
-          <div className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={statisticsChartData}
-                margin={{
-                  top: 10,
-                  right: 20,
-                  left: 0,
-                  bottom: 10,
-                }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
+          <div className="border-y border-[#a79093]/30">
+            <div className="grid grid-cols-1 divide-y divide-[#a79093]/30 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+              <div className="px-5 py-6 sm:px-6">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#a79093]">
+                  Advisors
+                </p>
 
-                <XAxis
-                  dataKey="name"
-                  tick={{
-                    fontSize: 13,
-                  }}
-                />
+                <div className="mt-3 flex items-end justify-between gap-4">
+                  <p className="text-4xl font-semibold tracking-tight text-[#3e1919]">
+                    {statistics.advisors.total}
+                  </p>
 
-                <YAxis
-                  allowDecimals={false}
-                  tick={{
-                    fontSize: 13,
-                  }}
-                />
+                  <span className="pb-1 text-sm text-[#a79093]">
+                    {statistics.advisors.active} active
+                  </span>
+                </div>
 
-                <Tooltip
-                  formatter={(value) => [value, "Total"]}
-                  labelFormatter={(label) => `${label}`}
-                />
+                <div className="mt-5 h-1 bg-[#f0e2d6]">
+                  <div
+                    className="h-full bg-[#3e1919]"
+                    style={{
+                      width: `${advisorActivePercentage}%`,
+                    }}
+                  />
+                </div>
 
-                <Line
-                  type="monotone"
-                  dataKey="total"
-                  stroke="#2563eb"
-                  strokeWidth={3}
-                  dot={{
-                    r: 6,
-                  }}
-                  activeDot={{
-                    r: 8,
-                  }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+                <p className="mt-2 text-xs text-[#a79093]">
+                  {advisorActivePercentage}% currently active
+                </p>
+              </div>
+
+              <div className="px-5 py-6 sm:px-6">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#a79093]">
+                  Sessions
+                </p>
+
+                <div className="mt-3 flex items-end justify-between gap-4">
+                  <p className="text-4xl font-semibold tracking-tight text-[#3e1919]">
+                    {statistics.sessions.total}
+                  </p>
+
+                  <span className="pb-1 text-sm text-[#a79093]">
+                    {statistics.sessions.withPassword} protected
+                  </span>
+                </div>
+
+                <div className="mt-5 h-1 bg-[#f0e2d6]">
+                  <div
+                    className="h-full bg-[#3e1919]"
+                    style={{
+                      width: `${sessionPasswordPercentage}%`,
+                    }}
+                  />
+                </div>
+
+                <p className="mt-2 text-xs text-[#a79093]">
+                  {sessionPasswordPercentage}% protected with a password
+                </p>
+              </div>
+
+              <div className="px-5 py-6 sm:px-6">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#a79093]">
+                  Conversations
+                </p>
+
+                <div className="mt-3 flex items-end justify-between gap-4">
+                  <p className="text-4xl font-semibold tracking-tight text-[#3e1919]">
+                    {statistics.conversations.total}
+                  </p>
+
+                  <span className="pb-1 text-sm text-[#a79093]">
+                    {statistics.conversations.totalMessages} messages
+                  </span>
+                </div>
+
+                <div className="mt-5 h-1 bg-[#f0e2d6]">
+                  <div
+                    className="h-full bg-[#3e1919]"
+                    style={{
+                      width: `${conversationMessagePercentage}%`,
+                    }}
+                  />
+                </div>
+
+                <p className="mt-2 text-xs text-[#a79093]">
+                  {conversationMessagePercentage}% have messages
+                </p>
+              </div>
+            </div>
           </div>
-
-          {/* Graph values */}
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="rounded-xl bg-blue-50 p-4">
-              <p className="text-sm font-medium text-blue-600">
-                Total Advisors
-              </p>
-
-              <p className="mt-1 text-2xl font-bold text-gray-900">
-                {statistics.advisors.total}
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-purple-50 p-4">
-              <p className="text-sm font-medium text-purple-600">
-                Total Sessions
-              </p>
-
-              <p className="mt-1 text-2xl font-bold text-gray-900">
-                {statistics.sessions.total}
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-orange-50 p-4">
-              <p className="text-sm font-medium text-orange-600">
-                Total Conversations
-              </p>
-
-              <p className="mt-1 text-2xl font-bold text-gray-900">
-                {statistics.conversations.total}
-              </p>
-            </div>
-          </div>
-        </div>
+        </section>
 
         {/* ========================================================
-            DISTRIBUTION SECTIONS
+            SYSTEM GRAPH
         ======================================================== */}
 
-        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* ======================================================
-              ADVISORS BY TYPE
-          ====================================================== */}
+        <section className="mt-12">
+          <div className="mb-6 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+                Activity
+              </p>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Advisors by Type
+              <h2 className="mt-1 text-xl font-semibold text-[#3e1919]">
+                System statistics
               </h2>
 
-              <p className="mt-1 text-sm text-gray-500">
-                Distribution of advisors across service types.
+              <p className="mt-1 text-sm text-[#a79093]">
+                Total advisors, sessions, and conversations.
               </p>
-            </div>
-
-            <div className="space-y-5">
-              {advisorTypeDistribution.length === 0 ? (
-                <p className="text-sm text-gray-500">
-                  No advisor type data available.
-                </p>
-              ) : (
-                advisorTypeDistribution.map((item) => {
-                  const percentage =
-                    statistics.advisors.total > 0
-                      ? Math.round(
-                          (item.count / statistics.advisors.total) * 100,
-                        )
-                      : 0;
-
-                  return (
-                    <div key={item.type}>
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-sm font-medium capitalize text-gray-700">
-                          {item.type}
-                        </span>
-
-                        <span className="text-sm text-gray-500">
-                          {item.count}
-                        </span>
-                      </div>
-
-                      <div className="h-2 overflow-hidden rounded-full bg-gray-100">
-                        <div
-                          className="h-full rounded-full bg-blue-500"
-                          style={{
-                            width: `${percentage}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })
-              )}
             </div>
           </div>
 
-          {/* ======================================================
-              CONVERSATIONS BY LANGUAGE
-          ====================================================== */}
+          <div className="border-y border-[#a79093]/30 bg-white/40 px-2 py-6 sm:px-5 sm:py-8">
+            <div className="h-[320px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={statisticsChartData}
+                  margin={{
+                    top: 10,
+                    right: 20,
+                    left: 0,
+                    bottom: 10,
+                  }}
+                >
+                  <CartesianGrid
+                    stroke="#a79093"
+                    strokeOpacity={0.15}
+                    strokeDasharray="2 4"
+                  />
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Conversations by Language
-              </h2>
+                  <XAxis
+                    dataKey="name"
+                    axisLine={{
+                      stroke: "#a79093",
+                      strokeOpacity: 0.3,
+                    }}
+                    tickLine={false}
+                    tick={{
+                      fontSize: 12,
+                      fill: "#a79093",
+                    }}
+                  />
 
-              <p className="mt-1 text-sm text-gray-500">
-                Distribution of SafeLink conversations by language.
+                  <YAxis
+                    allowDecimals={false}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{
+                      fontSize: 12,
+                      fill: "#a79093",
+                    }}
+                  />
+
+                  <Tooltip
+                    cursor={{
+                      stroke: "#a79093",
+                      strokeOpacity: 0.2,
+                    }}
+                    contentStyle={{
+                      backgroundColor: "#3e1919",
+                      border: "none",
+                      borderRadius: "4px",
+                      color: "#f7f5f6",
+                      padding: "10px 14px",
+                    }}
+                    labelStyle={{
+                      color: "#f0e2d6",
+                      marginBottom: "4px",
+                    }}
+                    itemStyle={{
+                      color: "#f7f5f6",
+                    }}
+                    formatter={(value) => [value, "Total"]}
+                    labelFormatter={(label) => `${label}`}
+                  />
+
+                  <Line
+                    type="monotone"
+                    dataKey="total"
+                    stroke="#3e1919"
+                    strokeWidth={2.5}
+                    dot={{
+                      r: 5,
+                      fill: "#3e1919",
+                      stroke: "#f7f5f6",
+                      strokeWidth: 2,
+                    }}
+                    activeDot={{
+                      r: 7,
+                      fill: "#3e1919",
+                      stroke: "#f0e2d6",
+                      strokeWidth: 3,
+                    }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================
+            DISTRIBUTIONS
+        ======================================================== */}
+
+        <section className="mt-12">
+          <div className="mb-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+              Distribution
+            </p>
+
+            <h2 className="mt-1 text-xl font-semibold text-[#3e1919]">
+              Service overview
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
+            {/* ====================================================
+                ADVISORS BY TYPE
+            ==================================================== */}
+
+            <div>
+              <div className="border-b border-[#a79093]/30 pb-4">
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#3e1919]">
+                      Advisors by Type
+                    </h3>
+
+                    <p className="mt-1 text-sm text-[#a79093]">
+                      Distribution across available advisor services.
+                    </p>
+                  </div>
+
+                  <span className="text-xs uppercase tracking-wider text-[#a79093]">
+                    {statistics.advisors.total} total
+                  </span>
+                </div>
+              </div>
+
+              <div className="divide-y divide-[#a79093]/20">
+                {advisorTypeDistribution.length === 0 ? (
+                  <p className="py-8 text-sm text-[#a79093]">
+                    No advisor type data available.
+                  </p>
+                ) : (
+                  advisorTypeDistribution.map((item) => {
+                    const percentage =
+                      statistics.advisors.total > 0
+                        ? Math.round(
+                            (item.count / statistics.advisors.total) * 100,
+                          )
+                        : 0;
+
+                    return (
+                      <div key={item.type} className="py-5">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            <span className="h-2 w-2 bg-[#3e1919]" />
+
+                            <span className="text-sm font-medium capitalize text-[#3e1919]">
+                              {item.type}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-semibold text-[#3e1919]">
+                              {item.count}
+                            </span>
+
+                            <span className="w-10 text-right text-xs text-[#a79093]">
+                              {percentage}%
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 h-1 bg-[#f0e2d6]">
+                          <div
+                            className="h-full bg-[#3e1919]"
+                            style={{
+                              width: `${percentage}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* ====================================================
+                CONVERSATIONS BY LANGUAGE
+            ==================================================== */}
+
+            <div>
+              <div className="border-b border-[#a79093]/30 pb-4">
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#3e1919]">
+                      Conversations by Language
+                    </h3>
+
+                    <p className="mt-1 text-sm text-[#a79093]">
+                      Distribution of SafeLink sessions by language.
+                    </p>
+                  </div>
+
+                  <span className="text-xs uppercase tracking-wider text-[#a79093]">
+                    {statistics.sessions.total} total
+                  </span>
+                </div>
+              </div>
+
+              <div className="divide-y divide-[#a79093]/20">
+                {sessionLanguageDistribution.length === 0 ? (
+                  <p className="py-8 text-sm text-[#a79093]">
+                    No language data available.
+                  </p>
+                ) : (
+                  sessionLanguageDistribution.map((item) => {
+                    const percentage =
+                      statistics.sessions.total > 0
+                        ? Math.round(
+                            (item.count / statistics.sessions.total) * 100,
+                          )
+                        : 0;
+
+                    const languageName =
+                      item.language === "en"
+                        ? "English"
+                        : item.language === "am"
+                          ? "Amharic"
+                          : item.language === "om"
+                            ? "Afaan Oromoo"
+                            : item.language;
+
+                    return (
+                      <div key={item.language} className="py-5">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            <span className="h-2 w-2 bg-[#3e1919]" />
+
+                            <span className="text-sm font-medium text-[#3e1919]">
+                              {languageName}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-semibold text-[#3e1919]">
+                              {item.count}
+                            </span>
+
+                            <span className="w-10 text-right text-xs text-[#a79093]">
+                              {percentage}%
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 h-1 bg-[#f0e2d6]">
+                          <div
+                            className="h-full bg-[#3e1919]"
+                            style={{
+                              width: `${percentage}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================
+            ADDITIONAL SYSTEM DETAILS
+        ======================================================== */}
+
+        <section className="mt-12 border-t border-[#a79093]/30 pt-8">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#a79093]">
+                Active Advisors
+              </p>
+
+              <p className="mt-2 text-2xl font-semibold text-[#3e1919]">
+                {statistics.advisors.active}
+              </p>
+
+              <p className="mt-1 text-xs text-[#a79093]">
+                {statistics.advisors.inactive} currently inactive
               </p>
             </div>
 
-            <div className="space-y-5">
-              {sessionLanguageDistribution.length === 0 ? (
-                <p className="text-sm text-gray-500">
-                  No language data available.
-                </p>
-              ) : (
-                sessionLanguageDistribution.map((item) => {
-                  const percentage =
-                    statistics.sessions.total > 0
-                      ? Math.round(
-                          (item.count / statistics.sessions.total) * 100,
-                        )
-                      : 0;
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#a79093]">
+                Session Security
+              </p>
 
-                  const languageName =
-                    item.language === "en"
-                      ? "English"
-                      : item.language === "am"
-                        ? "Amharic"
-                        : item.language === "om"
-                          ? "Afaan Oromoo"
-                          : item.language;
+              <p className="mt-2 text-2xl font-semibold text-[#3e1919]">
+                {statistics.sessions.withPassword}
+              </p>
 
-                  return (
-                    <div key={item.language}>
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700">
-                          {languageName}
-                        </span>
+              <p className="mt-1 text-xs text-[#a79093]">
+                Sessions protected with a password
+              </p>
+            </div>
 
-                        <span className="text-sm text-gray-500">
-                          {item.count}
-                        </span>
-                      </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#a79093]">
+                Messages
+              </p>
 
-                      <div className="h-2 overflow-hidden rounded-full bg-gray-100">
-                        <div
-                          className="h-full rounded-full bg-purple-500"
-                          style={{
-                            width: `${percentage}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+              <p className="mt-2 text-2xl font-semibold text-[#3e1919]">
+                {statistics.conversations.totalMessages}
+              </p>
+
+              <p className="mt-1 text-xs text-[#a79093]">
+                Total messages across conversations
+              </p>
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* ========================================================
+            FOOTER NOTE
+        ======================================================== */}
+
+        <footer className="mt-12 border-t border-[#a79093]/30 pt-6">
+          <p className="text-xs leading-5 text-[#a79093]">
+            SafeLink administration dashboard · Statistics are retrieved from
+            the current system data.
+          </p>
+        </footer>
       </div>
-    </div>
+    </main>
   );
 }

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { loginSession } from "../api/sessionApi";
 
@@ -54,18 +53,19 @@ function LoginSessionPage({
   };
 
   return (
-    <main className="min-h-screen bg-[#faf8f3] text-[#12304a] relative overflow-hidden">
+    <main className="relative min-h-screen overflow-hidden bg-[#f7f5f6] text-[#3e1919]">
 
       {/* Background decoration */}
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#d9efe5] rounded-full blur-3xl opacity-70" />
+      <div className="absolute -right-40 -top-40 h-96 w-96 rounded-full bg-[#f0e2d6] opacity-80 blur-3xl" />
 
-      <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#dceef4] rounded-full blur-3xl opacity-70" />
+      <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-[#a79093] opacity-20 blur-3xl" />
 
       {/* Header */}
-      <header className="relative z-10 max-w-7xl mx-auto px-6 py-6">
+      <header className="relative z-10 mx-auto max-w-7xl px-6 py-6">
         <button
+          type="button"
           onClick={onBack}
-          className="flex items-center gap-2 text-[#126d85] font-medium hover:gap-3 transition-all"
+          className="flex items-center gap-2 font-medium text-[#3e1919] transition-all hover:gap-3 hover:text-[#a79093]"
         >
           <span>←</span>
           Back
@@ -73,32 +73,33 @@ function LoginSessionPage({
       </header>
 
       {/* Content */}
-      <section className="relative z-10 min-h-[calc(100vh-96px)] flex items-center justify-center px-6 py-10">
+      <section className="relative z-10 flex min-h-[calc(100vh-96px)] items-center justify-center px-6 py-10">
 
         <div className="w-full max-w-lg">
 
           {/* Logo */}
-          <div className="flex justify-center mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#239b78] to-[#1685a5] flex items-center justify-center shadow-lg">
-              <span className="text-white text-3xl">
+          <div className="mb-8 flex justify-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#3e1919] shadow-lg shadow-[#3e1919]/20">
+              <span className="text-3xl text-[#f0e2d6]">
                 ♡
               </span>
             </div>
           </div>
 
           {/* Card */}
-          <div className="bg-white/90 backdrop-blur-xl border border-white rounded-[2rem] shadow-2xl p-7 md:p-9">
+          <div className="rounded-[2rem] border border-[#f0e2d6] bg-white/90 p-7 shadow-2xl backdrop-blur-xl md:p-9">
 
+            {/* Heading */}
             <div className="mb-8">
-              <p className="text-sm font-semibold text-[#239b78] mb-2">
+              <p className="mb-2 text-sm font-semibold tracking-wide text-[#a79093]">
                 PRIVATE SESSION
               </p>
 
-              <h1 className="text-3xl font-bold">
+              <h1 className="text-3xl font-bold text-[#3e1919]">
                 Welcome back
               </h1>
 
-              <p className="text-gray-500 mt-3 leading-relaxed">
+              <p className="mt-3 leading-relaxed text-[#a79093]">
                 Enter your SafeLink ID to return to your private session.
               </p>
             </div>
@@ -108,7 +109,7 @@ function LoginSessionPage({
 
               <label
                 htmlFor="safelink-id"
-                className="block font-semibold mb-2"
+                className="mb-2 block font-semibold text-[#3e1919]"
               >
                 SafeLink ID
               </label>
@@ -122,17 +123,19 @@ function LoginSessionPage({
                 autoComplete="off"
                 className="
                   w-full
-                  border border-gray-200
                   rounded-xl
+                  border border-[#f0e2d6]
+                  bg-[#f7f5f6]
                   px-4 py-3.5
-                  bg-[#fafcfb]
                   font-mono
                   uppercase
+                  text-[#3e1919]
                   outline-none
-                  focus:ring-2
-                  focus:ring-[#239b78]/30
-                  focus:border-[#239b78]
                   transition
+                  placeholder:text-[#a79093]
+                  focus:border-[#a79093]
+                  focus:ring-2
+                  focus:ring-[#a79093]/20
                 "
               />
 
@@ -143,10 +146,11 @@ function LoginSessionPage({
 
               <label
                 htmlFor="session-pin"
-                className="block font-semibold mb-2"
+                className="mb-2 block font-semibold text-[#3e1919]"
               >
                 PIN
-                <span className="text-gray-400 font-normal ml-2">
+
+                <span className="ml-2 font-normal text-[#a79093]">
                   if you created one
                 </span>
               </label>
@@ -162,29 +166,41 @@ function LoginSessionPage({
                   autoComplete="off"
                   className="
                     w-full
-                    border border-gray-200
                     rounded-xl
+                    border border-[#f0e2d6]
+                    bg-[#f7f5f6]
                     px-4 py-3.5 pr-16
-                    bg-[#fafcfb]
+                    text-[#3e1919]
                     outline-none
-                    focus:ring-2
-                    focus:ring-[#239b78]/30
-                    focus:border-[#239b78]
                     transition
+                    placeholder:text-[#a79093]
+                    focus:border-[#a79093]
+                    focus:ring-2
+                    focus:ring-[#a79093]/20
                   "
                 />
 
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[#126d85] font-medium"
+                  className="
+                    absolute
+                    right-4
+                    top-1/2
+                    -translate-y-1/2
+                    text-sm
+                    font-medium
+                    text-[#3e1919]
+                    transition
+                    hover:text-[#a79093]
+                  "
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
 
               </div>
 
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="mt-2 text-xs text-[#a79093]">
                 If your session has no PIN, you can leave this empty.
               </p>
 
@@ -192,53 +208,62 @@ function LoginSessionPage({
 
             {/* Error */}
             {error && (
-              <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div className="mb-5 rounded-xl border border-[#a79093]/30 bg-[#f0e2d6] px-4 py-3 text-sm text-[#3e1919]">
                 {error}
               </div>
             )}
 
             {/* Login */}
             <button
+              type="button"
               onClick={handleLogin}
               disabled={isLoggingIn}
               className="
+                flex
                 w-full
-                flex items-center justify-center gap-3
-                bg-[#126d85]
-                hover:bg-[#0d5d73]
-                disabled:bg-gray-400
-                text-white
-                py-4
+                items-center
+                justify-center
+                gap-3
                 rounded-xl
+                bg-[#3e1919]
+                py-4
                 font-semibold
+                text-white
                 shadow-lg
-                shadow-[#126d85]/20
+                shadow-[#3e1919]/20
                 transition-all
+                hover:bg-[#a79093]
+                disabled:cursor-not-allowed
+                disabled:bg-[#a79093]
               "
             >
               {isLoggingIn ? (
                 <>
-                  <span className="animate-spin">◌</span>
+                  <span className="animate-spin">
+                    ◌
+                  </span>
+
                   Opening your session...
                 </>
               ) : (
                 <>
                   Continue to Private Support
+
                   <span>→</span>
                 </>
               )}
             </button>
 
             {/* Privacy note */}
-            <div className="mt-6 pt-6 border-t border-gray-100">
+            <div className="mt-6 border-t border-[#f0e2d6] pt-6">
 
               <div className="flex gap-3">
 
-                <span className="text-lg">
+                <span className="text-lg text-[#3e1919]">
                   🔒
                 </span>
 
-                <p className="text-xs text-gray-500 leading-relaxed">
+                <p className="text-xs leading-relaxed text-[#a79093]">
                   SafeLink does not require your name, phone number, or
                   email. Your SafeLink ID is used to access your private
                   session.
@@ -256,4 +281,3 @@ function LoginSessionPage({
 }
 
 export default LoginSessionPage;
-
