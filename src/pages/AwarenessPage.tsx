@@ -72,47 +72,6 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
     return (
       <main className="min-h-screen bg-[#FAFBF7] text-[#173B28]">
         {/* =========================================================
-            NAVBAR — floating glass card, matches LandingPage
-        ========================================================= */}
-        <header className="fixed left-0 right-0 top-0 z-50">
-          <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
-            <nav className="flex items-center justify-between rounded-2xl border border-[#2F8F4E]/30 bg-white/85 px-4 py-3 shadow-lg backdrop-blur-md">
-              <button
-                type="button"
-                onClick={() => setSelectedPost(null)}
-                className="group flex items-center gap-3"
-                aria-label="Back to resources"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2F8F4E] transition group-hover:bg-[#176B3A]">
-                  <ArrowLeft
-                    size={18}
-                    className="text-white"
-                  />
-                </div>
-
-                <div className="text-left">
-                  <p className="text-sm font-bold text-[#176B3A] transition group-hover:text-[#2F8F4E]">
-                    Back to resources
-                  </p>
-
-                  <p className="mt-0.5 text-[9px] font-semibold tracking-[0.25em] text-[#2F8F4E]">
-                    AWARENESS
-                  </p>
-                </div>
-              </button>
-
-              <span className="hidden rounded-full border border-[#2F8F4E]/30 bg-[#E7F1E3] px-3.5 py-1.5 text-xs font-semibold text-[#2F8F4E] sm:inline-flex">
-                {language === "en"
-                  ? "English"
-                  : language === "am"
-                  ? "አማርኛ"
-                  : "Afaan Oromoo"}
-              </span>
-            </nav>
-          </div>
-        </header>
-
-        {/* =========================================================
             ARTICLE
         ========================================================= */}
         <article className="mx-auto max-w-3xl px-5 pt-32 pb-20 sm:px-8 sm:pt-40">

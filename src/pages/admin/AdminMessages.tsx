@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { MessageSquare, Users } from "lucide-react";
 
 interface Message {
   message_id: string;
@@ -169,28 +170,36 @@ export default function AdminMessages() {
    */
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#f7f5f6] text-[#3e1919]">
+      <main className="min-h-screen bg-[#FAFBF7] text-[#173B28]">
         <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
-          <header className="border-b border-[#a79093]/30 pb-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#a79093]">
+          <div className="rounded-2xl border border-[#2F8F4E]/30 bg-gradient-to-br from-white to-[#E7F1E3]/60 p-6 shadow-sm sm:p-8 lg:p-10">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#2F8F4E]/30 bg-white px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#2F8F4E]">
               SafeLink Administration
-            </p>
+            </div>
 
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#3e1919]">
+            <h1 className="text-3xl font-bold tracking-tight text-[#176B3A]">
               Messages
             </h1>
 
-            <p className="mt-3 text-sm text-[#a79093]">
+            <div className="mt-4 h-1 w-20 rounded-full bg-[#2F8F4E]" />
+
+            <p className="mt-4 text-sm text-[#173B28]/70">
               View and manage conversations with advisors.
             </p>
-          </header>
+          </div>
 
           <div className="flex min-h-[45vh] items-center justify-center">
             <div className="text-center">
-              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-[#a79093]/30 border-t-[#3e1919]" />
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E7F1E3]">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#2F8F4E]/30 border-t-[#2F8F4E]" />
+              </div>
 
-              <p className="mt-4 text-sm text-[#a79093]">
+              <p className="mt-4 text-sm font-semibold text-[#176B3A]">
                 Loading conversations...
+              </p>
+
+              <p className="mt-1 text-xs text-[#173B28]/60">
+                Fetching advisor conversations.
               </p>
             </div>
           </div>
@@ -205,34 +214,36 @@ export default function AdminMessages() {
    * ============================================================
    */
   return (
-    <main className="min-h-screen bg-[#f7f5f6] text-[#3e1919]">
+    <main className="min-h-screen bg-[#FAFBF7] text-[#173B28]">
       <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
         {/* ======================================================
             HEADER
         ====================================================== */}
 
-        <header className="border-b border-[#a79093]/30 pb-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#a79093]">
-            SafeLink Administration
-          </p>
-
-          <div className="mt-3 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+        <header className="rounded-2xl border border-[#2F8F4E]/30 bg-gradient-to-br from-white to-[#E7F1E3]/60 p-6 shadow-sm sm:p-8 lg:p-10">
+          <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-[#3e1919] sm:text-4xl">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#2F8F4E]/30 bg-white px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#2F8F4E]">
+                SafeLink Administration
+              </div>
+
+              <h1 className="text-3xl font-bold tracking-tight text-[#176B3A] sm:text-4xl">
                 Messages
               </h1>
 
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#a79093]">
+              <div className="mt-4 h-1 w-20 rounded-full bg-[#2F8F4E]" />
+
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-[#173B28]/70 sm:text-base">
                 View and manage your conversations with SafeLink advisors.
               </p>
             </div>
 
-            <div className="border-l-2 border-[#3e1919] pl-4">
-              <p className="text-xs uppercase tracking-wider text-[#a79093]">
+            <div className="shrink-0 rounded-2xl border border-[#2F8F4E]/30 bg-white px-5 py-4">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#2F8F4E]">
                 Conversations
               </p>
 
-              <p className="mt-1 text-sm font-medium text-[#3e1919]">
+              <p className="mt-2 text-sm font-semibold text-[#176B3A]">
                 {conversations.length}{" "}
                 {conversations.length === 1
                   ? "conversation"
@@ -247,21 +258,27 @@ export default function AdminMessages() {
         ====================================================== */}
 
         {error && (
-          <div className="mt-6 flex items-start justify-between gap-5 border-l-4 border-[#3e1919] bg-[#f0e2d6] px-5 py-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#a79093]">
-                Notice
-              </p>
+          <div className="mt-6 flex items-start justify-between gap-5 rounded-2xl border border-[#2F8F4E]/30 bg-white p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#176B3A] text-xs font-bold text-white">
+                !
+              </span>
 
-              <p className="mt-1 text-sm leading-6 text-[#3e1919]">
-                {error}
-              </p>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2F8F4E]">
+                  Notice
+                </p>
+
+                <p className="mt-1 text-sm leading-6 text-[#176B3A]">
+                  {error}
+                </p>
+              </div>
             </div>
 
             <button
               type="button"
               onClick={() => setError("")}
-              className="shrink-0 text-lg leading-none text-[#a79093] transition hover:text-[#3e1919]"
+              className="shrink-0 rounded-full p-1 text-lg leading-none text-[#173B28]/50 transition hover:bg-[#E7F1E3] hover:text-[#176B3A]"
               aria-label="Close error"
             >
               ×
@@ -274,45 +291,32 @@ export default function AdminMessages() {
         ====================================================== */}
 
         {conversations.length === 0 ? (
-          <section className="mt-10 border-y border-[#a79093]/30 py-14">
-            <div className="max-w-xl">
-              <div className="flex h-12 w-12 items-center justify-center border border-[#a79093]/40 bg-[#f0e2d6]">
-                <svg
-                  className="h-6 w-6 text-[#3e1919]"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.7}
-                    d="M8 10h.01M12 10h.01M16 10h.01M9 16h6m2 4H7a4 4 0 01-4-4V8a4 4 0 014-4h10a4 4 0 014 4v8a4 4 0 01-4 4z"
-                  />
-                </svg>
-              </div>
-
-              <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-[#a79093]">
-                Inbox
-              </p>
-
-              <h2 className="mt-2 text-2xl font-semibold text-[#3e1919]">
-                No conversations yet
-              </h2>
-
-              <p className="mt-3 max-w-md text-sm leading-6 text-[#a79093]">
-                Conversations with advisors will appear here once they become
-                available.
-              </p>
-
-              <button
-                type="button"
-                onClick={() => navigate("/admin/advisors")}
-                className="mt-7 border border-[#3e1919] bg-[#3e1919] px-5 py-2.5 text-sm font-medium text-[#f7f5f6] transition hover:bg-[#3e1919]/90"
-              >
-                Go to Advisors
-              </button>
+          <section className="mt-10 rounded-2xl border border-[#2F8F4E]/30 bg-white p-10 text-center shadow-sm sm:p-14">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E7F1E3]">
+              <MessageSquare size={25} className="text-[#2F8F4E]" />
             </div>
+
+            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
+              Inbox
+            </p>
+
+            <h2 className="mt-2 text-2xl font-semibold text-[#176B3A]">
+              No conversations yet
+            </h2>
+
+            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#173B28]/65">
+              Conversations with advisors will appear here once they become
+              available.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => navigate("/admin/advisors")}
+              className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#2F8F4E] px-6 py-3 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#176B3A]"
+            >
+              <Users size={15} />
+              Go to Advisors
+            </button>
           </section>
         ) : (
           /* ====================================================
@@ -320,24 +324,24 @@ export default function AdminMessages() {
           ==================================================== */
 
           <section className="mt-10">
-            <div className="mb-4 flex items-end justify-between gap-4">
+            <div className="mb-6 flex items-end justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
                   Inbox
                 </p>
 
-                <h2 className="mt-1 text-xl font-semibold text-[#3e1919]">
+                <h2 className="mt-2 text-2xl font-semibold text-[#176B3A] sm:text-3xl">
                   Advisor conversations
                 </h2>
               </div>
 
-              <span className="text-xs text-[#a79093]">
+              <span className="hidden text-xs text-[#173B28]/60 sm:block">
                 Select a conversation to open it
               </span>
             </div>
 
-            <div className="border-y border-[#a79093]/30">
-              {conversations.map((conversation, index) => {
+            <div className="space-y-3">
+              {conversations.map((conversation) => {
                 const hasAdvisorId = Boolean(conversation.advisor_id);
 
                 return (
@@ -346,21 +350,17 @@ export default function AdminMessages() {
                     type="button"
                     onClick={() => openConversation(conversation)}
                     disabled={!hasAdvisorId}
-                    className={`group flex w-full items-center gap-4 px-2 py-5 text-left transition sm:px-4 ${
-                      index !== conversations.length - 1
-                        ? "border-b border-[#a79093]/20"
-                        : ""
-                    } ${
+                    className={`group flex w-full items-center gap-4 rounded-2xl border bg-white px-4 py-4 text-left shadow-sm transition-all duration-300 sm:px-5 sm:py-5 ${
                       hasAdvisorId
-                        ? "hover:bg-[#f0e2d6]/60"
-                        : "cursor-not-allowed opacity-60"
+                        ? "border-[#E7F1E3] hover:-translate-y-0.5 hover:border-[#2F8F4E] hover:shadow-md"
+                        : "cursor-not-allowed border-[#E7F1E3] opacity-60"
                     }`}
                   >
                     {/* ==================================================
                         AVATAR
                     ================================================== */}
 
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-[#3e1919] text-xs font-semibold tracking-wide text-[#f7f5f6]">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#2F8F4E] text-xs font-bold tracking-wide text-white shadow-md transition group-hover:bg-[#176B3A]">
                       {conversation.advisor_id
                         ? conversation.advisor_id.slice(0, 2).toUpperCase()
                         : "AD"}
@@ -373,22 +373,22 @@ export default function AdminMessages() {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                         <div className="min-w-0">
-                          <h3 className="text-sm font-semibold text-[#3e1919]">
+                          <h3 className="text-sm font-semibold text-[#176B3A]">
                             Advisor
                           </h3>
 
-                          <p className="mt-0.5 truncate text-xs text-[#a79093]">
+                          <p className="mt-0.5 truncate font-mono text-[11px] text-[#173B28]/55">
                             {conversation.advisor_id ||
                               "Advisor ID unavailable"}
                           </p>
                         </div>
 
-                        <span className="shrink-0 text-xs text-[#a79093]">
+                        <span className="shrink-0 text-[11px] text-[#173B28]/50">
                           {getLastMessageTime(conversation)}
                         </span>
                       </div>
 
-                      <p className="mt-2 truncate text-sm text-[#a79093]">
+                      <p className="mt-2 truncate text-sm text-[#173B28]/70">
                         {getLastMessage(conversation)}
                       </p>
                     </div>
@@ -398,7 +398,7 @@ export default function AdminMessages() {
                     ================================================== */}
 
                     <svg
-                      className="h-5 w-5 shrink-0 text-[#a79093] transition-transform group-hover:translate-x-1 group-hover:text-[#3e1919]"
+                      className="h-5 w-5 shrink-0 text-[#2F8F4E] transition-transform group-hover:translate-x-1 group-hover:text-[#176B3A]"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -421,11 +421,17 @@ export default function AdminMessages() {
             FOOTER
         ====================================================== */}
 
-        <footer className="mt-10 border-t border-[#a79093]/30 pt-6">
-          <p className="text-xs leading-5 text-[#a79093]">
-            SafeLink administration · Advisor conversations are handled
-            securely through the administrator interface.
-          </p>
+        <footer className="mt-12 border-t border-[#2F8F4E]/20 pt-6">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#E7F1E3] text-xs font-bold text-[#2F8F4E]">
+              ✓
+            </span>
+
+            <p className="text-xs leading-6 text-[#173B28]/60">
+              SafeLink administration · Advisor conversations are handled
+              securely through the administrator interface.
+            </p>
+          </div>
         </footer>
       </div>
     </main>

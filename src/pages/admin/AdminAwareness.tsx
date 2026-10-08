@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   BookOpen,
   CalendarDays,
@@ -9,8 +9,14 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-
-type Language = "en" | "am" | "om";
+import {
+  createAwarenessPost,
+  deleteAwarenessPost,
+  getAwarenessPosts,
+  type AwarenessPost,
+  type Language,
+  updateAwarenessPost,
+} from "../../api/awarenessApi";
 
 interface LanguageLabels {
   language: string;
@@ -33,15 +39,6 @@ interface LanguageLabels {
   loadingPosts: string;
   noPosts: string;
   deleteConfirm: string;
-}
-
-interface AwarenessPost {
-  _id: string;
-  language: Language;
-  title: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
 }
 
 const labels: Record<Language, LanguageLabels> = {
@@ -116,6 +113,17 @@ const labels: Record<Language, LanguageLabels> = {
 };
 
 export default function AdminAwareness() {
+  function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
+    return (
+      <img
+        src="/safelink-logo.png"
+        alt="SafeLink logo"
+        className={`${className} object-contain`}
+        draggable={false}
+      />
+    );
+  }
+
   const [language, setLanguage] = useState<Language>("en");
 
   const [title, setTitle] = useState("");
@@ -132,40 +140,21 @@ export default function AdminAwareness() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
+  // Which post is expanded inline (Medium-style "Read more")
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
 
-  // Which post's ⋮ menu is open
-  const [menuPostId, setMenuPostId] = useState<string | null>(null);
+  // Post pending deletion (custom confirm modal)
+  const [postToDelete, setPostToDelete] = useState<AwarenessPost | null>(null);
+
+  // Ref to the editor section so Edit can scroll right to the input
+  const editorRef = useRef<HTMLDivElement | null>(null);
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
 
   const currentLabels = labels[language];
 
   const fetchPosts = async () => {
-    const token = localStorage.getItem("adminToken");
-
-    if (!token) {
-      setError("Admin authentication required.");
-      setPostsLoading(false);
-      return;
-    }
-
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/admin/awareness-posts",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to fetch awareness posts.");
-      }
-
-      setPosts(data.posts);
+      setPosts(await getAwarenessPosts());
     } catch (error) {
       setError(
         error instanceof Error
@@ -181,11 +170,26 @@ export default function AdminAwareness() {
     fetchPosts();
   }, []);
 
+  // When editing starts, scroll the editor into view and focus the title input
+  useEffect(() => {
+    if (editingPostId && editorRef.current) {
+      // Small delay so the form renders with new values first
+      requestAnimationFrame(() => {
+        editorRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+
+        // Then focus the title input after scroll settles
+        window.setTimeout(() => {
+          titleInputRef.current?.focus({ preventScroll: true });
+        }, 450);
+      });
+    }
+  }, [editingPostId]);
+
   const handleLanguageChange = (selectedLanguage: Language) => {
     setLanguage(selectedLanguage);
-    setTitle("");
-    setContent("");
-    setEditingPostId(null);
     setSuccess("");
     setError("");
   };
@@ -197,40 +201,18 @@ export default function AdminAwareness() {
     setSuccess("");
     setError("");
 
-    const token = localStorage.getItem("adminToken");
-
-    if (!token) {
-      setError("Admin authentication required.");
-      setLoading(false);
-      return;
-    }
-
     try {
-      const url = editingPostId
-        ? `http://localhost:5000/api/admin/awareness-posts/${editingPostId}`
-        : "http://localhost:5000/api/admin/awareness-posts";
+      const payload = { language, title, content };
+      const wasEditing = Boolean(editingPostId);
 
-      const response = await fetch(url, {
-        method: editingPostId ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          language,
-          title,
-          content,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to save awareness post.");
+      if (editingPostId) {
+        await updateAwarenessPost(editingPostId, payload);
+      } else {
+        await createAwarenessPost(payload);
       }
 
       setSuccess(
-        editingPostId
+        wasEditing
           ? "Awareness post updated successfully."
           : "Awareness post created successfully.",
       );
@@ -258,11 +240,7 @@ export default function AdminAwareness() {
     setContent(post.content);
     setSuccess("");
     setError("");
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    // Scroll is handled by the useEffect on editingPostId
   };
 
   const handleCancelEdit = () => {
@@ -273,38 +251,29 @@ export default function AdminAwareness() {
     setError("");
   };
 
-  const handleDelete = async (postId: string) => {
-    if (!window.confirm(currentLabels.deleteConfirm)) {
-      return;
-    }
+  // Open the custom confirm modal
+  const requestDelete = (post: AwarenessPost) => {
+    setPostToDelete(post);
+  };
 
-    const token = localStorage.getItem("adminToken");
+  // Cancel the delete confirmation
+  const cancelDelete = () => {
+    if (deletingPostId) return; // don't allow closing while deleting
+    setPostToDelete(null);
+  };
 
-    if (!token) {
-      setError("Admin authentication required.");
-      return;
-    }
+  // Confirm and actually delete
+  const confirmDelete = async () => {
+    if (!postToDelete) return;
+
+    const postId = postToDelete._id;
 
     setDeletingPostId(postId);
     setSuccess("");
     setError("");
 
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/admin/awareness-posts/${postId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to delete awareness post.");
-      }
+      await deleteAwarenessPost(postId);
 
       if (editingPostId === postId) {
         setEditingPostId(null);
@@ -313,6 +282,8 @@ export default function AdminAwareness() {
       }
 
       setSuccess("Awareness post deleted successfully.");
+
+      setPostToDelete(null);
 
       await fetchPosts();
     } catch (error) {
@@ -338,6 +309,7 @@ export default function AdminAwareness() {
     return "English";
   };
 
+  /* Medium-style preview: first ~140 chars of the post */
   const getPreview = (text: string, limit = 140) => {
     const clean = text.replace(/\s+/g, " ").trim();
     if (clean.length <= limit) return clean;
@@ -346,7 +318,10 @@ export default function AdminAwareness() {
 
   return (
     <main className="min-h-screen bg-[#FAFBF7] text-[#173B28]">
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#FAFBF7] via-[#E7F1E3] to-[#E7F1E3] pt-16 pb-16 sm:pt-20 sm:pb-20">
+      {/* =========================================================
+          HERO
+      ========================================================= */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#FAFBF7] via-[#E7F1E3] to-[#E7F1E3] pt-32 pb-16 sm:pt-40 sm:pb-20">
         <div className="pointer-events-none absolute -right-24 top-20 h-96 w-96 rounded-full bg-[#2F8F4E]/15 blur-3xl" />
         <div className="pointer-events-none absolute -left-24 bottom-0 h-80 w-80 rounded-full bg-[#2F8F4E]/10 blur-3xl" />
 
@@ -369,7 +344,11 @@ export default function AdminAwareness() {
         </div>
       </section>
 
+      {/* =========================================================
+          MAIN CONTENT
+      ========================================================= */}
       <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-16">
+        {/* STATUS MESSAGES */}
         {(success || error) && (
           <div className="mb-10 space-y-3">
             {success && (
@@ -392,8 +371,10 @@ export default function AdminAwareness() {
           </div>
         )}
 
-        {/* EDITOR */}
-        <section>
+        {/* =========================================================
+            EDITOR
+        ========================================================= */}
+        <section ref={editorRef} className="scroll-mt-24">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
@@ -419,6 +400,7 @@ export default function AdminAwareness() {
             onSubmit={handleSubmit}
             className="overflow-hidden rounded-2xl border border-[#2F8F4E]/30 bg-white shadow-lg"
           >
+            {/* LANGUAGE */}
             <div className="grid gap-6 border-b border-[#E7F1E3] p-6 sm:grid-cols-[180px_1fr] sm:p-7">
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E7F1E3]">
@@ -447,6 +429,7 @@ export default function AdminAwareness() {
               </select>
             </div>
 
+            {/* TITLE */}
             <div className="grid gap-6 border-b border-[#E7F1E3] p-6 sm:grid-cols-[180px_1fr] sm:p-7">
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E7F1E3]">
@@ -463,6 +446,7 @@ export default function AdminAwareness() {
 
               <input
                 id="title"
+                ref={titleInputRef}
                 type="text"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
@@ -472,6 +456,7 @@ export default function AdminAwareness() {
               />
             </div>
 
+            {/* CONTENT */}
             <div className="grid gap-6 p-6 sm:grid-cols-[180px_1fr] sm:p-7">
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E7F1E3]">
@@ -497,6 +482,7 @@ export default function AdminAwareness() {
               />
             </div>
 
+            {/* ACTIONS */}
             <div className="flex flex-col-reverse gap-3 border-t border-[#E7F1E3] bg-[#FAFBF7] px-6 py-5 sm:flex-row sm:justify-end sm:px-7">
               {editingPostId && (
                 <button
@@ -526,7 +512,9 @@ export default function AdminAwareness() {
           </form>
         </section>
 
-        {/* POSTS */}
+        {/* =========================================================
+            POSTS — Medium-style cards
+        ========================================================= */}
         <section className="mt-20">
           <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -587,11 +575,9 @@ export default function AdminAwareness() {
             </div>
           ) : (
             <div className="grid gap-5 lg:grid-cols-2">
-              {posts.map((post) => {
+              {posts.map((post, index) => {
                 const isExpanded = expandedPostId === post._id;
                 const isEditing = editingPostId === post._id;
-                const isMenuOpen = menuPostId === post._id;
-                const isDeleting = deletingPostId === post._id;
 
                 return (
                   <article
@@ -602,74 +588,28 @@ export default function AdminAwareness() {
                         : "border-[#E7F1E3] hover:-translate-y-1 hover:border-[#2F8F4E] hover:shadow-xl"
                     }`}
                   >
+                    {/* Accent bar */}
                     <div className="h-1.5 bg-[#2F8F4E]" />
 
                     <div className="flex flex-1 flex-col p-6 sm:p-7">
-                      {/* Top row: language chip + ⋮ menu */}
+                      {/* Top row: language chip + index */}
                       <div className="mb-5 flex items-center justify-between gap-3">
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E7F1E3] px-3 py-1 text-xs font-semibold text-[#2F8F4E]">
                           <Globe2 size={12} />
                           {getLanguageName(post.language)}
                         </span>
 
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setMenuPostId((current) =>
-                                current === post._id ? null : post._id,
-                              )
-                            }
-                            aria-label="Post actions"
-                            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E7F1E3] text-lg leading-none text-[#2F8F4E] transition hover:border-[#2F8F4E] hover:bg-[#E7F1E3]"
-                          >
-                            ⋮
-                          </button>
-
-                          {isMenuOpen && (
-                            <>
-                              <button
-                                type="button"
-                                aria-label="Close menu"
-                                onClick={() => setMenuPostId(null)}
-                                className="fixed inset-0 z-20 cursor-default"
-                              />
-
-                              <div className="absolute right-0 top-11 z-30 w-40 overflow-hidden rounded-2xl border border-[#E7F1E3] bg-white shadow-2xl">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setMenuPostId(null);
-                                    handleEdit(post);
-                                  }}
-                                  className="w-full px-4 py-3 text-left text-sm text-[#176B3A] transition hover:bg-[#FAFBF7]"
-                                >
-                                  {currentLabels.editButton}
-                                </button>
-
-                                <button
-                                  type="button"
-                                  disabled={isDeleting}
-                                  onClick={() => {
-                                    setMenuPostId(null);
-                                    handleDelete(post._id);
-                                  }}
-                                  className="w-full px-4 py-3 text-left text-sm font-medium text-[#8B1F1F] transition hover:bg-[#F7EBEB] disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                  {isDeleting
-                                    ? "..."
-                                    : currentLabels.deleteButton}
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
+                        <span className="flex h-8 min-w-8 items-center justify-center rounded-full bg-[#2F8F4E] px-2.5 text-xs font-bold text-white">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
                       </div>
 
+                      {/* Title */}
                       <h3 className="text-xl font-bold leading-7 text-[#176B3A] transition group-hover:text-[#2F8F4E] sm:text-2xl">
                         {post.title}
                       </h3>
 
+                      {/* Date */}
                       <div className="mt-3 flex items-center gap-2 text-xs text-[#173B28]/60">
                         <CalendarDays size={13} />
                         <span>
@@ -677,8 +617,10 @@ export default function AdminAwareness() {
                         </span>
                       </div>
 
+                      {/* Divider */}
                       <div className="my-5 h-px bg-[#E7F1E3]" />
 
+                      {/* Preview / full content */}
                       <div className="flex-1">
                         {isExpanded ? (
                           <div className="whitespace-pre-wrap text-sm leading-7 text-[#173B28]/75">
@@ -691,6 +633,7 @@ export default function AdminAwareness() {
                         )}
                       </div>
 
+                      {/* Read more toggle */}
                       {!isExpanded && (
                         <button
                           type="button"
@@ -712,6 +655,30 @@ export default function AdminAwareness() {
                           <ChevronDown size={13} />
                         </button>
                       )}
+
+                      {/* Action row */}
+                      <div className="mt-6 flex items-center justify-between gap-3 border-t border-[#E7F1E3] pt-5">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(post)}
+                          className="inline-flex items-center gap-2 rounded-full border border-[#2F8F4E]/40 bg-white px-4 py-2 text-xs font-semibold text-[#2F8F4E] transition hover:-translate-y-0.5 hover:border-[#2F8F4E] hover:bg-[#FAFBF7] sm:text-sm"
+                        >
+                          <BookOpen size={14} />
+                          {currentLabels.editButton}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => requestDelete(post)}
+                          disabled={deletingPostId === post._id}
+                          className="inline-flex items-center gap-2 rounded-full border border-[#2F8F4E]/20 bg-white px-4 py-2 text-xs font-semibold text-[#2F8F4E] transition hover:-translate-y-0.5 hover:border-[#176B3A] hover:bg-[#E7F1E3] hover:text-[#176B3A] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
+                        >
+                          <Trash2 size={14} />
+                          {deletingPostId === post._id
+                            ? "..."
+                            : currentLabels.deleteButton}
+                        </button>
+                      </div>
                     </div>
                   </article>
                 );
@@ -720,6 +687,9 @@ export default function AdminAwareness() {
           )}
         </section>
 
+        {/* =========================================================
+            FOOTER NOTE
+        ========================================================= */}
         <footer className="mt-16 border-t border-[#2F8F4E]/20 pt-8">
           <div className="flex items-start gap-3">
             <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#E7F1E3] text-xs font-bold text-[#2F8F4E]">
@@ -734,6 +704,75 @@ export default function AdminAwareness() {
           </div>
         </footer>
       </div>
+
+      {/* =========================================================
+          CUSTOM DELETE CONFIRM MODAL
+      ========================================================= */}
+      {postToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#173B28]/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#E7F1E3] bg-white shadow-2xl">
+            {/* Header */}
+            <div className="border-b border-[#E7F1E3] px-6 py-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
+                Confirmation required
+              </p>
+
+              <h2 className="mt-2 text-xl font-semibold text-[#176B3A]">
+                Delete awareness post
+              </h2>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-6">
+              <p className="text-sm leading-6 text-[#173B28]/70">
+                {currentLabels.deleteConfirm}
+              </p>
+
+              {/* Post preview inside modal */}
+              <div className="mt-5 rounded-xl border border-[#2F8F4E]/20 bg-[#FAFBF7] px-4 py-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2F8F4E]">
+                  {getLanguageName(postToDelete.language)}
+                </p>
+
+                <p className="mt-1 line-clamp-2 text-sm font-semibold text-[#176B3A]">
+                  {postToDelete.title}
+                </p>
+              </div>
+
+              <div className="mt-4 rounded-xl border border-[#2F8F4E]/30 bg-[#E7F1E3] px-4 py-3">
+                <p className="text-xs leading-5 text-[#176B3A]">
+                  This action cannot be undone. The post will be permanently
+                  removed.
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 border-t border-[#E7F1E3] bg-[#FAFBF7] px-6 py-5">
+              <button
+                type="button"
+                onClick={cancelDelete}
+                disabled={deletingPostId === postToDelete._id}
+                className="rounded-full border border-[#2F8F4E]/40 bg-white px-5 py-2.5 text-sm font-semibold text-[#2F8F4E] transition hover:border-[#2F8F4E] hover:bg-[#E7F1E3] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deletingPostId === postToDelete._id}
+                className="inline-flex items-center gap-2 rounded-full bg-[#2F8F4E] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#176B3A] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Trash2 size={14} />
+                {deletingPostId === postToDelete._id
+                  ? "Deleting..."
+                  : "Delete post"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

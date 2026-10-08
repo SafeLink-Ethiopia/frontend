@@ -32,7 +32,6 @@ import QuickExitPage from "./pages/QuickExitPage";
 // =========================
 
 import AdvisorPage from "./pages/AdvisorPage";
-import AdvisorLoginPage from "./pages/AdvisorLoginPage";
 import AdvisorDashboardPage from "./pages/AdvisorDashboardPage";
 import AdvisorProfilePage from "./pages/AdvisorProfilePage";
 
@@ -47,7 +46,6 @@ import UserConversations from "./pages/advisor/UserConversations";
 // Admin Pages
 // =========================
 
-import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminAwareness from "./pages/admin/AdminAwareness";
 import CreateAdvisor from "./pages/admin/CreateAdvisor";
@@ -72,7 +70,7 @@ function LandingRoute({ hasSavedSession }: { hasSavedSession: boolean }) {
   return (
     <LandingPage
       onNeedHelp={() => navigate("/create")}
-      onHelping={() => navigate("/helping")}
+      // onHelping={() => navigate("/helping")} 
       hasSavedSession={hasSavedSession}
       onContinueSession={() => navigate("/login")}
     />
@@ -162,7 +160,8 @@ function App() {
           element={<LandingRoute hasSavedSession={hasSavedSession} />}
         />
 
-        <Route path="/information" element={<InformationPage />} />
+        <Route path="/
+        " element={<InformationPage />} />
 
         <Route
           path="/create"
@@ -208,9 +207,7 @@ function App() {
         {/* Advisor landing / main page */}
         <Route path="/advisor" element={<AdvisorPage />} />
 
-        {/* Advisor login */}
-        <Route path="/advisor/login" element={<AdvisorLoginPage />} />
-
+   
         {/* Advisor dashboard */}
         {/* <Route path="/advisor/dashboard" element={<AdvisorDashboardPage />} /> */}
 
@@ -278,17 +275,6 @@ function App() {
   />
 
 </Route>
-
-
-
-
-
-
-        {/* =====================================================
-            ADMIN LOGIN
-        ====================================================== */}
-
-        <Route path="/admin/login" element={<AdminLogin />} />
 
         {/* =====================================================
             PROTECTED ADMIN ROUTES

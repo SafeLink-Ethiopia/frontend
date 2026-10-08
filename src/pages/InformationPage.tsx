@@ -92,6 +92,17 @@ const SUPPORT_OPTIONS: SupportInfo[] = [
   },
 ];
 
+function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
+  return (
+    <img
+      src="/safelink-logo.png"
+      alt="SafeLink logo"
+      className={`${className} object-contain`}
+      draggable={false}
+    />
+  );
+}
+
 function InformationPage() {
   const navigate = useNavigate();
 
@@ -114,7 +125,6 @@ function InformationPage() {
 
   const [advisorToken, setAdvisorToken] = useState("");
 
-  // NEW: editing + deleting states (advisor-only)
   const [editingFacility, setEditingFacility] =
     useState<Facility | null>(null);
 
@@ -227,7 +237,6 @@ function InformationPage() {
     setLocation("");
   };
 
-  /* Advisor-only delete handler */
   const handleDeleteFacility = async (facility: Facility) => {
     const token =
       localStorage.getItem("advisor_token") ||
@@ -249,7 +258,6 @@ function InformationPage() {
 
       await deleteFacility(facility.facility_id, token);
 
-      // Close modal if the deleted facility is the one being viewed
       if (selectedFacility?.facility_id === facility.facility_id) {
         setSelectedFacility(null);
       }
@@ -267,85 +275,14 @@ function InformationPage() {
       setDeletingFacilityId(null);
     }
   };
-function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
+
   return (
-    <img
-      src="/safelink-logo.png"
-      alt="SafeLink logo"
-      className={`${className} object-contain`}
-      draggable={false}
-    />
-  );
-}
-  return (
-    <main className="min-h-screen bg-[#FAFBF7] text-[#173B28]">
+    <div className="min-h-screen bg-[#FAFBF7] text-[#173B28]">
       {/* =========================================================
-          NAVBAR — floating glass card, same as LandingPage
+          HERO
       ========================================================= */}
 
-      <header className="fixed left-0 right-0 top-0 z-50">
-        <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
-          <nav className="rounded-2xl border border-[#2F8F4E]/30 bg-white/85 px-4 py-3 shadow-lg backdrop-blur-md">
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => navigate("/")}
-                className="flex items-center gap-3"
-                aria-label="Go to SafeLink home"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl ">
-                  <LogoMark className="h-10 w-10" />
-                </div>
-
-                <div className="text-left">
-                  <p className="text-xl font-extrabold leading-none tracking-tight text-[#2F8F4E]">
-                    SafeLink
-                  </p>
-
-                  <p className="mt-1 text-[9px] font-semibold tracking-[0.25em] text-[#2F8F4E]">
-                    ETHIOPIA
-                  </p>
-                </div>
-              </button>
-
-              <div className="hidden items-center gap-3 md:flex">
-                <button
-                  type="button"
-                  onClick={() => navigate("/")}
-                  className="rounded-full px-4 py-2.5 text-sm font-medium text-[#173B28]/75 transition hover:bg-[#E7F1E3] hover:text-[#2F8F4E]"
-                >
-                  Home
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handlePrivateSession}
-                  className="rounded-full bg-[#2F8F4E] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#176B3A]"
-                >
-                  Private Session
-                </button>
-              </div>
-
-              {/* Mobile actions */}
-              <div className="flex items-center gap-2 md:hidden">
-                <button
-                  type="button"
-                  onClick={handlePrivateSession}
-                  className="rounded-full bg-[#2F8F4E] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#176B3A]"
-                >
-                  Private Session
-                </button>
-              </div>
-            </div>
-          </nav>
-        </div>
-      </header>
-
-      {/* =========================================================
-          HERO — rounded bottom, mint gradient, same mood
-      ========================================================= */}
-
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#FAFBF7] via-[#E7F1E3] to-[#E7F1E3] pt-32 pb-20 sm:pt-40 sm:pb-24 lg:pt-44 lg:pb-32">
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#FAFBF7] via-[#E7F1E3] to-[#E7F1E3] pt-8 pb-20 sm:pt-12 sm:pb-24 lg:pt-14 lg:pb-32">
         <div className="pointer-events-none absolute -right-24 top-20 h-96 w-96 rounded-full bg-[#2F8F4E]/15 blur-3xl" />
 
         <div className="pointer-events-none absolute -left-24 bottom-0 h-80 w-80 rounded-full bg-[#2F8F4E]/10 blur-3xl" />
@@ -353,7 +290,7 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
           <div>
             <p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
-              Information & support
+              Information &amp; support
             </p>
 
             <h1 className="max-w-3xl text-4xl font-bold leading-[1.1] tracking-tight text-[#176B3A] sm:text-5xl lg:text-6xl">
@@ -418,7 +355,7 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
       </section>
 
       {/* =========================================================
-          SUPPORT TYPES — read-only description cards (no selection)
+          SUPPORT TYPES
       ========================================================= */}
 
       <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-28">
@@ -446,7 +383,6 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
               >
                 <div className="flex items-center justify-between gap-6 px-6 py-5 text-left sm:px-7 sm:py-6">
                   <div className="flex items-start gap-5">
-                    {/* Illustration */}
                     <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#E7F1E3] sm:h-20 sm:w-20">
                       <img
                         src={option.image}
@@ -496,7 +432,7 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
       </section>
 
       {/* =========================================================
-          FINDER — full-width mint section (filtering here still works)
+          FINDER
       ========================================================= */}
 
       <section
@@ -607,8 +543,6 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
               )}
             </div>
           </div>
-
-          {/* Results */}
 
           <div className="mt-14">
             <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -857,145 +791,7 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
       </section>
 
       {/* =========================================================
-          FINAL CTA
-      ========================================================= */}
-
-      <section className="bg-[#176B3A] px-6 py-14 sm:px-8 sm:py-16">
-        <div className="mx-auto flex max-w-6xl flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#E7F1E3]">
-              You can start without knowing everything
-            </p>
-
-            <h2 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">
-              Not sure what you need?
-            </h2>
-
-            <p className="mt-4 text-sm leading-7 text-[#E7F1E3] sm:text-base sm:leading-8">
-              Start a private SafeLink session and explain what is happening
-              in your own words. You do not need to decide which type of
-              support fits you before starting.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={handlePrivateSession}
-            className="group inline-flex shrink-0 items-center gap-3 rounded-full bg-[#E7F1E3] px-7 py-4 text-sm font-semibold text-[#176B3A] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-white"
-          >
-            {getSafelinkId()
-              ? "Continue to SafeLink"
-              : "Start Private Session"}
-
-            <span className="text-lg leading-none transition-transform duration-200 group-hover:translate-x-1">
-              →
-            </span>
-          </button>
-        </div>
-      </section>
-
-      {/* =========================================================
-          FOOTER
-      ========================================================= */}
-
-      <footer className="bg-[#173B28] text-white">
-        <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
-          <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-12">
-            <div className="lg:col-span-5">
-              <button
-                type="button"
-                onClick={() => navigate("/")}
-                className="group flex items-center gap-3"
-              >
-                <div className="flex h-11 w-11 items-center justify-center">
-                  <LogoMark className="h-10 w-10" />
-                </div>
-
-                <div className="text-left">
-                  <h3 className="text-xl font-bold tracking-tight text-white">
-                    SafeLink
-                  </h3>
-
-                  <p className="mt-0.5 text-[9px] font-semibold tracking-[0.25em] text-[#2F8F4E]">
-                    ETHIOPIA
-                  </p>
-                </div>
-              </button>
-            </div>
-
-            <div className="lg:col-span-3">
-              <h4 className="text-sm font-semibold uppercase tracking-wide text-[#2F8F4E]">
-                Contact
-              </h4>
-
-              <div className="mt-4 space-y-3">
-                <a
-                  href="mailto:support@safelink.org"
-                  className="block text-sm text-white/70 transition hover:text-[#2F8F4E]"
-                >
-                  support@safelink.org
-                </a>
-
-                <p className="text-sm text-white/70">
-                  +251912345678
-                </p>
-              </div>
-            </div>
-
-            <div className="lg:col-span-4">
-              <h4 className="text-sm font-semibold uppercase tracking-wide text-[#2F8F4E]">
-                Safety & Legal
-              </h4>
-
-              <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3">
-                <button
-                  type="button"
-                  className="text-left text-sm text-white/60 transition hover:text-[#2F8F4E]"
-                >
-                  Privacy Policy
-                </button>
-
-                <button
-                  type="button"
-                  className="text-left text-sm text-white/60 transition hover:text-[#2F8F4E]"
-                >
-                  Terms of Use
-                </button>
-
-                <button
-                  type="button"
-                  className="text-left text-sm text-white/60 transition hover:text-[#2F8F4E]"
-                >
-                  Safety & Security
-                </button>
-
-                <button
-                  type="button"
-                  className="text-left text-sm text-white/60 transition hover:text-[#2F8F4E]"
-                >
-                  Accessibility
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="my-7 h-px bg-white/10" />
-
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-white/50">
-              © {new Date().getFullYear()} SafeLink Ethiopia. All rights
-              reserved.
-            </p>
-
-            <p className="text-xs text-white/30">
-              Built with care for safer communities.
-            </p>
-          </div>
-        </div>
-      </footer>
-
-      {/* =========================================================
-          SUPPORT DETAIL MODAL
+          MODALS
       ========================================================= */}
 
       {selectedSupportInfo && (
@@ -1011,10 +807,6 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
           )}
         />
       )}
-
-      {/* =========================================================
-          FACILITY MODAL — with advisor ⋮ menu
-      ========================================================= */}
 
       {selectedFacility && (
         <FacilityModal
@@ -1032,10 +824,6 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
         />
       )}
 
-      {/* =========================================================
-          ADD FACILITY — ADVISOR ONLY
-      ========================================================= */}
-
       {showAddFacility && isAdvisor && (
         <AddFacilityModal
           token={advisorToken}
@@ -1046,10 +834,6 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
           }}
         />
       )}
-
-      {/* =========================================================
-          EDIT FACILITY — ADVISOR ONLY
-      ========================================================= */}
 
       {editingFacility && isAdvisor && (
         <EditFacilityModal
@@ -1062,7 +846,7 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
           }}
         />
       )}
-    </main>
+    </div>
   );
 }
 
@@ -1217,7 +1001,7 @@ function FacilityCard({
 }
 
 /* ===============================================================
-   FACILITY MODAL — with advisor ⋮ menu (Edit / Delete)
+   FACILITY MODAL
 =============================================================== */
 
 function FacilityModal({
@@ -1257,7 +1041,6 @@ function FacilityModal({
             </h2>
           </div>
 
-          {/* Advisor ⋮ menu replaces the X close button */}
           {isAdvisor ? (
             <div className="relative shrink-0">
               <button
