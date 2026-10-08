@@ -1,6 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  Check,
+  CheckCheck,
+  Edit3,
+  MessageCircle,
+  Reply,
+  Send,
+  Trash2,
+  UserRound,
+  X,
+} from "lucide-react";
+
 import QuickExit from "../components/QuickExit";
+
 import {
   requestAdvisor,
   getUserConversations,
@@ -8,441 +22,412 @@ import {
   editMessage,
   deleteMessage,
   markConversationSeen,
-  type AdvisorType,
-  type Conversation,
 } from "../api/conversationApi";
 
-const advisorOptions: {
-  type: AdvisorType;
-  label: string;
-  description: string;
-  icon: string;
-}[] = [
-  {
-    type: "medical",
-    label: "Medical Advisor",
-    description: "Guidance related to health and medical concerns.",
-    icon: "🩺",
-  },
-  {
-    type: "legal",
-    label: "Legal Advisor",
-    description: "Information about your rights and legal options.",
-    icon: "⚖️",
-  },
-  {
-    type: "psychological",
-    label: "Psychological Advisor",
-    description: "A private space for emotional or psychological concerns.",
-    icon: "💚",
-  },
-  {
-    type: "general",
-    label: "General Advisor",
-    description: "Talk with an advisor about your situation.",
-    icon: "💬",
-  },
+import type { AdvisorType, Conversation } from "../api/conversationApi";
+
+interface UserAdvisorChatProps {
+  onBack?: () => void;
+}
+
+const advisorLabels: Record<AdvisorType, string> = {
+  medical: "Medical Advisor",
+  legal: "Legal Advisor",
+  psychological: "Psychological Advisor",
+  general: "General Advisor",
+};
+
+const advisorDescriptions: Record<AdvisorType, string> = {
+  medical: "Get support for health-related concerns.",
+  legal: "Get guidance about legal concerns.",
+  psychological: "Get confidential emotional support.",
+  general: "Get general guidance and support.",
+};
+
+const advisorTypes: AdvisorType[] = [
+  "medical",
+  "legal",
+  "psychological",
+  "general",
 ];
 
-const advisorStorageKey = (sessionId: string) =>
-  `safelink_selected_advisor_${sessionId}`;
-
-const conversationStorageKey = (sessionId: string, advisorType: AdvisorType) =>
-  `safelink_conversation_${sessionId}_${advisorType}`;
-
-const isAdvisorType = (value: string | null): value is AdvisorType =>
-  value === "medical" ||
-  value === "legal" ||
-  value === "psychological" ||
-  value === "general";
-
-export default function UserAdvisorChat() {
+function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
   const navigate = useNavigate();
+
+  const [sessionId, setSessionId] = useState("");
+
+  const [conversations, setConversations] = useState<Conversation[]>([]);
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
 
   const [selectedAdvisor, setSelectedAdvisor] =
     useState<AdvisorType>("general");
 
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [startingChat, setStartingChat] = useState(false);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+
+  const [messageText, setMessageText] = useState("");
 
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
 
   const [editingText, setEditingText] = useState("");
 
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{
+    message_id: string;
+    text: string;
+    sender: "user" | "advisor";
+  } | null>(null);
 
-  const savedSession = localStorage.getItem("safelink_session");
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  let sessionId: string | null = null;
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
-  try {
-    sessionId = savedSession ? JSON.parse(savedSession).safelink_id : null;
-  } catch {
-    sessionId = null;
-  }
-
-  /*
-   * Load the advisor selected from the dashboard.
-   */
-  useEffect(() => {
-    if (!sessionId) {
-      navigate("/create");
-      return;
-    }
-
-    const savedAdvisor = localStorage.getItem(advisorStorageKey(sessionId));
-
-    if (isAdvisorType(savedAdvisor)) {
-      setSelectedAdvisor(savedAdvisor);
-    }
-  }, [sessionId, navigate]);
+  const composerRef = useRef<HTMLTextAreaElement | null>(null);
 
   /*
-   * Load ONLY the conversation belonging to
-   * the currently selected advisor.
+   * ============================================================
+   * LOAD SESSION
+   * ============================================================
    */
+
   useEffect(() => {
-    if (!sessionId) return;
+    try {
+      const savedSession = localStorage.getItem("safelink_session");
 
-    let cancelled = false;
-
-    const loadAdvisorConversation = async () => {
-      setError("");
-      setConversation(null);
-
-      try {
-        const conversations = await getUserConversations(sessionId);
-
-        if (cancelled) return;
-
-        const advisorConversations = conversations
-          .filter(
-            (item) =>
-              item.advisor_type === selectedAdvisor && !item.hidden_for_user,
-          )
-          .sort(
-            (a, b) =>
-              new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime(),
-          );
-
-        const matchingConversation = advisorConversations[0] ?? null;
-
-        if (!matchingConversation) {
-          return;
-        }
-
-        setConversation(matchingConversation);
-
-        localStorage.setItem(
-          conversationStorageKey(sessionId, selectedAdvisor),
-          matchingConversation.conversation_id,
-        );
-
-        /*
-         * The user has opened this conversation.
-         * Mark advisor messages as seen.
-         */
-        try {
-          const seenConversation = await markConversationSeen(
-            matchingConversation.conversation_id,
-            "user",
-          );
-
-          if (!cancelled) {
-            setConversation(seenConversation);
-          }
-        } catch (seenError) {
-          console.error("Unable to mark conversation as seen:", seenError);
-        }
-      } catch (loadError) {
-        if (cancelled) return;
-
-        console.error("Unable to load advisor conversation:", loadError);
-
-        setConversation(null);
-        setError("Unable to load this advisor conversation.");
+      if (!savedSession) {
+        navigate("/");
+        return;
       }
-    };
 
-    loadAdvisorConversation();
+      const parsed = JSON.parse(savedSession);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [sessionId, selectedAdvisor]);
+      const id =
+        parsed?.session_id ||
+        parsed?.safelink_id ||
+        parsed?.session?.session_id ||
+        parsed?.session?.safelink_id ||
+        "";
 
-  /*
-   * Poll ONLY the currently selected advisor's conversation.
-   *
-   * IMPORTANT:
-   * If the advisor sends a new message while the user
-   * is already inside this chat, the new advisor message
-   * is automatically marked as seen.
-   */
-  useEffect(() => {
-    if (!conversation || !sessionId) return;
-
-    const activeConversationId = conversation.conversation_id;
-
-    const refreshConversation = async () => {
-      try {
-        const conversations = await getUserConversations(sessionId);
-
-        const updatedConversation = conversations.find(
-          (item) =>
-            item.conversation_id === activeConversationId &&
-            item.advisor_type === selectedAdvisor &&
-            !item.hidden_for_user,
-        );
-
-            setConversation(seenConversation);
-          } catch (seenError) {
-            console.error(
-              "Unable to mark advisor messages as seen:",
-              seenError,
-            );
-          }
-        }
-      } catch (pollError) {
-        console.error("Unable to refresh conversation:", pollError);
+      if (!id) {
+        navigate("/");
+        return;
       }
-    };
 
-    /*
-     * Check immediately.
-     */
-    refreshConversation();
+      setSessionId(id);
 
-    /*
-     * Continue checking every 3 seconds.
-     */
-    const interval = window.setInterval(refreshConversation, 3000);
+      const savedAdvisor = localStorage.getItem("safelink_selected_advisor");
 
-    return () => {
-      window.clearInterval(interval);
-    };
-  }, [conversation?.conversation_id, sessionId, selectedAdvisor]);
+      if (
+        savedAdvisor === "medical" ||
+        savedAdvisor === "legal" ||
+        savedAdvisor === "psychological" ||
+        savedAdvisor === "general"
+      ) {
+        setSelectedAdvisor(savedAdvisor);
+      }
+    } catch (error) {
+      console.error("Failed to load saved session:", error);
 
-  /*
-   * Scroll to newest message.
-   */
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
-  }, [conversation?.messages.length]);
-
-  /*
-   * Change advisor.
-   */
-  const handleAdvisorChange = (advisorType: AdvisorType) => {
-    if (!sessionId) return;
-
-    setSelectedAdvisor(advisorType);
-
-    localStorage.setItem(advisorStorageKey(sessionId), advisorType);
-
-    setConversation(null);
-    setMessage("");
-    setError("");
-    setEditingMessageId(null);
-    setEditingText("");
-  };
-
-  /*
-   * Start/open the selected advisor conversation.
-   */
-  const handleStartChat = async () => {
-    if (!sessionId) {
-      setError("Your private session could not be found.");
-      return;
+      navigate("/");
     }
+  }, [navigate]);
 
-    setStartingChat(true);
-    setError("");
+  /*
+   * ============================================================
+   * LOAD CONVERSATIONS
+   * ============================================================
+   */
+
+  const loadConversations = async (
+    currentSessionId: string,
+    keepCurrent = true,
+  ) => {
+    if (!currentSessionId) return;
 
     try {
-      const conversations = await getUserConversations(sessionId);
+      const data = await getUserConversations(currentSessionId);
 
-      const existingConversation =
-        conversations
-          .filter(
-            (item) =>
-              item.advisor_type === selectedAdvisor && !item.hidden_for_user,
-          )
-          .sort(
-            (a, b) =>
-              new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime(),
-          )[0] ?? null;
+      setConversations(data);
 
-      if (existingConversation) {
-        setConversation(existingConversation);
-
-        localStorage.setItem(advisorStorageKey(sessionId), selectedAdvisor);
-
-        localStorage.setItem(
-          conversationStorageKey(sessionId, selectedAdvisor),
-          existingConversation.conversation_id,
-        );
-
-        /*
-         * User opened the conversation.
-         * Mark advisor messages as seen.
-         */
-        try {
-          const seenConversation = await markConversationSeen(
-            existingConversation.conversation_id,
-            "user",
-          );
-
-          setConversation(seenConversation);
-        } catch (seenError) {
-          console.error("Unable to mark conversation as seen:", seenError);
+      if (data.length === 0) {
+        if (!keepCurrent) {
+          setConversation(null);
         }
 
         return;
       }
 
-      const newConversation = await requestAdvisor(sessionId, selectedAdvisor);
+      const savedAdvisor = localStorage.getItem("safelink_selected_advisor");
 
-      if (newConversation.advisor_type !== selectedAdvisor) {
-        throw new Error("The server returned the wrong advisor conversation.");
-      }
+      const advisorToUse =
+        savedAdvisor === "medical" ||
+        savedAdvisor === "legal" ||
+        savedAdvisor === "psychological" ||
+        savedAdvisor === "general"
+          ? savedAdvisor
+          : selectedAdvisor;
 
-      setConversation(newConversation);
-
-      localStorage.setItem(advisorStorageKey(sessionId), selectedAdvisor);
-
-      localStorage.setItem(
-        conversationStorageKey(sessionId, selectedAdvisor),
-        newConversation.conversation_id,
-      );
-
-      /*
-       * Mark the newly opened conversation as seen.
-       */
-      try {
-        const seenConversation = await markConversationSeen(
-          newConversation.conversation_id,
-          "user",
+      if (keepCurrent && conversation) {
+        const updatedCurrent = data.find(
+          (item) => item.conversation_id === conversation.conversation_id,
         );
 
-        setConversation(seenConversation);
-      } catch (seenError) {
-        console.error("Unable to mark conversation as seen:", seenError);
+        if (updatedCurrent) {
+          setConversation(updatedCurrent);
+          return;
+        }
       }
-    } catch (requestError) {
-      console.error("Unable to request advisor:", requestError);
 
-      setError("Unable to connect you with this advisor. Please try again.");
-    } finally {
-      setStartingChat(false);
+      const matchingConversation = data.find(
+        (item) => item.advisor_type === advisorToUse,
+      );
+
+      if (matchingConversation) {
+        setConversation(matchingConversation);
+        setSelectedAdvisor(matchingConversation.advisor_type);
+      } else {
+        setConversation(null);
+      }
+    } catch (error) {
+      console.error("Failed to load conversations:", error);
     }
   };
 
   /*
-   * Send message.
+   * ============================================================
+   * INITIAL LOAD
+   * ============================================================
    */
-  const handleSendMessage = async () => {
-    if (!conversation || !message.trim() || loading) {
+
+  useEffect(() => {
+    if (!sessionId) return;
+
+    let mounted = true;
+
+    const initialLoad = async () => {
+      setLoading(true);
+
+      try {
+        if (!mounted) return;
+
+        await loadConversations(sessionId, false);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    initialLoad();
+
+    return () => {
+      mounted = false;
+    };
+  }, [sessionId]);
+
+  /*
+   * ============================================================
+   * POLLING
+   * ============================================================
+   */
+
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const interval = window.setInterval(async () => {
+      try {
+        const data = await getUserConversations(sessionId);
+
+        setConversations(data);
+
+        if (!conversation) return;
+
+        const updatedConversation = data.find(
+          (item) => item.conversation_id === conversation.conversation_id,
+        );
+
+        if (updatedConversation) {
+          setConversation(updatedConversation);
+        }
+      } catch (error) {
+        console.error("Conversation polling failed:", error);
+      }
+    }, 3000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [sessionId, conversation?.conversation_id]);
+
+  /*
+   * ============================================================
+   * MARK ADVISOR MESSAGES AS SEEN
+   * ============================================================
+   */
+
+  useEffect(() => {
+    if (!conversation) return;
+
+    const hasUnreadMessages = conversation.messages.some(
+      (message) =>
+        message.sender === "advisor" && !message.deleted && !message.seen_at,
+    );
+
+    if (!hasUnreadMessages) return;
+
+    markConversationSeen(conversation.conversation_id, "user")
+      .then((updatedConversation) => {
+        setConversation(updatedConversation);
+
+        setConversations((previous) =>
+          previous.map((item) =>
+            item.conversation_id === updatedConversation.conversation_id
+              ? updatedConversation
+              : item,
+          ),
+        );
+      })
+      .catch((error) => {
+        console.error("Failed to mark conversation as seen:", error);
+      });
+  }, [conversation?.conversation_id, conversation?.messages]);
+
+  /*
+   * ============================================================
+   * SELECT ADVISOR
+   * ============================================================
+   */
+
+  const handleSelectAdvisor = async (advisorType: AdvisorType) => {
+    setSelectedAdvisor(advisorType);
+
+    localStorage.setItem("safelink_selected_advisor", advisorType);
+
+    setEditingMessageId(null);
+    setEditingText("");
+    setReplyingTo(null);
+
+    const existingConversation = conversations.find(
+      (item) => item.advisor_type === advisorType,
+    );
+
+    if (existingConversation) {
+      setConversation(existingConversation);
+      setMobileSidebarOpen(false);
       return;
     }
 
-    const text = message.trim();
-
-    setLoading(true);
-    setError("");
+    if (!sessionId) return;
 
     try {
-      const updatedConversation = await sendMessage(
-        conversation.conversation_id,
-        "user",
-        text,
-      );
+      setLoading(true);
 
-      if (updatedConversation.advisor_type !== selectedAdvisor) {
-        throw new Error("The server returned the wrong advisor conversation.");
-      }
+      const newConversation = await requestAdvisor(sessionId, advisorType);
 
-      setConversation(updatedConversation);
-      setMessage("");
-    } catch (sendError) {
-      console.error("Unable to send message:", sendError);
+      setConversation(newConversation);
 
-      setError("Unable to send your message. Please try again.");
+      setConversations((previous) => {
+        const exists = previous.some(
+          (item) => item.conversation_id === newConversation.conversation_id,
+        );
+
+        if (exists) {
+          return previous.map((item) =>
+            item.conversation_id === newConversation.conversation_id
+              ? newConversation
+              : item,
+          );
+        }
+
+        return [...previous, newConversation];
+      });
+
+      setMobileSidebarOpen(false);
+    } catch (error) {
+      console.error("Failed to select advisor:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEditMessage = async (messageId: string) => {
-    if (!conversation || !editingText.trim()) {
+  /*
+   * ============================================================
+   * REPLY
+   * ============================================================
+   */
+
+  const handleReply = (
+    messageId: string,
+    text: string,
+    sender: "user" | "advisor",
+  ) => {
+    setEditingMessageId(null);
+    setEditingText("");
+
+    setReplyingTo({
+      message_id: messageId,
+      text,
+      sender,
+    });
+
+    window.setTimeout(() => {
+      composerRef.current?.focus();
+    }, 50);
+  };
+
+  const cancelReply = () => {
+    setReplyingTo(null);
+    composerRef.current?.focus();
+  };
+
+  /*
+   * ============================================================
+   * SEND MESSAGE
+   * ============================================================
+   */
+
+  const handleSendMessage = async () => {
+    const text = messageText.trim();
+
+    if (!text || !conversation || sending) {
       return;
     }
 
     try {
-      const updatedConversation = await editMessage(
+      setSending(true);
+
+      const updatedConversation = await sendMessage(
         conversation.conversation_id,
-        messageId,
-        editingText.trim(),
+        "user",
+        text,
+        false,
+        replyingTo?.message_id ?? null,
       );
 
-      if (updatedConversation.advisor_type !== selectedAdvisor) {
-        throw new Error("The server returned the wrong advisor conversation.");
-      }
-
       setConversation(updatedConversation);
-      setEditingMessageId(null);
-      setEditingText("");
-    } catch (editError) {
-      console.error("Unable to edit message:", editError);
 
-      setError("Unable to edit the message.");
+      setConversations((previous) =>
+        previous.map((item) =>
+          item.conversation_id === updatedConversation.conversation_id
+            ? updatedConversation
+            : item,
+        ),
+      );
+
+      setMessageText("");
+      setReplyingTo(null);
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    } finally {
+      setSending(false);
     }
   };
 
-  const handleDeleteMessage = async (messageId: string) => {
-    if (!conversation) return;
-
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this message?",
-    );
-
-    if (!confirmed) return;
-
-    try {
-      const updatedConversation = await deleteMessage(
-        conversation.conversation_id,
-        messageId,
-      );
-
-      if (updatedConversation.advisor_type !== selectedAdvisor) {
-        throw new Error("The server returned the wrong advisor conversation.");
-      }
-
-      setConversation(updatedConversation);
-    } catch (deleteError) {
-      console.error("Unable to delete message:", deleteError);
-
-      setError("Unable to delete the message.");
-    }
-  };
-
-  const startEditing = (messageId: string, text: string) => {
-    setEditingMessageId(messageId);
-    setEditingText(text);
-  };
-
-  const cancelEditing = () => {
-    setEditingMessageId(null);
-    setEditingText("");
-  };
+  /*
+   * ============================================================
+   * ENTER TO SEND
+   * ============================================================
+   */
 
   const handleComposerKeyDown = (
     event: React.KeyboardEvent<HTMLTextAreaElement>,
@@ -453,533 +438,981 @@ export default function UserAdvisorChat() {
     }
   };
 
-  if (!sessionId) {
-    return null;
+  /*
+   * ============================================================
+   * EDIT MESSAGE
+   * ============================================================
+   */
+
+  const startEditing = (messageId: string, text: string) => {
+    setReplyingTo(null);
+    setEditingMessageId(messageId);
+    setEditingText(text);
+  };
+
+  const cancelEditing = () => {
+    setEditingMessageId(null);
+    setEditingText("");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!conversation || !editingMessageId || !editingText.trim()) {
+      return;
+    }
+
+    try {
+      const updatedConversation = await editMessage(
+        conversation.conversation_id,
+        editingMessageId,
+        editingText.trim(),
+      );
+
+      setConversation(updatedConversation);
+
+      setConversations((previous) =>
+        previous.map((item) =>
+          item.conversation_id === updatedConversation.conversation_id
+            ? updatedConversation
+            : item,
+        ),
+      );
+
+      setEditingMessageId(null);
+      setEditingText("");
+    } catch (error) {
+      console.error("Failed to edit message:", error);
+    }
+  };
+
+  /*
+   * ============================================================
+   * DELETE MESSAGE
+   * ============================================================
+   */
+
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!conversation) return;
+
+    const confirmed = window.confirm("Delete this message?");
+
+    if (!confirmed) return;
+
+    try {
+      const updatedConversation = await deleteMessage(
+        conversation.conversation_id,
+        messageId,
+      );
+
+      setConversation(updatedConversation);
+
+      setConversations((previous) =>
+        previous.map((item) =>
+          item.conversation_id === updatedConversation.conversation_id
+            ? updatedConversation
+            : item,
+        ),
+      );
+
+      if (replyingTo?.message_id === messageId) {
+        setReplyingTo(null);
+      }
+
+      if (editingMessageId === messageId) {
+        setEditingMessageId(null);
+        setEditingText("");
+      }
+    } catch (error) {
+      console.error("Failed to delete message:", error);
+    }
+  };
+
+  /*
+   * ============================================================
+   * BACK
+   * ============================================================
+   */
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+
+    navigate("/dashboard");
+  };
+
+  /*
+   * ============================================================
+   * AUTO SCROLL
+   * ============================================================
+   */
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+
+    if (!container) return;
+
+    container.scrollTop = container.scrollHeight;
+  }, [conversation?.conversation_id]);
+
+  /*
+   * ============================================================
+   * UNREAD COUNT
+   * ============================================================
+   */
+
+  const getUnreadCount = (item: Conversation) => {
+    return item.messages.filter(
+      (message) =>
+        message.sender === "advisor" && !message.deleted && !message.seen_at,
+    ).length;
+  };
+
+  /*
+   * ============================================================
+   * GET REPLIED MESSAGE
+   * ============================================================
+   */
+
+  const getRepliedMessage = (replyTo: string | null | undefined) => {
+    if (!replyTo || !conversation) {
+      return null;
+    }
+
+    return (
+      conversation.messages.find((message) => message.message_id === replyTo) ||
+      null
+    );
+  };
+
+  /*
+   * ============================================================
+   * LOADING SCREEN
+   * ============================================================
+   */
+
+  if (loading && !conversation && conversations.length === 0) {
+    return (
+      <div className="h-[100dvh] min-h-screen bg-[#FAFBF7] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 rounded-full border-4 border-[#E7F1E3] border-t-[#2F8F4E] animate-spin mx-auto" />
+
+          <p className="mt-4 text-sm text-[#176B3A]">
+            Loading your advisors...
+          </p>
+        </div>
+      </div>
+    );
   }
 
-  const currentAdvisor = advisorOptions.find(
-    (advisor) => advisor.type === selectedAdvisor,
-  );
+  /*
+   * ============================================================
+   * MAIN LAYOUT
+   * ============================================================
+   */
 
   return (
-    <main className="min-h-screen bg-[#f7f5f6] text-[#3e1919]">
-      <div className="flex min-h-screen">
-        {/* SIDEBAR */}
-        <aside className="hidden w-[250px] shrink-0 border-r border-[#a79093]/25 bg-[#f7f5f6] lg:flex lg:flex-col">
-          {/* Logo */}
-          <div className="px-7 pt-8 pb-8">
-            <button
-              onClick={() => navigate("/user/dashboard")}
-              className="flex items-center gap-3"
-            >
-              <div className="flex h-10 w-10 items-center justify-center bg-[#3e1919]">
-                <span className="text-xl text-[#f0e2d6]">♡</span>
-              </div>
+    <div className="h-[100dvh] min-h-screen bg-[#FAFBF7] flex overflow-hidden text-[#173B28]">
+      {/* ======================================================
+          MOBILE OVERLAY
+          ====================================================== */}
 
-              <div className="text-left">
-                <p className="text-[19px] font-semibold tracking-tight text-[#3e1919]">
-                  SafeLink
-                </p>
+      {mobileSidebarOpen && (
+        <button
+          type="button"
+          aria-label="Close advisor menu"
+          onClick={() => setMobileSidebarOpen(false)}
+          className="fixed inset-0 z-30 bg-black/20 lg:hidden"
+        />
+      )}
 
-                <p className="text-[9px] font-medium tracking-[0.18em] text-[#a79093]">
-                  PRIVATE SUPPORT
-                </p>
-              </div>
-            </button>
-          </div>
+      {/* ======================================================
+          SIDEBAR
+          ====================================================== */}
 
-          {/* Navigation */}
-          <nav className="flex-1 px-5">
-            <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
-              Workspace
+      <aside
+        className={`
+          fixed
+          lg:relative
+          z-40
+          lg:z-auto
+          left-0
+          top-0
+          h-[100dvh]
+          w-[280px]
+          sm:w-[300px]
+          shrink-0
+          bg-white
+          border-r
+          border-[#DCE8DD]
+          flex
+          flex-col
+          overflow-hidden
+          transition-transform
+          duration-200
+          ${
+            mobileSidebarOpen
+              ? "translate-x-0"
+              : "-translate-x-full lg:translate-x-0"
+          }
+        `}
+      >
+        {/* Sidebar top */}
+        <div className="shrink-0 h-[72px] px-5 flex items-center justify-between border-b border-[#DCE8DD]">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="flex items-center gap-2 text-[#176B3A] hover:text-[#2F8F4E] transition"
+          >
+            <ArrowLeft size={19} />
+
+            <span className="font-semibold text-sm">Back</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setMobileSidebarOpen(false)}
+            className="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center text-[#176B3A] hover:bg-[#E7F1E3]"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Advisor list */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-3 py-5">
+          <div className="px-2 mb-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-[#2F8F4E]">
+              Advisors
             </p>
 
-            <button
-              onClick={() => navigate("/user/dashboard")}
-              className="mb-1 flex w-full items-center gap-3 border-l-2 border-transparent px-3 py-3 text-sm font-medium text-[#a79093] transition hover:border-[#3e1919] hover:text-[#3e1919]"
-            >
-              <span className="text-base">⌂</span>
-              Dashboard
-            </button>
-
-            <button
-              onClick={() => navigate("/user/dashboard/chat")}
-              className="mb-1 flex w-full items-center gap-3 border-l-2 border-[#3e1919] bg-[#f0e2d6] px-3 py-3 text-sm font-semibold text-[#3e1919]"
-            >
-              <span className="text-base">◌</span>
-              Advisor Chat
-            </button>
-
-            <button
-              onClick={() => navigate("/awareness")}
-              className="flex w-full items-center gap-3 border-l-2 border-transparent px-3 py-3 text-sm font-medium text-[#a79093] transition hover:border-[#3e1919] hover:text-[#3e1919]"
-            >
-              <span className="text-base">▣</span>
-              Awareness
-            </button>
-          </nav>
-
-          {/* Safety area */}
-          <div className="px-5 pb-5">
-            <div className="border-t border-[#a79093]/25 pt-5">
-              <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center bg-[#f0e2d6] text-sm font-semibold text-[#3e1919]">
-                  !
-                </div>
-
-                <div>
-                  <p className="text-sm font-semibold text-[#3e1919]">
-                    Your safety matters
-                  </p>
-
-                  <p className="mt-1 text-[11px] leading-5 text-[#a79093]">
-                    Your conversations are private.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => navigate("/quick-exit")}
-                className="mt-4 w-full border border-[#3e1919] py-2.5 text-xs font-semibold text-[#3e1919] transition hover:bg-[#3e1919] hover:text-white"
-              >
-                Quick Exit
-              </button>
-            </div>
+            <p className="mt-1 text-xs text-[#6B7C70]">
+              Choose who you want to talk to.
+            </p>
           </div>
-        </aside>
 
-        {/* MAIN */}
-        <section className="flex min-h-screen min-w-0 flex-1 flex-col">
-          {/* Header */}
-          <header className="flex min-h-[76px] items-center justify-between border-b border-[#a79093]/25 bg-[#f7f5f6] px-5 sm:px-8">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate("/user/dashboard")}
-                className="flex h-9 w-9 items-center justify-center border border-[#a79093]/35 text-[#3e1919] transition hover:bg-[#f0e2d6]"
-                aria-label="Back to dashboard"
-              >
-                ←
-              </button>
+          <div className="space-y-1.5">
+            {advisorTypes.map((advisorType) => {
+              const isSelected = selectedAdvisor === advisorType;
 
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#a79093]">
-                  Private Support
-                </p>
+              const currentConversation = conversations.find(
+                (item) => item.advisor_type === advisorType,
+              );
 
-                <h1 className="text-base font-semibold text-[#3e1919] sm:text-lg">
-                  Advisor Conversations
-                </h1>
-              </div>
-            </div>
+              const unreadCount = currentConversation
+                ? getUnreadCount(currentConversation)
+                : 0;
 
-            <div className="flex items-center gap-3">
-              <div className="hidden border border-[#a79093]/30 px-3 py-1.5 text-[11px] font-semibold text-[#3e1919] sm:block">
-                Private session
-              </div>
-
-              <QuickExit />
-            </div>
-          </header>
-
-          <div className="flex min-h-0 flex-1 flex-col">
-            {/* ADVISOR SWITCHER */}
-            <div className="border-b border-[#a79093]/25 bg-[#f7f5f6] px-4 py-3 sm:px-8">
-              <div className="mx-auto flex max-w-[1000px] gap-1 overflow-x-auto pb-1">
-                {advisorOptions.map((advisor) => {
-                  const active = selectedAdvisor === advisor.type;
-
-                  return (
-                    <button
-                      key={advisor.type}
-                      onClick={() => handleAdvisorChange(advisor.type)}
-                      className={`flex shrink-0 items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-semibold transition ${
-                        active
-                          ? "border-[#3e1919] bg-[#f0e2d6] text-[#3e1919]"
-                          : "border-transparent text-[#a79093] hover:border-[#a79093] hover:text-[#3e1919]"
-                      }`}
+              return (
+                <button
+                  key={advisorType}
+                  type="button"
+                  onClick={() => handleSelectAdvisor(advisorType)}
+                  className={`
+                      w-full
+                      text-left
+                      rounded-xl
+                      px-3.5
+                      py-3
+                      border
+                      transition
+                      ${
+                        isSelected
+                          ? "bg-[#E7F1E3] border-[#BBD8C0]"
+                          : "bg-white border-transparent hover:bg-[#F3F7F1] hover:border-[#DCE8DD]"
+                      }
+                    `}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`
+                          w-10
+                          h-10
+                          shrink-0
+                          rounded-full
+                          flex
+                          items-center
+                          justify-center
+                          ${
+                            isSelected
+                              ? "bg-[#2F8F4E] text-white"
+                              : "bg-[#E7F1E3] text-[#176B3A]"
+                          }
+                        `}
                     >
-                      <span>{advisor.icon}</span>
-
-                      <span>{advisor.label.replace(" Advisor", "")}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {!conversation ? (
-              /* START SELECTED ADVISOR CHAT */
-              <div className="flex flex-1 items-start justify-center overflow-y-auto px-5 py-10 sm:px-8 lg:items-center lg:py-12">
-                <div className="w-full max-w-[850px]">
-                  <div className="border-b border-[#a79093]/25 pb-8">
-                    <div className="mb-5 flex h-12 w-12 items-center justify-center bg-[#f0e2d6] text-2xl">
-                      {currentAdvisor?.icon || "💬"}
+                      <UserRound size={18} />
                     </div>
 
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#a79093]">
-                      {currentAdvisor?.label || "Advisor"}
-                    </p>
-
-                    <h2 className="max-w-[650px] text-3xl font-semibold leading-tight tracking-tight text-[#3e1919] sm:text-4xl">
-                      Your private {currentAdvisor?.label || "advisor"} chat.
-                    </h2>
-
-                    <p className="mt-3 max-w-[620px] text-sm leading-6 text-[#a79093]">
-                      This conversation is separate from your conversations with
-                      other advisors.
-                    </p>
-                  </div>
-
-                  <div className="mt-7 border-y border-[#a79093]/25 py-6">
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-[#f0e2d6] text-xl">
-                        {currentAdvisor?.icon || "💬"}
-                      </div>
-
-                      <div>
-                        <h3 className="font-semibold text-[#3e1919]">
-                          {currentAdvisor?.label || "Advisor"}
-                        </h3>
-
-                        <p className="mt-1 text-sm leading-5 text-[#a79093]">
-                          {currentAdvisor?.description}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p
+                          className={`
+                              text-sm
+                              font-semibold
+                              truncate
+                              ${
+                                isSelected ? "text-[#176B3A]" : "text-[#173B28]"
+                              }
+                            `}
+                        >
+                          {advisorLabels[advisorType]}
                         </p>
-                      </div>
-                    </div>
-                  </div>
 
-                  {error && (
-                    <div className="mt-5 border-l-2 border-[#3e1919] bg-[#f0e2d6] px-4 py-3 text-sm text-[#3e1919]">
-                      {error}
-                    </div>
-                  )}
-
-                  <button
-                    onClick={handleStartChat}
-                    disabled={startingChat}
-                    className="mt-7 flex w-full items-center justify-center gap-2 bg-[#3e1919] px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-[#2d1111] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                  >
-                    {startingChat
-                      ? "Connecting..."
-                      : `Open ${currentAdvisor?.label || "advisor"} conversation`}
-
-                    {!startingChat && <span>→</span>}
-                  </button>
-
-                  <p className="mt-4 text-xs leading-5 text-[#a79093]">
-                    Your {currentAdvisor?.label?.toLowerCase() || "advisor"}{" "}
-                    conversation is private and separate from your other advisor
-                    chats.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              /* CHAT */
-              <div className="flex min-h-0 flex-1 flex-col bg-[#f7f5f6]">
-                {/* Chat header */}
-                <div className="border-b border-[#a79093]/25 bg-[#f7f5f6] px-5 py-4 sm:px-8">
-                  <div className="mx-auto flex max-w-[1000px] items-center justify-between gap-4">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#f0e2d6] text-xl">
-                        {currentAdvisor?.icon || "💬"}
+                        {unreadCount > 0 && (
+                          <span className="min-w-5 h-5 px-1.5 rounded-full bg-[#2F8F4E] text-white text-[10px] font-bold flex items-center justify-center">
+                            {unreadCount > 9 ? "9+" : unreadCount}
+                          </span>
+                        )}
                       </div>
 
-                      <div className="min-w-0">
-                        <h2 className="truncate text-sm font-semibold text-[#3e1919] sm:text-base">
-                          {currentAdvisor?.label || "Advisor"}
-                        </h2>
+                      <p className="mt-1 text-xs leading-4 text-[#6B7C70] line-clamp-2">
+                        {advisorDescriptions[advisorType]}
+                      </p>
 
-                        <div className="mt-0.5 flex items-center gap-2">
-                          <span className="h-1.5 w-1.5 bg-[#3e1919]" />
+                      {currentConversation && (
+                        <div className="mt-2 flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#2F8F4E]" />
 
-                          <span className="text-xs text-[#a79093]">
-                            Private conversation
+                          <span className="text-[10px] text-[#6B7C70]">
+                            Conversation active
                           </span>
                         </div>
-                      </div>
+                      )}
                     </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-                    <div className="hidden border-l border-[#a79093]/30 pl-4 text-right sm:block">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#a79093]">
-                        Advisor
+        {/* Sidebar bottom */}
+        <div className="shrink-0 border-t border-[#DCE8DD] p-4">
+          <div className="rounded-xl bg-[#F3F7F1] border border-[#E7F1E3] p-3">
+            <div className="flex items-start gap-2">
+              <MessageCircle
+                size={16}
+                className="mt-0.5 text-[#2F8F4E] shrink-0"
+              />
+
+              <p className="text-[11px] leading-4 text-[#53685A]">
+                Your conversation is private. Choose the advisor that best
+                matches your needs.
+              </p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* ======================================================
+          CHAT
+          ====================================================== */}
+
+      <section className="flex-1 min-w-0 h-[100dvh] flex flex-col overflow-hidden">
+        {/* ====================================================
+            CHAT HEADER
+            ==================================================== */}
+
+        <header className="shrink-0 h-[64px] sm:h-[72px] bg-white border-b border-[#DCE8DD] px-3 sm:px-5 flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Mobile menu */}
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center bg-[#E7F1E3] text-[#176B3A] hover:bg-[#DCECD9]"
+            >
+              <MessageCircle size={19} />
+            </button>
+
+            <div className="w-10 h-10 rounded-full bg-[#E7F1E3] text-[#176B3A] flex items-center justify-center shrink-0">
+              <UserRound size={19} />
+            </div>
+
+            <div className="min-w-0">
+              <h1 className="font-semibold text-[#173B28] text-sm sm:text-base truncate">
+                {advisorLabels[selectedAdvisor]}
+              </h1>
+
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#2F8F4E]" />
+
+                <span className="text-[11px] sm:text-xs text-[#6B7C70]">
+                  Private conversation
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <QuickExit />
+        </header>
+
+        {/* ====================================================
+            NO CONVERSATION
+            ==================================================== */}
+
+        {!conversation ? (
+          <main className="flex-1 min-h-0 overflow-y-auto bg-[#FAFBF7] px-4 py-8 sm:px-6">
+            <div className="w-full max-w-2xl mx-auto min-h-full flex items-center justify-center">
+              <div className="text-center max-w-md">
+                <div className="w-16 h-16 rounded-2xl bg-[#E7F1E3] text-[#2F8F4E] flex items-center justify-center mx-auto">
+                  <MessageCircle size={28} />
+                </div>
+
+                <h2 className="mt-5 text-xl font-semibold text-[#173B28]">
+                  Choose an advisor
+                </h2>
+
+                <p className="mt-2 text-sm leading-6 text-[#66786B]">
+                  Select an advisor from the sidebar to start or continue a
+                  private conversation.
+                </p>
+
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {advisorTypes.map((advisorType) => (
+                    <button
+                      key={advisorType}
+                      type="button"
+                      onClick={() => handleSelectAdvisor(advisorType)}
+                      className="text-left p-3 rounded-xl bg-white border border-[#DCE8DD] hover:border-[#BBD8C0] hover:bg-[#F3F7F1] transition"
+                    >
+                      <p className="text-sm font-semibold text-[#173B28]">
+                        {advisorLabels[advisorType]}
                       </p>
 
-                      <p className="mt-0.5 text-xs font-semibold text-[#3e1919]">
-                        {currentAdvisor?.label.replace(" Advisor", "")}
+                      <p className="mt-1 text-xs text-[#6B7C70]">
+                        {advisorDescriptions[advisorType]}
                       </p>
-                    </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </main>
+        ) : (
+          <>
+            {/* ==================================================
+                MESSAGE AREA
+                ================================================== */}
+
+            <main
+              ref={messagesContainerRef}
+              className="
+                relative
+                flex-1
+                min-h-0
+                overflow-y-auto
+                overscroll-contain
+                bg-[#FAFBF7]
+                px-2.5
+                sm:px-4
+                md:px-6
+                py-3
+                sm:py-5
+              "
+            >
+              <div className="w-full max-w-4xl mx-auto">
+                {/* Conversation label */}
+                <div className="flex justify-center mb-5">
+                  <div className="rounded-full bg-[#E7F1E3] border border-[#DCE8DD] px-3 py-1.5">
+                    <p className="text-[10px] sm:text-xs text-[#176B3A]">
+                      Your conversation with {advisorLabels[selectedAdvisor]}
+                    </p>
                   </div>
                 </div>
 
-                {/* Messages */}
-                <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8">
-                  <div className="mx-auto max-w-[850px]">
-                    {conversation.messages.length === 0 && (
-                      <div className="flex min-h-[300px] items-center justify-center">
-                        <div className="max-w-[420px] text-center">
-                          <div className="mx-auto flex h-12 w-12 items-center justify-center bg-[#f0e2d6] text-2xl">
-                            {currentAdvisor?.icon || "💬"}
-                          </div>
+                {/* No messages */}
+                {conversation.messages.length === 0 ? (
+                  <div className="py-20 text-center">
+                    <div className="w-14 h-14 rounded-full bg-[#E7F1E3] text-[#2F8F4E] flex items-center justify-center mx-auto">
+                      <MessageCircle size={24} />
+                    </div>
 
-                          <h3 className="mt-4 text-base font-semibold text-[#3e1919]">
-                            Your {currentAdvisor?.label || "advisor"}{" "}
-                            conversation is ready
-                          </h3>
+                    <h2 className="mt-4 text-base font-semibold text-[#173B28]">
+                      Start your conversation
+                    </h2>
 
-                          <p className="mt-2 text-sm leading-6 text-[#a79093]">
-                            Send your first message below. This chat is separate
-                            from your other advisor conversations.
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                    <p className="mt-1 text-sm text-[#6B7C70]">
+                      Send a message to your advisor.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {/* ==================================================
+                        MESSAGES
+                        ================================================== */}
 
-                    <div className="space-y-6">
-                      {conversation.messages.map((item) => {
-                        const isUser = item.sender === "user";
+                    {conversation.messages.map((item) => {
+                      /*
+                       * ----------------------------------------------
+                       * DELETED MESSAGE
+                       * ----------------------------------------------
+                       */
 
-                        if (item.deleted) {
-                          return (
-                            <div
-                              key={item.message_id}
-                              className={`flex ${
-                                isUser ? "justify-end" : "justify-start"
-                              }`}
-                            >
-                              <div
-                                className={`border border-[#a79093]/20 px-4 py-3 text-xs italic text-[#a79093] ${
-                                  isUser ? "bg-[#f0e2d6]" : "bg-white"
-                                }`}
-                              >
-                                This message was deleted.
-                              </div>
-                            </div>
-                          );
-                        }
-
+                      if (item.deleted) {
                         return (
                           <div
                             key={item.message_id}
-                            className={`flex ${
-                              isUser ? "justify-end" : "justify-start"
+                            className={`flex w-full ${
+                              item.sender === "user"
+                                ? "justify-end"
+                                : "justify-start"
                             }`}
                           >
-                            <div className="max-w-[82%] sm:max-w-[70%]">
+                            <div className="max-w-[85%] rounded-2xl px-4 py-2.5 bg-[#F3F7F1] border border-[#DCE8DD]">
+                              <p className="text-xs italic text-[#7A897E]">
+                                Message deleted
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      const isUser = item.sender === "user";
+
+                      const repliedMessage = getRepliedMessage(item.reply_to);
+
+                      const isEditing = editingMessageId === item.message_id;
+
+                      /*
+                       * ----------------------------------------------
+                       * MESSAGE ROW
+                       *
+                       * USER    -> RIGHT
+                       * ADVISOR -> LEFT
+                       * ----------------------------------------------
+                       */
+
+                      return (
+                        <div
+                          key={item.message_id}
+                          className={`
+                              flex
+                              w-full
+                              ${isUser ? "justify-end" : "justify-start"}
+                            `}
+                        >
+                          <div
+                            className={`
+                                group
+                                flex
+                                flex-col
+                                max-w-[85%]
+                                sm:max-w-[70%]
+                                md:max-w-[60%]
+                                ${isUser ? "items-end" : "items-start"}
+                              `}
+                          >
+                            {/* ========================================
+                                  TELEGRAM REPLY PREVIEW
+                                  ======================================== */}
+
+                            {item.reply_to && (
                               <div
-                                className={`mb-1.5 flex items-center gap-2 ${
-                                  isUser ? "justify-end" : "justify-start"
-                                }`}
+                                className={`
+                                    mb-1
+                                    w-full
+                                    rounded-xl
+                                    overflow-hidden
+                                    border
+                                    ${
+                                      isUser
+                                        ? "bg-[#DCECD9] border-[#C5DCC8]"
+                                        : "bg-white border-[#DCE8DD]"
+                                    }
+                                  `}
                               >
-                                <span className="text-[10px] font-semibold text-[#a79093]">
-                                  {isUser
-                                    ? "You"
-                                    : currentAdvisor?.label || "Advisor"}
-                                </span>
+                                <div className="flex">
+                                  {/* Green Telegram-like reply line */}
+                                  <div className="w-1 bg-[#2F8F4E] shrink-0" />
 
-                                <span className="text-[10px] text-[#a79093]/80">
-                                  {new Date(item.timestamp).toLocaleTimeString(
-                                    [],
-                                    {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    },
-                                  )}
-                                </span>
+                                  <div className="px-3 py-2 min-w-0">
+                                    <p className="text-[11px] font-semibold text-[#2F8F4E]">
+                                      {repliedMessage?.sender === "user"
+                                        ? "You"
+                                        : repliedMessage?.sender === "advisor"
+                                          ? advisorLabels[selectedAdvisor]
+                                          : "Original message"}
+                                    </p>
+
+                                    <p className="mt-0.5 text-[11px] text-[#65766A] truncate">
+                                      {repliedMessage?.text ||
+                                        "Original message unavailable"}
+                                    </p>
+                                  </div>
+                                </div>
                               </div>
+                            )}
 
-                              {editingMessageId === item.message_id ? (
-                                <div className="border border-[#a79093]/35 bg-white p-3">
+                            {/* ========================================
+                                  MESSAGE BUBBLE
+                                  ======================================== */}
+
+                            <div
+                              className={`
+                                  relative
+                                  rounded-2xl
+                                  px-3.5
+                                  py-2
+                                  sm:px-4
+                                  sm:py-2.5
+                                  shadow-sm
+                                  ${
+                                    isUser
+                                      ? "bg-[#E7F1E3] text-[#173B28] rounded-br-md"
+                                      : "bg-white text-[#173B28] border border-[#DCE8DD] rounded-bl-md"
+                                  }
+                                `}
+                            >
+                              {/* EDIT MODE */}
+                              {isEditing ? (
+                                <div className="min-w-[240px] sm:min-w-[320px]">
                                   <textarea
                                     value={editingText}
                                     onChange={(event) =>
                                       setEditingText(event.target.value)
                                     }
-                                    rows={3}
-                                    autoFocus
-                                    className="w-full resize-none border-0 bg-transparent text-sm leading-6 text-[#3e1919] outline-none"
+                                    className="
+                                        w-full
+                                        min-h-[90px]
+                                        resize-none
+                                        rounded-xl
+                                        border
+                                        border-[#C8D9CB]
+                                        bg-white
+                                        px-3
+                                        py-2.5
+                                        text-sm
+                                        text-[#173B28]
+                                        outline-none
+                                        focus:border-[#2F8F4E]
+                                        focus:ring-2
+                                        focus:ring-[#E7F1E3]
+                                      "
                                   />
 
                                   <div className="mt-2 flex justify-end gap-2">
                                     <button
+                                      type="button"
                                       onClick={cancelEditing}
-                                      className="px-3 py-1.5 text-xs font-semibold text-[#a79093] hover:text-[#3e1919]"
+                                      className="
+                                          px-3
+                                          py-1.5
+                                          rounded-lg
+                                          text-xs
+                                          font-medium
+                                          text-[#607267]
+                                          hover:bg-[#F3F7F1]
+                                        "
                                     >
                                       Cancel
                                     </button>
 
                                     <button
-                                      onClick={() =>
-                                        handleEditMessage(item.message_id)
-                                      }
-                                      className="bg-[#3e1919] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#2d1111]"
+                                      type="button"
+                                      onClick={handleSaveEdit}
+                                      className="
+                                          px-3
+                                          py-1.5
+                                          rounded-lg
+                                          text-xs
+                                          font-semibold
+                                          bg-[#2F8F4E]
+                                          text-white
+                                          hover:bg-[#176B3A]
+                                        "
                                     >
                                       Save
                                     </button>
                                   </div>
                                 </div>
                               ) : (
-                                <div
-                                  className={`px-4 py-3.5 ${
-                                    isUser
-                                      ? "bg-[#3e1919] text-white"
-                                      : "border border-[#a79093]/25 bg-white text-[#3e1919]"
-                                  }`}
-                                >
-                                  <p className="whitespace-pre-wrap text-sm leading-6">
+                                <>
+                                  {/* MESSAGE TEXT */}
+
+                                  <p className="whitespace-pre-wrap break-words text-sm leading-5">
                                     {item.text}
                                   </p>
 
-                                  <div className="mt-1 flex items-center justify-end gap-1">
-                                    {item.edited && (
-                                      <span
-                                        className={`text-[9px] ${
+                                  {/* MESSAGE INFO */}
+
+                                  <div
+                                    className={`
+                                        mt-1
+                                        flex
+                                        items-center
+                                        justify-end
+                                        gap-1
+                                        ${
                                           isUser
-                                            ? "text-white/60"
-                                            : "text-[#a79093]"
-                                        }`}
-                                      >
-                                        edited
-                                      </span>
-                                    )}
-
-                                    {isUser && (
-                                      <span
-                                        className={`text-[11px] font-semibold ${
-                                          item.seen_at
-                                            ? "text-[#f0e2d6]"
-                                            : "text-white/60"
-                                        }`}
-                                        title={
-                                          item.seen_at
-                                            ? "Seen by advisor"
-                                            : "Sent"
+                                            ? "text-[#5D8067]"
+                                            : "text-[#87938A]"
                                         }
-                                      >
-                                        {item.seen_at ? "✓✓" : "✓"}
-                                      </span>
+                                      `}
+                                  >
+                                    {item.edited && (
+                                      <span className="text-[9px]">edited</span>
                                     )}
-                                  </div>
-                                </div>
-                              )}
 
-                              {isUser &&
-                                editingMessageId !== item.message_id && (
-                                  <div className="mt-1.5 flex justify-end gap-3">
+                                    <span className="text-[9px]">
+                                      {new Date(
+                                        item.timestamp,
+                                      ).toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </span>
+
+                                    {/* SENT / SEEN */}
+                                    {isUser &&
+                                      (item.seen_at ? (
+                                        <CheckCheck
+                                          size={14}
+                                          className="text-[#2F8F4E]"
+                                        />
+                                      ) : (
+                                        <Check
+                                          size={14}
+                                          className="text-[#6B8571]"
+                                        />
+                                      ))}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+
+                            {/* ========================================
+                                  ACTIONS
+                                  ======================================== */}
+
+                            {!isEditing && (
+                              <div
+                                className={`
+                                    mt-1
+                                    flex
+                                    items-center
+                                    gap-1
+                                    opacity-100
+                                    sm:opacity-0
+                                    sm:group-hover:opacity-100
+                                    transition
+                                    ${isUser ? "justify-end" : "justify-start"}
+                                  `}
+                              >
+                                {/* Reply */}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleReply(
+                                      item.message_id!,
+                                      item.text,
+                                      item.sender,
+                                    )
+                                  }
+                                  className="
+                                      inline-flex
+                                      items-center
+                                      gap-1
+                                      px-2
+                                      py-1
+                                      rounded-md
+                                      text-[10px]
+                                      font-medium
+                                      text-[#176B3A]
+                                      hover:bg-[#E7F1E3]
+                                    "
+                                >
+                                  <Reply size={11} />
+                                  Reply
+                                </button>
+
+                                {/* Edit + Delete */}
+                                {isUser && (
+                                  <>
                                     <button
+                                      type="button"
                                       onClick={() =>
-                                        startEditing(item.message_id, item.text)
+                                        startEditing(
+                                          item.message_id!,
+                                          item.text,
+                                        )
                                       }
-                                      className="text-[10px] font-medium text-[#a79093] transition hover:text-[#3e1919]"
+                                      className="
+                                          inline-flex
+                                          items-center
+                                          gap-1
+                                          px-2
+                                          py-1
+                                          rounded-md
+                                          text-[10px]
+                                          font-medium
+                                          text-[#176B3A]
+                                          hover:bg-[#E7F1E3]
+                                        "
                                     >
+                                      <Edit3 size={11} />
                                       Edit
                                     </button>
 
                                     <button
+                                      type="button"
                                       onClick={() =>
-                                        handleDeleteMessage(item.message_id)
+                                        handleDeleteMessage(item.message_id!)
                                       }
-                                      className="text-[10px] font-medium text-[#a79093] transition hover:text-[#3e1919]"
+                                      className="
+                                          inline-flex
+                                          items-center
+                                          gap-1
+                                          px-2
+                                          py-1
+                                          rounded-md
+                                          text-[10px]
+                                          font-medium
+                                          text-red-600
+                                          hover:bg-red-50
+                                        "
                                     >
+                                      <Trash2 size={11} />
                                       Delete
                                     </button>
-                                  </div>
+                                  </>
                                 )}
-                            </div>
+                              </div>
+                            )}
                           </div>
-                        );
-                      })}
-                    </div>
-
-                    <div ref={messagesEndRef} />
-                  </div>
-                </div>
-
-                {/* Error */}
-                {error && (
-                  <div className="px-4 sm:px-8">
-                    <div className="mx-auto mb-2 max-w-[850px] border-l-2 border-[#3e1919] bg-[#f0e2d6] px-4 py-2.5 text-xs text-[#3e1919]">
-                      {error}
-                    </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
+              </div>
+            </main>
 
-                {/* Composer */}
-                <div className="border-t border-[#a79093]/25 bg-[#f7f5f6] px-4 py-4 sm:px-8">
-                  <div className="mx-auto max-w-[850px]">
-                    <div className="flex items-end gap-2 border border-[#a79093]/35 bg-white p-2 transition focus-within:border-[#3e1919]">
-                      <textarea
-                        value={message}
-                        onChange={(event) => setMessage(event.target.value)}
-                        onKeyDown={handleComposerKeyDown}
-                        placeholder={`Write your message to the ${currentAdvisor?.label?.toLowerCase() || "advisor"}...`}
-                        rows={1}
-                        className="max-h-32 min-h-[42px] flex-1 resize-none bg-transparent px-3 py-2.5 text-sm leading-5 text-[#3e1919] outline-none placeholder:text-[#a79093]"
-                      />
+            {/* ==================================================
+                REPLY COMPOSER PREVIEW
+                ================================================== */}
 
-                      <button
-                        onClick={handleSendMessage}
-                        disabled={loading || !message.trim()}
-                        className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#3e1919] text-white transition hover:bg-[#2d1111] disabled:cursor-not-allowed disabled:opacity-40"
-                        aria-label="Send message"
-                      >
-                        {loading ? "…" : "↑"}
-                      </button>
-                    </div>
-
-                    <div className="mt-2 flex items-center justify-between px-1">
-                      <p className="text-[10px] text-[#a79093]">
-                        Enter to send · Shift + Enter for a new line
-                      </p>
-
-                      <p className="hidden text-[10px] text-[#a79093] sm:block">
-                        {currentAdvisor?.label || "Advisor"} conversation is
-                        private
-                      </p>
-                    </div>
+            {replyingTo && (
+              <div className="shrink-0 bg-white border-t border-[#DCE8DD] px-3 sm:px-5 py-2.5">
+                <div className="w-full max-w-4xl mx-auto flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#E7F1E3] text-[#2F8F4E] flex items-center justify-center shrink-0">
+                    <Reply size={15} />
                   </div>
+
+                  <div className="min-w-0 flex-1 border-l-2 border-[#2F8F4E] pl-3">
+                    <p className="text-[10px] font-semibold text-[#176B3A]">
+                      Replying to{" "}
+                      {replyingTo.sender === "user"
+                        ? "your message"
+                        : advisorLabels[selectedAdvisor]}
+                    </p>
+
+                    <p className="text-xs text-[#65766A] truncate mt-0.5">
+                      {replyingTo.text}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={cancelReply}
+                    className="
+                      w-8
+                      h-8
+                      rounded-lg
+                      flex
+                      items-center
+                      justify-center
+                      text-[#6B7C70]
+                      hover:bg-[#F3F7F1]
+                      hover:text-[#173B28]
+                    "
+                  >
+                    <X size={17} />
+                  </button>
                 </div>
               </div>
             )}
-          </div>
-        </section>
-      </div>
 
-      {/* Mobile navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-[#a79093]/25 bg-[#f7f5f6] px-3 py-2 lg:hidden">
-        <div className="mx-auto flex max-w-md items-center justify-around">
-          <button
-            onClick={() => navigate("/user/dashboard")}
-            className="flex flex-col items-center gap-1 px-4 py-1 text-[#a79093] transition hover:text-[#3e1919]"
-          >
-            <span>⌂</span>
-            <span className="text-[9px] font-semibold">Home</span>
-          </button>
+            {/* ==================================================
+                MESSAGE COMPOSER
+                ================================================== */}
 
-          <button
-            onClick={() => navigate("/user/dashboard/chat")}
-            className="flex flex-col items-center gap-1 border-b-2 border-[#3e1919] px-4 py-1 text-[#3e1919]"
-          >
-            <span>◌</span>
-            <span className="text-[9px] font-semibold">Chat</span>
-          </button>
+            <footer className="shrink-0 bg-white border-t border-[#DCE8DD] px-2.5 sm:px-4 md:px-6 py-2.5 sm:py-3">
+              <div className="w-full max-w-4xl mx-auto">
+                <div
+                  className="
+                  flex
+                  items-end
+                  gap-2
+                  rounded-2xl
+                  border
+                  border-[#D5E2D7]
+                  bg-[#F3F7F1]
+                  p-1.5
+                  sm:p-2
+                  focus-within:border-[#A9C9AF]
+                  focus-within:ring-2
+                  focus-within:ring-[#E7F1E3]
+                "
+                >
+                  <textarea
+                    id="user-chat-composer"
+                    ref={composerRef}
+                    value={messageText}
+                    onChange={(event) => setMessageText(event.target.value)}
+                    onKeyDown={handleComposerKeyDown}
+                    placeholder={
+                      replyingTo ? "Write your reply..." : "Write a message..."
+                    }
+                    rows={1}
+                    className="
+                      flex-1
+                      resize-none
+                      bg-transparent
+                      outline-none
+                      border-none
+                      px-2
+                      py-2
+                      text-sm
+                      text-[#173B28]
+                      placeholder:text-[#829087]
+                      max-h-28
+                    "
+                  />
 
-          <button
-            onClick={() => navigate("/awareness")}
-            className="flex flex-col items-center gap-1 px-4 py-1 text-[#a79093] transition hover:text-[#3e1919]"
-          >
-            <span>▣</span>
-            <span className="text-[9px] font-semibold">Awareness</span>
-          </button>
+                  <button
+                    type="button"
+                    onClick={handleSendMessage}
+                    disabled={sending || !messageText.trim()}
+                    className="
+                      w-10
+                      h-10
+                      shrink-0
+                      rounded-xl
+                      flex
+                      items-center
+                      justify-center
+                      bg-[#2F8F4E]
+                      text-white
+                      hover:bg-[#176B3A]
+                      disabled:opacity-40
+                      disabled:cursor-not-allowed
+                      transition
+                    "
+                    aria-label="Send message"
+                  >
+                    <Send size={17} />
+                  </button>
+                </div>
 
-          <button
-            onClick={() => navigate("/quick-exit")}
-            className="flex flex-col items-center gap-1 px-4 py-1 text-[#3e1919]"
-          >
-            <span>×</span>
-            <span className="text-[9px] font-semibold">Exit</span>
-          </button>
-        </div>
-      </div>
-    </main>
+                <p className="text-[9px] sm:text-[10px] text-[#8A978E] mt-1.5 px-1">
+                  Press Enter to send · Shift + Enter for a new line
+                </p>
+              </div>
+            </footer>
+          </>
+        )}
+      </section>
+    </div>
   );
 }
+
+export default UserAdvisorChat;
