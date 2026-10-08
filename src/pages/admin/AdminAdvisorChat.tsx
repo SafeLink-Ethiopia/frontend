@@ -1,12 +1,16 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import {
+  ArrowDown,
   ArrowLeft,
   Check,
   CheckCheck,
+  Copy,
   Edit3,
   MoreVertical,
+  Reply,
+  Search,
   Send,
   Trash2,
   X,
@@ -21,14 +25,20 @@ interface Message {
   timestamp: string;
 
   edited?: boolean;
-  deleted?: boolean;
 
+  deleted?: boolean;
   deletedForAdmin?: boolean;
   deletedForAdvisor?: boolean;
   deletedForEveryone?: boolean;
 
   deliveredAt?: string;
   readAt?: string;
+
+  replyTo?: {
+    message_id: string;
+    text: string;
+    sender: "admin" | "advisor";
+  };
 }
 
 interface Conversation {
@@ -38,6 +48,9 @@ interface Conversation {
   messages: Message[];
   createdAt: string;
   updatedAt: string;
+
+  deletedForAdmin?: boolean;
+  deletedForAdvisor?: boolean;
 }
 
 interface AdvisorInfo {
@@ -49,37 +62,90 @@ interface AdvisorInfo {
 
 interface ConversationResponse {
   conversation: Conversation;
-  advisor: AdvisorInfo;
+  advisor?: AdvisorInfo;
 }
 
 type DeleteType = "me" | "everyone";
 
+const API_URL = "http://localhost:5000/api";
+
 export default function AdminAdvisorChat() {
-  const { advisorId } = useParams<{ advisorId: string }>();
+  const { advisorId } = useParams<{
+    advisorId: string;
+  }>();
 
   const navigate = useNavigate();
 
+  /*
+   * Admin authentication token
+   */
+  const adminToken = localStorage.getItem("adminToken");
+
+  /*
+   * Refs
+   */
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  /*
+   * Conversation
+   */
   const [conversation, setConversation] = useState<Conversation | null>(null);
 
   const [advisor, setAdvisor] = useState<AdvisorInfo | null>(null);
 
+  /*
+   * Input
+   */
   const [messageText, setMessageText] = useState("");
 
+  /*
+   * Editing
+   */
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
 
   const [editingText, setEditingText] = useState("");
 
+  /*
+   * Reply
+   */
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+
+  /*
+   * Selected message menu
+   */
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
     null,
   );
 
-  const [confirmDeleteMessageId, setConfirmDeleteMessageId] = useState<
-    string | null
-  >(null);
+  /*
+   * Delete message
+   */
+  const [deleteTarget, setDeleteTarget] = useState<Message | null>(null);
 
-  const [confirmDeleteConversation, setConfirmDeleteConversation] =
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  /*
+   * Conversation menu
+   */
+  const [showConversationMenu, setShowConversationMenu] = useState(false);
+
+  const [showDeleteConversationModal, setShowDeleteConversationModal] =
     useState(false);
 
+  /*
+   * Search
+   */
+  const [showSearch, setShowSearch] = useState(false);
+
+  const [searchText, setSearchText] = useState("");
+
+  /*
+   * Status
+   */
   const [loading, setLoading] = useState(true);
 
   const [sending, setSending] = useState(false);
@@ -88,21 +154,23 @@ export default function AdminAdvisorChat() {
 
   const [error, setError] = useState("");
 
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  /*
+   * Typing
+   */
+  const [typing, setTyping] = useState(false);
 
-  // ============================================================
-  // SCROLL TO BOTTOM
-  // ============================================================
+  /*
+   * Scroll
+   */
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
-  };
+  const [isNearBottom, setIsNearBottom] = useState(true);
 
-  // ============================================================
-  // LOAD CONVERSATION
-  // ============================================================
+  /*
+   * ============================================================
+   * LOAD CONVERSATION
+   * ============================================================
+   */
 
   useEffect(() => {
     const fetchConversation = async () => {
@@ -112,46 +180,46 @@ export default function AdminAdvisorChat() {
         return;
       }
 
+      if (!adminToken) {
+        setError("Admin authentication required.");
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError("");
 
-        const token = localStorage.getItem("adminToken");
-
-        if (!token) {
-          setError("Admin authentication required.");
-          setLoading(false);
-          return;
-        }
-
-        console.log("Loading admin conversation for advisor:", advisorId);
-
         const response = await axios.get<ConversationResponse>(
-          `http://localhost:5000/api/advisor-admin-conversations/advisor/${advisorId}`,
+          `${API_URL}/admin-advisor-conversations/advisor/${advisorId}`,
           {
             headers: {
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${adminToken}`,
             },
           },
         );
 
-        console.log("Conversation response:", response.data);
-
         setConversation(response.data.conversation);
-        setAdvisor(response.data.advisor);
-      } catch (error) {
-        console.error("Failed to load conversation:", error);
 
-        if (axios.isAxiosError(error)) {
-          console.error("Status:", error.response?.status);
+        if (response.data.advisor) {
+          setAdvisor(response.data.advisor);
+        }
+      } catch (err) {
+        console.error("Failed to load conversation:", err);
 
-          console.error("Response:", error.response?.data);
+        if (axios.isAxiosError(err)) {
+          if (err.response?.status === 401) {
+            localStorage.removeItem("adminToken");
+
+            navigate("/admin/login");
+            return;
+          }
 
           setError(
-            error.response?.data?.message || "Failed to load conversation.",
+            err.response?.data?.message || "Failed to load conversation.",
           );
         } else {
-          setError("Something went wrong.");
+          setError("Something went wrong while loading the conversation.");
         }
       } finally {
         setLoading(false);
@@ -159,29 +227,30 @@ export default function AdminAdvisorChat() {
     };
 
     fetchConversation();
-  }, [advisorId]);
+  }, [advisorId, adminToken, navigate]);
 
-  // ============================================================
-  // SOCKET CONNECTION
-  // ============================================================
+  /*
+   * ============================================================
+   * SOCKET CONNECTION STATUS
+   * ============================================================
+   */
 
   useEffect(() => {
     const handleConnect = () => {
-      console.log("[Socket] Connected:", socket.id);
+      console.log("Socket connected");
 
       setConnected(true);
-
       setError("");
     };
 
-    const handleDisconnect = (reason: string) => {
-      console.log("[Socket] Disconnected:", reason);
+    const handleDisconnect = () => {
+      console.log("Socket disconnected");
 
       setConnected(false);
     };
 
     const handleConnectError = (socketError: Error) => {
-      console.error("[Socket] Connection error:", socketError);
+      console.error("Socket connection error:", socketError);
 
       setConnected(false);
 
@@ -207,9 +276,11 @@ export default function AdminAdvisorChat() {
     };
   }, []);
 
-  // ============================================================
-  // JOIN CONVERSATION + SOCKET EVENTS
-  // ============================================================
+  /*
+   * ============================================================
+   * JOIN CONVERSATION + SOCKET EVENTS
+   * ============================================================
+   */
 
   useEffect(() => {
     if (!conversation?.conversation_id) {
@@ -218,24 +289,18 @@ export default function AdminAdvisorChat() {
 
     const conversationId = conversation.conversation_id;
 
-    // ----------------------------------------------------------
-    // JOIN
-    // ----------------------------------------------------------
-
+    /*
+     * Join room
+     */
     const joinConversation = () => {
       socket.emit("join_conversation", conversationId);
 
-      console.log("[Socket] Joined conversation:", conversationId);
+      console.log("Joined conversation:", conversationId);
     };
 
-    const handleConnect = () => {
-      joinConversation();
-    };
-
-    // ----------------------------------------------------------
-    // NEW MESSAGE
-    // ----------------------------------------------------------
-
+    /*
+     * New message
+     */
     const handleNewMessage = (data: {
       conversation_id: string;
       message: Message;
@@ -266,7 +331,10 @@ export default function AdminAdvisorChat() {
         };
       });
 
-      // Mark advisor message as delivered.
+      /*
+       * If advisor sent the message,
+       * mark it as delivered.
+       */
       if (data.message.sender === "advisor") {
         socket.emit("mark_message_delivered", {
           conversation_id: conversationId,
@@ -275,16 +343,28 @@ export default function AdminAdvisorChat() {
         });
       }
 
-      // Our own message was accepted.
+      /*
+       * Our own message was accepted
+       */
       if (data.message.sender === "admin") {
         setSending(false);
       }
     };
 
-    // ----------------------------------------------------------
-    // MESSAGE EDITED
-    // ----------------------------------------------------------
-
+    /*
+     * Message edited
+     *
+     * IMPORTANT:
+     * We do NOT replace the whole message object.
+     *
+     * This preserves:
+     * - original timestamp
+     * - readAt
+     * - deliveredAt
+     * - replyTo
+     *
+     * And only changes the text + edited state.
+     */
     const handleMessageEdited = (data: {
       conversation_id: string;
       message: Message;
@@ -301,11 +381,47 @@ export default function AdminAdvisorChat() {
         return {
           ...currentConversation,
 
-          messages: currentConversation.messages.map((message) =>
-            message.message_id === data.message.message_id
-              ? data.message
-              : message,
-          ),
+          messages: currentConversation.messages.map((message) => {
+            if (message.message_id !== data.message.message_id) {
+              return message;
+            }
+
+            return {
+              ...message,
+
+              text: data.message.text ?? message.text,
+
+              edited: true,
+
+              /*
+               * Preserve original time.
+               */
+              timestamp: message.timestamp,
+
+              /*
+               * Preserve delivery state.
+               */
+              deliveredAt: data.message.deliveredAt ?? message.deliveredAt,
+
+              /*
+               * Preserve read state.
+               */
+              readAt: data.message.readAt ?? message.readAt,
+
+              replyTo: data.message.replyTo ?? message.replyTo,
+
+              deleted: data.message.deleted ?? message.deleted,
+
+              deletedForAdmin:
+                data.message.deletedForAdmin ?? message.deletedForAdmin,
+
+              deletedForAdvisor:
+                data.message.deletedForAdvisor ?? message.deletedForAdvisor,
+
+              deletedForEveryone:
+                data.message.deletedForEveryone ?? message.deletedForEveryone,
+            };
+          }),
         };
       });
 
@@ -314,10 +430,9 @@ export default function AdminAdvisorChat() {
       setSelectedMessageId(null);
     };
 
-    // ----------------------------------------------------------
-    // DELETE FOR ME
-    // ----------------------------------------------------------
-
+    /*
+     * Message deleted for current user
+     */
     const handleMessageDeletedForMe = (data: {
       conversation_id: string;
       message_id: string;
@@ -334,20 +449,26 @@ export default function AdminAdvisorChat() {
         return {
           ...currentConversation,
 
-          messages: currentConversation.messages.filter(
-            (message) => message.message_id !== data.message_id,
+          messages: currentConversation.messages.map((message) =>
+            message.message_id === data.message_id
+              ? {
+                  ...message,
+
+                  deletedForAdmin: true,
+                }
+              : message,
           ),
         };
       });
 
       setSelectedMessageId(null);
-      setConfirmDeleteMessageId(null);
+      setDeleteTarget(null);
+      setShowDeleteModal(false);
     };
 
-    // ----------------------------------------------------------
-    // DELETE FOR EVERYONE
-    // ----------------------------------------------------------
-
+    /*
+     * Message deleted for everyone
+     */
     const handleMessageDeletedForEveryone = (data: {
       conversation_id: string;
       message_id: string;
@@ -381,16 +502,14 @@ export default function AdminAdvisorChat() {
       });
 
       setSelectedMessageId(null);
-      setConfirmDeleteMessageId(null);
-
-      setEditingMessageId(null);
-      setEditingText("");
+      setDeleteTarget(null);
+      setShowDeleteModal(false);
     };
 
-    // ----------------------------------------------------------
-    // BACKWARD COMPATIBILITY
-    // ----------------------------------------------------------
-
+    /*
+     * Some backend versions emit
+     * message_deleted instead.
+     */
     const handleMessageDeleted = (data: {
       conversation_id: string;
       message_id: string;
@@ -424,17 +543,17 @@ export default function AdminAdvisorChat() {
       });
 
       setSelectedMessageId(null);
-      setConfirmDeleteMessageId(null);
+      setDeleteTarget(null);
+      setShowDeleteModal(false);
     };
 
-    // ----------------------------------------------------------
-    // MESSAGE DELIVERED
-    // ----------------------------------------------------------
-
+    /*
+     * Delivered
+     */
     const handleMessageDelivered = (data: {
       conversation_id: string;
       message_id: string;
-      deliveredAt: string;
+      deliveredAt?: string;
     }) => {
       if (data.conversation_id !== conversationId) {
         return;
@@ -453,7 +572,7 @@ export default function AdminAdvisorChat() {
               ? {
                   ...message,
 
-                  deliveredAt: data.deliveredAt,
+                  deliveredAt: data.deliveredAt ?? message.deliveredAt,
                 }
               : message,
           ),
@@ -461,14 +580,13 @@ export default function AdminAdvisorChat() {
       });
     };
 
-    // ----------------------------------------------------------
-    // MESSAGE READ
-    // ----------------------------------------------------------
-
+    /*
+     * Read
+     */
     const handleMessageRead = (data: {
       conversation_id: string;
       message_id: string;
-      readAt: string;
+      readAt?: string;
     }) => {
       if (data.conversation_id !== conversationId) {
         return;
@@ -487,7 +605,7 @@ export default function AdminAdvisorChat() {
               ? {
                   ...message,
 
-                  readAt: data.readAt,
+                  readAt: data.readAt ?? message.readAt,
                 }
               : message,
           ),
@@ -495,10 +613,26 @@ export default function AdminAdvisorChat() {
       });
     };
 
-    // ----------------------------------------------------------
-    // CONVERSATION HIDDEN
-    // ----------------------------------------------------------
+    /*
+     * Typing
+     */
+    const handleTyping = (data: {
+      conversation_id: string;
+      sender: "admin" | "advisor";
+      isTyping: boolean;
+    }) => {
+      if (data.conversation_id !== conversationId) {
+        return;
+      }
 
+      if (data.sender === "advisor") {
+        setTyping(data.isTyping);
+      }
+    };
+
+    /*
+     * Conversation deleted/hidden
+     */
     const handleConversationDeleted = (data: {
       conversation_id: string;
       deletedFor: "admin" | "advisor";
@@ -512,10 +646,9 @@ export default function AdminAdvisorChat() {
       }
     };
 
-    // ----------------------------------------------------------
-    // SOCKET ERROR
-    // ----------------------------------------------------------
-
+    /*
+     * Socket operation error
+     */
     const handleMessageError = (data: { message?: string }) => {
       console.error("Message error:", data.message);
 
@@ -524,11 +657,10 @@ export default function AdminAdvisorChat() {
       setSending(false);
     };
 
-    // ----------------------------------------------------------
-    // REGISTER EVENTS
-    // ----------------------------------------------------------
-
-    socket.on("connect", handleConnect);
+    /*
+     * Register listeners
+     */
+    socket.on("connect", joinConversation);
 
     socket.on("new_message", handleNewMessage);
 
@@ -544,26 +676,26 @@ export default function AdminAdvisorChat() {
 
     socket.on("message_read", handleMessageRead);
 
+    socket.on("user_typing", handleTyping);
+
     socket.on("conversation_deleted", handleConversationDeleted);
 
     socket.on("message_error", handleMessageError);
 
-    // ----------------------------------------------------------
-    // CONNECT / JOIN
-    // ----------------------------------------------------------
-
+    /*
+     * Join immediately if connected
+     */
     if (socket.connected) {
       joinConversation();
     } else {
       socket.connect();
     }
 
-    // ----------------------------------------------------------
-    // CLEANUP
-    // ----------------------------------------------------------
-
+    /*
+     * Cleanup
+     */
     return () => {
-      socket.off("connect", handleConnect);
+      socket.off("connect", joinConversation);
 
       socket.off("new_message", handleNewMessage);
 
@@ -582,18 +714,26 @@ export default function AdminAdvisorChat() {
 
       socket.off("message_read", handleMessageRead);
 
+      socket.off("user_typing", handleTyping);
+
       socket.off("conversation_deleted", handleConversationDeleted);
 
       socket.off("message_error", handleMessageError);
     };
   }, [conversation?.conversation_id, navigate]);
 
-  // ============================================================
-  // MARK ADVISOR MESSAGES AS READ
-  // ============================================================
+  /*
+   * ============================================================
+   * MARK ADVISOR MESSAGES AS READ
+   * ============================================================
+   */
 
   useEffect(() => {
     if (!conversation) {
+      return;
+    }
+
+    if (!socket.connected) {
       return;
     }
 
@@ -601,7 +741,8 @@ export default function AdminAdvisorChat() {
       (message) =>
         message.sender === "advisor" &&
         !message.readAt &&
-        !message.deletedForAdmin,
+        !message.deletedForAdmin &&
+        !message.deletedForEveryone,
     );
 
     unreadAdvisorMessages.forEach((message) => {
@@ -611,35 +752,72 @@ export default function AdminAdvisorChat() {
         message_id: message.message_id,
       });
     });
-  }, [conversation?.messages.length]);
+  }, [conversation?.conversation_id, conversation?.messages.length, connected]);
 
-  // ============================================================
-  // AUTO SCROLL
-  // ============================================================
+  /*
+   * ============================================================
+   * SEARCHED MESSAGES
+   * ============================================================
+   */
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [conversation?.messages.length]);
+  const visibleMessages = useMemo(() => {
+    if (!conversation) {
+      return [];
+    }
 
-  // ============================================================
-  // SEND MESSAGE
-  // ============================================================
+    if (!searchText.trim()) {
+      return conversation.messages;
+    }
 
-  const handleSendMessage = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+    const query = searchText.trim().toLowerCase();
+
+    return conversation.messages.filter((message) =>
+      message.text.toLowerCase().includes(query),
+    );
+  }, [conversation, searchText]);
+
+  /*
+   * ============================================================
+   * UNREAD COUNT
+   * ============================================================
+   */
+
+  const unreadCount = useMemo(() => {
+    if (!conversation) {
+      return 0;
+    }
+
+    return conversation.messages.filter(
+      (message) =>
+        message.sender === "advisor" &&
+        !message.readAt &&
+        !message.deletedForAdmin &&
+        !message.deletedForEveryone,
+    ).length;
+  }, [conversation]);
+
+  /*
+   * ============================================================
+   * SEND MESSAGE
+   * ============================================================
+   */
+
+  const handleSendMessage = (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
 
     if (!conversation) {
+      return;
+    }
+
+    if (!socket.connected) {
+      setError("Chat connection is not available.");
+
       return;
     }
 
     const text = messageText.trim();
 
     if (!text) {
-      return;
-    }
-
-    if (!socket.connected) {
-      setError("Chat connection is not available.");
       return;
     }
 
@@ -652,19 +830,53 @@ export default function AdminAdvisorChat() {
       sender: "admin",
 
       text,
+
+      ...(replyingTo
+        ? {
+            reply_to: {
+              message_id: replyingTo.message_id,
+
+              text: replyingTo.text,
+
+              sender: replyingTo.sender,
+            },
+          }
+        : {}),
     });
 
     setMessageText("");
+    setReplyingTo(null);
+
+    /*
+     * Stop typing indicator
+     */
+    socket.emit("user_typing", {
+      conversation_id: conversation.conversation_id,
+
+      sender: "admin",
+
+      isTyping: false,
+    });
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
   };
 
-  // ============================================================
-  // START EDITING
-  // ============================================================
+  /*
+   * ============================================================
+   * START EDITING
+   * ============================================================
+   */
 
   const startEditing = (message: Message) => {
+    if (message.sender !== "admin") {
+      return;
+    }
+
     if (
-      message.sender !== "admin" ||
       message.deleted ||
+      message.deletedForAdmin ||
       message.deletedForEveryone
     ) {
       return;
@@ -674,34 +886,105 @@ export default function AdminAdvisorChat() {
 
     setEditingText(message.text);
 
+    setReplyingTo(null);
     setSelectedMessageId(null);
 
-    setConfirmDeleteMessageId(null);
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
   };
 
-  // ============================================================
-  // CANCEL EDITING
-  // ============================================================
+  /*
+   * ============================================================
+   * CANCEL EDIT
+   * ============================================================
+   */
 
   const cancelEditing = () => {
     setEditingMessageId(null);
     setEditingText("");
   };
 
-  // ============================================================
-  // SAVE EDIT
-  // ============================================================
+  /*
+   * ============================================================
+   * SAVE EDIT
+   * ============================================================
+   */
 
-  const saveEdit = () => {
-    if (!conversation || !editingMessageId || !editingText.trim()) {
+  const saveEdit = (event?: FormEvent) => {
+    event?.preventDefault();
+
+    if (!conversation || !editingMessageId) {
+      return;
+    }
+
+    const newText = editingText.trim();
+
+    if (!newText) {
       return;
     }
 
     if (!socket.connected) {
       setError("Chat connection is not available.");
+
       return;
     }
 
+    const currentMessage = conversation.messages.find(
+      (message) => message.message_id === editingMessageId,
+    );
+
+    if (!currentMessage) {
+      return;
+    }
+
+    /*
+     * Nothing changed.
+     */
+    if (currentMessage.text === newText) {
+      cancelEditing();
+      return;
+    }
+
+    /*
+     * Optimistically update UI.
+     *
+     * IMPORTANT:
+     * Do not change timestamp.
+     * Do not remove readAt.
+     * Do not remove deliveredAt.
+     */
+    setConversation((currentConversation) => {
+      if (!currentConversation) {
+        return currentConversation;
+      }
+
+      return {
+        ...currentConversation,
+
+        messages: currentConversation.messages.map((message) =>
+          message.message_id === editingMessageId
+            ? {
+                ...message,
+
+                text: newText,
+
+                edited: true,
+
+                timestamp: message.timestamp,
+
+                deliveredAt: message.deliveredAt,
+
+                readAt: message.readAt,
+              }
+            : message,
+        ),
+      };
+    });
+
+    /*
+     * Send edit to backend
+     */
     socket.emit("edit_message", {
       conversation_id: conversation.conversation_id,
 
@@ -709,51 +992,133 @@ export default function AdminAdvisorChat() {
 
       sender: "admin",
 
-      text: editingText.trim(),
+      text: newText,
     });
-  };
 
-  // ============================================================
-  // REQUEST DELETE
-  // ============================================================
-
-  const requestDeleteMessage = (messageId: string) => {
+    setEditingMessageId(null);
+    setEditingText("");
     setSelectedMessageId(null);
-
-    setConfirmDeleteMessageId(messageId);
   };
 
-  // ============================================================
-  // DELETE MESSAGE
-  // ============================================================
+  /*
+   * ============================================================
+   * DELETE MESSAGE MODAL
+   * ============================================================
+   */
 
-  const deleteMessage = (messageId: string, deleteType: DeleteType) => {
-    if (!conversation) {
+  const openDeleteModal = (message: Message) => {
+    if (
+      message.deleted ||
+      message.deletedForAdmin ||
+      message.deletedForEveryone
+    ) {
+      return;
+    }
+
+    setDeleteTarget(message);
+    setShowDeleteModal(true);
+    setSelectedMessageId(null);
+  };
+
+  /*
+   * ============================================================
+   * DELETE MESSAGE
+   * ============================================================
+   */
+
+  const deleteMessage = (deleteType: DeleteType) => {
+    if (!conversation || !deleteTarget) {
       return;
     }
 
     if (!socket.connected) {
       setError("Chat connection is not available.");
+
       return;
     }
 
+    /*
+     * IMPORTANT:
+     *
+     * Your backend expects:
+     *
+     * deleteType: "me" | "everyone"
+     *
+     * So we explicitly send it here.
+     */
     socket.emit("delete_message", {
       conversation_id: conversation.conversation_id,
 
-      message_id: messageId,
+      message_id: deleteTarget.message_id,
 
       sender: "admin",
 
       deleteType,
     });
 
-    setConfirmDeleteMessageId(null);
-    setSelectedMessageId(null);
+    /*
+     * Optimistic UI for Delete for me
+     */
+    if (deleteType === "me") {
+      setConversation((currentConversation) => {
+        if (!currentConversation) {
+          return currentConversation;
+        }
+
+        return {
+          ...currentConversation,
+
+          messages: currentConversation.messages.map((message) =>
+            message.message_id === deleteTarget.message_id
+              ? {
+                  ...message,
+
+                  deletedForAdmin: true,
+                }
+              : message,
+          ),
+        };
+      });
+    }
+
+    /*
+     * Optimistic UI for Delete for everyone
+     */
+    if (deleteType === "everyone") {
+      setConversation((currentConversation) => {
+        if (!currentConversation) {
+          return currentConversation;
+        }
+
+        return {
+          ...currentConversation,
+
+          messages: currentConversation.messages.map((message) =>
+            message.message_id === deleteTarget.message_id
+              ? {
+                  ...message,
+
+                  deleted: true,
+
+                  deletedForEveryone: true,
+
+                  edited: false,
+                }
+              : message,
+          ),
+        };
+      });
+    }
+
+    setShowDeleteModal(false);
+    setDeleteTarget(null);
   };
 
-  // ============================================================
-  // HIDE WHOLE CONVERSATION
-  // ============================================================
+  /*
+   * ============================================================
+   * DELETE / HIDE CONVERSATION
+   * ============================================================
+   */
 
   const deleteConversation = () => {
     if (!conversation) {
@@ -762,6 +1127,7 @@ export default function AdminAdvisorChat() {
 
     if (!socket.connected) {
       setError("Chat connection is not available.");
+
       return;
     }
 
@@ -771,12 +1137,186 @@ export default function AdminAdvisorChat() {
       sender: "admin",
     });
 
-    setConfirmDeleteConversation(false);
+    setShowDeleteConversationModal(false);
   };
 
-  // ============================================================
-  // MESSAGE STATUS
-  // ============================================================
+  /*
+   * ============================================================
+   * REPLY
+   * ============================================================
+   */
+
+  const handleReply = (message: Message) => {
+    if (
+      message.deleted ||
+      message.deletedForAdmin ||
+      message.deletedForEveryone
+    ) {
+      return;
+    }
+
+    setReplyingTo(message);
+    setSelectedMessageId(null);
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
+  };
+
+  /*
+   * ============================================================
+   * COPY
+   * ============================================================
+   */
+
+  const handleCopy = async (message: Message) => {
+    if (
+      message.deleted ||
+      message.deletedForAdmin ||
+      message.deletedForEveryone
+    ) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(message.text);
+    } catch (copyError) {
+      console.error("Copy failed:", copyError);
+    }
+
+    setSelectedMessageId(null);
+  };
+
+  /*
+   * ============================================================
+   * INPUT CHANGE
+   * ============================================================
+   */
+
+  const handleInputChange = (value: string) => {
+    if (editingMessageId) {
+      setEditingText(value);
+      return;
+    }
+
+    setMessageText(value);
+
+    if (conversation && socket.connected) {
+      socket.emit("user_typing", {
+        conversation_id: conversation.conversation_id,
+
+        sender: "admin",
+
+        isTyping: value.trim().length > 0,
+      });
+    }
+  };
+
+  /*
+   * ============================================================
+   * INPUT KEYBOARD
+   * ============================================================
+   */
+
+  const handleInputKeyDown = (
+    event: React.KeyboardEvent<HTMLTextAreaElement>,
+  ) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+
+      if (editingMessageId) {
+        saveEdit();
+      } else {
+        handleSendMessage();
+      }
+    }
+  };
+
+  /*
+   * ============================================================
+   * TIME FORMAT
+   * ============================================================
+   */
+
+  const formatMessageTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  /*
+   * ============================================================
+   * DATE FORMAT
+   * ============================================================
+   */
+
+  const formatDate = (timestamp: string) => {
+    const date = new Date(timestamp);
+
+    const today = new Date();
+
+    const yesterday = new Date();
+
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return "Today";
+    }
+
+    if (date.toDateString() === yesterday.toDateString()) {
+      return "Yesterday";
+    }
+
+    return date.toLocaleDateString([], {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  /*
+   * ============================================================
+   * DATE SEPARATOR
+   * ============================================================
+   */
+
+  const shouldShowDateSeparator = (messages: Message[], index: number) => {
+    if (index === 0) {
+      return true;
+    }
+
+    const current = new Date(messages[index].timestamp).toDateString();
+
+    const previous = new Date(messages[index - 1].timestamp).toDateString();
+
+    return current !== previous;
+  };
+
+  /*
+   * ============================================================
+   * MESSAGE STATUS
+   *
+   * IMPORTANT:
+   *
+   * We use readAt for ✓✓.
+   *
+   * We DO NOT use deliveredAt for ✓✓
+   * because your backend sets deliveredAt
+   * when the message is created.
+   *
+   * Therefore:
+   *
+   * ✓  = sent / not read
+   * ✓✓ = read
+   * ============================================================
+   */
 
   const renderMessageStatus = (message: Message) => {
     if (message.sender !== "admin") {
@@ -784,63 +1324,101 @@ export default function AdminAdvisorChat() {
     }
 
     if (message.readAt) {
-      return <CheckCheck size={15} className="text-sky-400" />;
+      return (
+        <CheckCheck size={15} strokeWidth={2.8} className="text-sky-500" />
+      );
     }
 
-    if (message.deliveredAt) {
-      return <CheckCheck size={15} className="text-white/60" />;
-    }
-
-    return <Check size={15} className="text-white/60" />;
+    return <Check size={15} strokeWidth={2.8} className="text-slate-400" />;
   };
 
-  // ============================================================
-  // FORMAT TIME
-  // ============================================================
+  /*
+   * ============================================================
+   * SCROLL
+   * ============================================================
+   */
 
-  const formatMessageTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
     });
+
+    setIsNearBottom(true);
+    setShowScrollButton(false);
   };
 
-  // ============================================================
-  // LOADING
-  // ============================================================
+  useEffect(() => {
+    if (!isNearBottom) {
+      return;
+    }
+
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [conversation?.messages.length, typing, isNearBottom]);
+
+  const handleMessagesScroll = () => {
+    const container = messagesContainerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    const distance =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+
+    const nearBottom = distance < 120;
+
+    setIsNearBottom(nearBottom);
+
+    setShowScrollButton(!nearBottom);
+  };
+
+  /*
+   * ============================================================
+   * LOADING
+   * ============================================================
+   */
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#efeae2]">
-        <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-500" />
+      <div className="h-[100dvh] min-h-screen bg-[#FAFBF7] flex items-center justify-center px-4">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full border-4 border-[#DCE8DD] border-t-[#2F8F4E] animate-spin" />
 
-          <p className="mt-4 text-sm text-slate-500">Loading conversation...</p>
+          <p className="text-sm text-[#6B7D70]">Loading conversation...</p>
         </div>
       </div>
     );
   }
 
-  // ============================================================
-  // ERROR WITHOUT CONVERSATION
-  // ============================================================
+  /*
+   * ============================================================
+   * ERROR
+   * ============================================================
+   */
 
   if (error && !conversation) {
     return (
-      <div className="min-h-screen bg-[#efeae2] p-6">
-        <div className="mx-auto max-w-3xl">
+      <div className="min-h-screen bg-[#FAFBF7] flex items-center justify-center px-4">
+        <div className="w-full max-w-md rounded-2xl border border-red-200 bg-white p-5 sm:p-6 text-center shadow-sm">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-500">
+            <X size={23} />
+          </div>
+
+          <h2 className="mt-4 text-lg font-semibold text-[#173B28]">
+            Unable to load conversation
+          </h2>
+
+          <p className="mt-2 text-sm text-[#6B7D70]">{error}</p>
+
           <button
             type="button"
             onClick={() => navigate("/admin/messages")}
-            className="mb-6 flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            className="mt-5 w-full rounded-xl bg-[#2F8F4E] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#176B3A]"
           >
-            <ArrowLeft size={18} />
             Back to Messages
           </button>
-
-          <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-red-700">
-            {error}
-          </div>
         </div>
       </div>
     );
@@ -850,394 +1428,745 @@ export default function AdminAdvisorChat() {
     return null;
   }
 
-  const advisorName = advisor?.name || "Advisor";
+  /*
+   * ============================================================
+   * MAIN UI
+   * ============================================================
+   */
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#efeae2]">
-      {/* =====================================================
+    <div className="h-[100dvh] min-h-screen bg-[#FAFBF7] flex flex-col overflow-hidden">
+      {/* ======================================================
           HEADER
-      ===================================================== */}
+      ======================================================= */}
 
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white shadow-sm">
-        <div className="mx-auto flex h-[72px] w-full max-w-6xl items-center px-4">
-          <button
-            type="button"
-            onClick={() => navigate("/admin/messages")}
-            className="mr-3 rounded-full p-2 text-slate-600 transition hover:bg-slate-100"
-            aria-label="Back to messages"
-          >
-            <ArrowLeft size={22} />
-          </button>
+      <header className="shrink-0 h-[64px] sm:h-[72px] bg-white border-b border-[#DCE8DD] px-2.5 sm:px-4 lg:px-6">
+        <div className="h-full w-full max-w-5xl mx-auto flex items-center justify-between">
+          {/* LEFT */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            {/* BACK */}
+            <button
+              type="button"
+              onClick={() => navigate("/admin/messages")}
+              className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-full flex items-center justify-center text-[#173B28] transition hover:bg-[#F3F7F1] active:bg-[#E7F1E3]"
+              aria-label="Back"
+            >
+              <ArrowLeft size={19} />
+            </button>
 
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold text-white">
-            {advisorName.charAt(0).toUpperCase()}
-          </div>
+            {/* AVATAR */}
+            <div className="relative shrink-0">
+              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#E7F1E3] text-[#176B3A] flex items-center justify-center text-sm sm:text-lg font-semibold">
+                {advisor?.name?.charAt(0).toUpperCase() ||
+                  conversation.advisor_id.charAt(0).toUpperCase() ||
+                  "A"}
+              </div>
 
-          <div className="ml-3 min-w-0">
-            <h1 className="truncate text-base font-semibold text-slate-900">
-              {advisorName}
-            </h1>
+              {advisor?.active && (
+                <span className="absolute right-0 bottom-0 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#2F8F4E] border-2 border-white" />
+              )}
+            </div>
 
-            <div className="flex items-center gap-2">
-              <span
-                className={`h-2 w-2 rounded-full ${
-                  connected ? "bg-emerald-500" : "bg-red-500"
-                }`}
-              />
+            {/* NAME */}
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h1 className="font-semibold text-sm sm:text-base text-[#173B28] truncate max-w-[150px] sm:max-w-[300px] md:max-w-[400px]">
+                  {advisor?.name || "Advisor"}
+                </h1>
 
-              <p className="text-xs text-slate-500">
-                {connected ? "Online" : "Disconnected"}
-              </p>
+                {unreadCount > 0 && (
+                  <span className="shrink-0 min-w-5 h-5 px-1.5 rounded-full bg-[#2F8F4E] text-white text-[10px] font-semibold flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
+              </div>
+
+              <div className="text-[10px] sm:text-xs text-[#6B7D70] flex items-center gap-1.5">
+                {typing ? (
+                  <span className="text-[#2F8F4E]">typing...</span>
+                ) : advisor?.active ? (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#2F8F4E]" />
+                    <span>Online</span>
+                  </>
+                ) : (
+                  "Advisor"
+                )}
+
+                {!connected && (
+                  <span className="text-red-500">• Connecting...</span>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="relative ml-auto">
+          {/* RIGHT */}
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+            {/* SEARCH */}
             <button
               type="button"
-              onClick={() =>
-                setConfirmDeleteConversation((current) => !current)
-              }
-              className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-              title="Conversation options"
+              onClick={() => {
+                setShowSearch((current) => !current);
+
+                if (showSearch) {
+                  setSearchText("");
+                }
+              }}
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[#173B28] transition hover:bg-[#F3F7F1] active:bg-[#E7F1E3]"
+              aria-label="Search"
             >
-              <MoreVertical size={21} />
+              <Search size={19} />
             </button>
 
-            {confirmDeleteConversation && (
-              <div className="absolute right-0 top-12 z-50 w-72 rounded-xl border border-slate-200 bg-white p-4 shadow-xl">
-                <p className="text-sm font-semibold text-slate-900">
-                  Hide conversation?
-                </p>
+            {/* MORE */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowConversationMenu((current) => !current)}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[#173B28] transition hover:bg-[#F3F7F1] active:bg-[#E7F1E3]"
+                aria-label="More"
+              >
+                <MoreVertical size={19} />
+              </button>
 
-                <p className="mt-1 text-xs leading-5 text-slate-500">
-                  The conversation and its messages will remain safely stored in
-                  MongoDB.
-                </p>
+              {showConversationMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowConversationMenu(false)}
+                  />
 
-                <div className="mt-4 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setConfirmDeleteConversation(false)}
-                    className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
-                  >
-                    Cancel
-                  </button>
+                  <div className="absolute right-0 top-11 sm:top-12 z-50 w-48 rounded-xl border border-[#DCE8DD] bg-white shadow-xl overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowConversationMenu(false);
 
-                  <button
-                    type="button"
-                    onClick={deleteConversation}
-                    className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
-                  >
-                    Hide
-                  </button>
-                </div>
-              </div>
-            )}
+                        setShowDeleteConversationModal(true);
+                      }}
+                      className="w-full px-4 py-3 flex items-center gap-3 text-sm text-red-600 transition hover:bg-red-50 active:bg-red-100"
+                    >
+                      <Trash2 size={17} />
+                      Delete conversation
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
-      {/* =====================================================
-          ERROR
-      ===================================================== */}
+      {/* ======================================================
+          SEARCH BAR
+      ======================================================= */}
 
-      {error && (
-        <div className="mx-auto mt-3 w-full max-w-6xl px-4">
-          <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            <span>{error}</span>
+      {showSearch && (
+        <div className="shrink-0 bg-white border-b border-[#DCE8DD] px-3 sm:px-4 py-2.5 sm:py-3">
+          <div className="relative w-full max-w-4xl mx-auto">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7D70]"
+            />
 
-            <button type="button" onClick={() => setError("")} className="ml-4">
+            <input
+              autoFocus
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              placeholder="Search messages..."
+              className="w-full h-9 sm:h-10 pl-9 pr-9 rounded-xl bg-[#F3F7F1] text-sm text-[#173B28] outline-none border border-transparent focus:border-[#DCE8DD]"
+            />
+
+            {searchText && (
+              <button
+                type="button"
+                onClick={() => setSearchText("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center hover:bg-white"
+                aria-label="Clear search"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================
+          MESSAGES
+      ======================================================= */}
+
+      <main
+        ref={messagesContainerRef}
+        onScroll={handleMessagesScroll}
+        className="relative flex-1 min-h-0 overflow-y-auto overscroll-contain px-2.5 sm:px-4 md:px-6 py-3 sm:py-5"
+      >
+        <div className="w-full max-w-4xl mx-auto">
+          {/* PRIVACY */}
+          <div className="flex justify-center mb-4 sm:mb-6 px-2">
+            <span className="max-w-full text-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#E7F1E3] text-[#176B3A] text-[10px] sm:text-xs">
+              Messages between SafeLink administrators and advisors are private.
+            </span>
+          </div>
+
+          {/* NO MESSAGES */}
+          {visibleMessages.length === 0 ? (
+            <div className="min-h-[45vh] flex items-center justify-center px-4">
+              <div className="text-center">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#E7F1E3] text-[#176B3A] flex items-center justify-center mx-auto mb-4">
+                  <Send size={23} />
+                </div>
+
+                <h2 className="font-semibold text-[#173B28] text-sm sm:text-base">
+                  {searchText ? "No messages found" : "No messages yet"}
+                </h2>
+
+                <p className="text-xs sm:text-sm text-[#6B7D70] mt-1 max-w-xs mx-auto">
+                  {searchText
+                    ? "Try another search term."
+                    : `Start a conversation with ${
+                        advisor?.name || "this advisor"
+                      }.`}
+                </p>
+              </div>
+            </div>
+          ) : (
+            visibleMessages.map((message, index) => {
+              const isAdmin = message.sender === "admin";
+
+              const isDeleted = Boolean(
+                message.deleted ||
+                message.deletedForAdmin ||
+                message.deletedForEveryone,
+              );
+
+              const isSelected = selectedMessageId === message.message_id;
+
+              const isEditing = editingMessageId === message.message_id;
+
+              const showDate = shouldShowDateSeparator(visibleMessages, index);
+
+              return (
+                <div key={message.message_id}>
+                  {/* DATE */}
+                  {showDate && (
+                    <div className="flex justify-center my-4 sm:my-5">
+                      <span className="px-3 py-1 sm:py-1.5 rounded-full bg-white border border-[#DCE8DD] text-[#6B7D70] text-[10px] sm:text-xs shadow-sm">
+                        {formatDate(message.timestamp)}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* MESSAGE ROW */}
+                  <div
+                    className={`flex mb-2.5 sm:mb-2 ${
+                      isAdmin ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <div
+                      className={`relative w-fit max-w-[94%] sm:max-w-[82%] md:max-w-[72%] ${
+                        isAdmin ? "ml-8 sm:ml-12" : "mr-8 sm:mr-12"
+                      }`}
+                    >
+                      {/* =================================================
+                            MESSAGE MENU
+                        ================================================== */}
+
+                      {isSelected && !isDeleted && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-30"
+                            onClick={() => setSelectedMessageId(null)}
+                          />
+
+                          <div
+                            onClick={(event) => event.stopPropagation()}
+                            className={`absolute top-full mt-1 z-40 w-44 max-w-[calc(100vw-24px)] rounded-xl border border-[#DCE8DD] bg-white shadow-xl overflow-hidden ${
+                              isAdmin ? "right-0" : "left-0"
+                            }`}
+                          >
+                            {/* REPLY */}
+                            <button
+                              type="button"
+                              onClick={() => handleReply(message)}
+                              className="w-full px-3 py-2.5 flex items-center gap-3 text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
+                            >
+                              <Reply size={16} />
+                              Reply
+                            </button>
+
+                            {/* COPY */}
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(message)}
+                              className="w-full px-3 py-2.5 flex items-center gap-3 text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
+                            >
+                              <Copy size={16} />
+                              Copy
+                            </button>
+
+                            {/* EDIT */}
+                            {isAdmin && (
+                              <button
+                                type="button"
+                                onClick={() => startEditing(message)}
+                                className="w-full px-3 py-2.5 flex items-center gap-3 text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
+                              >
+                                <Edit3 size={16} />
+                                Edit
+                              </button>
+                            )}
+
+                            {/* DELETE */}
+                            <button
+                              type="button"
+                              onClick={() => openDeleteModal(message)}
+                              className="w-full px-3 py-2.5 flex items-center gap-3 text-sm text-red-600 transition hover:bg-red-50"
+                            >
+                              <Trash2 size={16} />
+                              Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
+
+                      {/* =================================================
+                            EDIT MODE
+                        ================================================== */}
+
+                      {isEditing ? (
+                        <form
+                          onSubmit={saveEdit}
+                          className="w-[360px] max-w-[90vw] rounded-2xl bg-[#2F8F4E] p-3 shadow-sm"
+                        >
+                          <div className="mb-2 text-xs font-semibold text-white/90">
+                            Editing message
+                          </div>
+
+                          <textarea
+                            value={editingText}
+                            onChange={(event) =>
+                              setEditingText(event.target.value)
+                            }
+                            autoFocus
+                            rows={3}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" && !event.shiftKey) {
+                                event.preventDefault();
+
+                                saveEdit();
+                              }
+                            }}
+                            className="w-full resize-none rounded-xl bg-white px-3 py-2 text-sm text-[#173B28] outline-none"
+                          />
+
+                          <div className="mt-2 flex justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={cancelEditing}
+                              className="flex items-center gap-1 rounded-full border border-white/30 px-3 py-1.5 text-xs text-white transition hover:bg-white/10"
+                            >
+                              <X size={13} />
+                              Cancel
+                            </button>
+
+                            <button
+                              type="submit"
+                              disabled={!editingText.trim()}
+                              className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[#2F8F4E] transition disabled:opacity-50"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        /* =================================================
+                             MESSAGE BUBBLE
+                          ================================================== */
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedMessageId(
+                              isSelected ? null : message.message_id,
+                            );
+                          }}
+                          className="w-full text-left"
+                        >
+                          <div
+                            className={`
+                                rounded-2xl
+                                px-3 py-2
+                                sm:px-3.5 sm:py-2.5
+                                shadow-sm
+                                ${
+                                  isAdmin
+                                    ? "bg-[#E7F1E3] text-[#173B28] rounded-br-md"
+                                    : "bg-white text-[#173B28] border border-[#DCE8DD] rounded-bl-md"
+                                }
+                                ${isDeleted ? "opacity-75" : ""}
+                                ${isSelected ? "ring-2 ring-[#2F8F4E]/30" : ""}
+                              `}
+                          >
+                            {/* REPLY PREVIEW */}
+                            {message.replyTo && !isDeleted && (
+                              <div className="mb-2 pl-2.5 sm:pl-3 border-l-2 border-[#2F8F4E] min-w-0">
+                                <div className="text-[10px] sm:text-[11px] font-semibold text-[#2F8F4E]">
+                                  {message.replyTo.sender === "admin"
+                                    ? "You"
+                                    : advisor?.name || "Advisor"}
+                                </div>
+
+                                <div className="text-[10px] sm:text-xs text-[#6B7D70] truncate max-w-[180px] sm:max-w-[280px]">
+                                  {message.replyTo.text}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* MESSAGE TEXT */}
+                            <div
+                              className={`
+                                  whitespace-pre-wrap
+                                  break-words
+                                  text-[13px] sm:text-sm
+                                  leading-relaxed
+                                  ${isDeleted ? "italic text-[#6B7D70]" : ""}
+                                `}
+                            >
+                              {isDeleted
+                                ? "This message was deleted"
+                                : message.text}
+                            </div>
+
+                            {/* MESSAGE BOTTOM INFO */}
+                            {!isDeleted && (
+                              <div className="flex items-center justify-end gap-1.5 mt-1 min-h-[14px]">
+                                {/* TIME */}
+                                <span
+                                  className={`
+                                      text-[9px] sm:text-[10px]
+                                      leading-none
+                                      whitespace-nowrap
+                                      ${
+                                        isAdmin
+                                          ? "text-[#6B7D70]"
+                                          : "text-slate-400"
+                                      }
+                                    `}
+                                >
+                                  {formatMessageTime(message.timestamp)}
+                                </span>
+
+                                {/* EDITED */}
+                                {message.edited === true && (
+                                  <span className="text-[9px] sm:text-[10px] text-slate-400 leading-none whitespace-nowrap">
+                                    edited
+                                  </span>
+                                )}
+
+                                {/* CHECK MARKS */}
+                                {isAdmin && (
+                                  <span className="inline-flex items-center justify-center leading-none">
+                                    {renderMessageStatus(message)}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+
+          {/* TYPING */}
+          {typing && (
+            <div className="flex justify-start mt-2">
+              <div className="px-3.5 sm:px-4 py-2.5 sm:py-3 bg-white border border-[#DCE8DD] rounded-2xl rounded-bl-md">
+                <div className="flex gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#6B7D70] animate-bounce" />
+
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-[#6B7D70] animate-bounce"
+                    style={{
+                      animationDelay: "150ms",
+                    }}
+                  />
+
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-[#6B7D70] animate-bounce"
+                    style={{
+                      animationDelay: "300ms",
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* SCROLL BUTTON */}
+        {showScrollButton && (
+          <button
+            type="button"
+            onClick={scrollToBottom}
+            className="fixed bottom-[90px] sm:bottom-28 right-3 sm:right-6 md:right-8 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-[#DCE8DD] shadow-lg flex items-center justify-center text-[#173B28] hover:bg-[#F3F7F1] transition z-20"
+            aria-label="Scroll to bottom"
+          >
+            <ArrowDown size={19} />
+          </button>
+        )}
+      </main>
+
+      {/* ======================================================
+          REPLY BAR
+      ======================================================= */}
+
+      {replyingTo && (
+        <div className="shrink-0 bg-white border-t border-[#DCE8DD] px-3 sm:px-4 py-2.5 sm:py-3">
+          <div className="w-full max-w-4xl mx-auto flex items-center gap-2.5 sm:gap-3">
+            <div className="w-1 h-9 sm:h-10 shrink-0 rounded-full bg-[#2F8F4E]" />
+
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] sm:text-xs font-semibold text-[#2F8F4E]">
+                Replying to{" "}
+                {replyingTo.sender === "admin"
+                  ? "yourself"
+                  : advisor?.name || "Advisor"}
+              </p>
+
+              <p className="text-xs sm:text-sm text-[#6B7D70] truncate">
+                {replyingTo.text}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setReplyingTo(null)}
+              className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center hover:bg-[#F3F7F1]"
+              aria-label="Cancel reply"
+            >
               <X size={17} />
             </button>
           </div>
         </div>
       )}
 
-      {/* =====================================================
-          CHAT AREA
-      ===================================================== */}
+      {/* ======================================================
+          EDIT BAR
+      ======================================================= */}
 
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-0 sm:px-4 sm:py-4">
-        <div className="flex flex-1 flex-col overflow-hidden bg-[#efeae2] sm:rounded-xl sm:shadow-sm">
-          {/* Messages */}
+      {editingMessageId && (
+        <div className="shrink-0 bg-white border-t border-[#DCE8DD] px-3 sm:px-4 py-2.5 sm:py-3">
+          <div className="w-full max-w-4xl mx-auto flex items-center gap-2.5 sm:gap-3">
+            <div className="w-1 h-9 sm:h-10 shrink-0 rounded-full bg-[#2F8F4E]" />
 
-          <div className="flex-1 overflow-y-auto px-3 py-5 sm:px-6">
-            {conversation.messages.length === 0 ? (
-              <div className="flex min-h-[500px] items-center justify-center">
-                <div className="text-center">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm">
-                    <div className="text-2xl">💬</div>
-                  </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] sm:text-xs font-semibold text-[#2F8F4E]">
+                Editing message
+              </p>
 
-                  <h2 className="mt-4 font-semibold text-slate-700">
-                    No messages yet
-                  </h2>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    Send a message to {advisorName}.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {conversation.messages.map((message) => {
-                  const isAdmin = message.sender === "admin";
-
-                  const isSelected = selectedMessageId === message.message_id;
-
-                  const isEditing = editingMessageId === message.message_id;
-
-                  const isConfirmingDelete =
-                    confirmDeleteMessageId === message.message_id;
-
-                  const isDeleted = Boolean(
-                    message.deletedForEveryone || message.deleted,
-                  );
-
-                  return (
-                    <div
-                      key={message.message_id}
-                      className={`flex ${
-                        isAdmin ? "justify-end" : "justify-start"
-                      }`}
-                    >
-                      <div
-                        className={`relative flex max-w-[88%] sm:max-w-[70%] ${
-                          isAdmin ? "justify-end" : "justify-start"
-                        }`}
-                      >
-                        {/* DELETE OPTIONS */}
-
-                        {isConfirmingDelete && (
-                          <div
-                            className={`absolute bottom-full z-50 mb-2 w-72 rounded-xl border border-slate-200 bg-white p-4 shadow-2xl ${
-                              isAdmin ? "right-0" : "left-0"
-                            }`}
-                          >
-                            <p className="text-sm font-semibold text-slate-900">
-                              Delete message?
-                            </p>
-
-                            <p className="mt-1 text-xs leading-5 text-slate-500">
-                              Choose how you want to delete this message.
-                            </p>
-
-                            <div className="mt-4 space-y-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  deleteMessage(message.message_id, "me")
-                                }
-                                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-left text-xs font-medium text-slate-700 transition hover:bg-slate-50"
-                              >
-                                <span className="block font-semibold">
-                                  Delete for me
-                                </span>
-
-                                <span className="mt-0.5 block text-[11px] text-slate-400">
-                                  Remove it from your view only.
-                                </span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  deleteMessage(message.message_id, "everyone")
-                                }
-                                className="w-full rounded-lg border border-red-100 px-3 py-2 text-left text-xs font-medium text-red-600 transition hover:bg-red-50"
-                              >
-                                <span className="block font-semibold">
-                                  Delete for everyone
-                                </span>
-
-                                <span className="mt-0.5 block text-[11px] text-red-400">
-                                  Replace it with a deleted message for both
-                                  sides.
-                                </span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => setConfirmDeleteMessageId(null)}
-                                className="w-full rounded-lg px-3 py-2 text-xs font-medium text-slate-500 transition hover:bg-slate-100"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* ACTION MENU */}
-
-                        {isSelected && isAdmin && !isDeleted && (
-                          <div className="absolute bottom-full right-0 z-40 mb-2 flex overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
-                            <button
-                              type="button"
-                              onClick={() => startEditing(message)}
-                              className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
-                            >
-                              <Edit3 size={14} />
-                              Edit
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                requestDeleteMessage(message.message_id)
-                              }
-                              className="flex items-center gap-2 border-l border-slate-200 px-4 py-2.5 text-xs font-semibold text-red-600 transition hover:bg-red-50"
-                            >
-                              <Trash2 size={14} />
-                              Delete
-                            </button>
-                          </div>
-                        )}
-
-                        {/* EDIT MODE */}
-
-                        {isEditing ? (
-                          <div className="w-[380px] max-w-[85vw] rounded-2xl bg-emerald-600 p-3 shadow-md">
-                            <textarea
-                              value={editingText}
-                              onChange={(event) =>
-                                setEditingText(event.target.value)
-                              }
-                              autoFocus
-                              rows={3}
-                              className="w-full resize-none rounded-xl bg-white px-3 py-2 text-sm text-slate-900 outline-none"
-                            />
-
-                            <div className="mt-2 flex justify-end gap-2">
-                              <button
-                                type="button"
-                                onClick={cancelEditing}
-                                className="flex items-center gap-1 rounded-full border border-white/30 px-3 py-1.5 text-xs text-white hover:bg-white/10"
-                              >
-                                <X size={13} />
-                                Cancel
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={saveEdit}
-                                disabled={!editingText.trim()}
-                                className="rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-                              >
-                                Save
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div
-                            className={`group relative ${
-                              isAdmin
-                                ? "rounded-2xl rounded-br-md bg-[#d9fdd3]"
-                                : "rounded-2xl rounded-bl-md bg-white"
-                            } px-3 py-2 shadow-sm`}
-                          >
-                            {/* Click admin message */}
-
-                            {isAdmin && !isDeleted && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedMessageId(
-                                    isSelected ? null : message.message_id,
-                                  );
-
-                                  setConfirmDeleteMessageId(null);
-                                }}
-                                className="absolute inset-0 z-10 cursor-pointer rounded-2xl"
-                                aria-label="Message options"
-                              />
-                            )}
-
-                            {/* Sender */}
-
-                            <p className="relative z-0 mb-0.5 text-[10px] font-semibold text-slate-500">
-                              {isAdmin ? "You" : advisorName}
-                            </p>
-
-                            {/* Content */}
-
-                            {isDeleted ? (
-                              <p className="relative z-0 pr-1 text-sm italic leading-5 text-slate-500">
-                                This message was deleted
-                              </p>
-                            ) : (
-                              <p className="relative z-0 whitespace-pre-wrap break-words pr-1 text-sm leading-5 text-slate-800">
-                                {message.text}
-                              </p>
-                            )}
-
-                            {/* Time + status */}
-
-                            <div className="relative z-20 mt-1 flex items-center justify-end gap-1">
-                              {message.edited && !isDeleted && (
-                                <span className="text-[9px] text-slate-400">
-                                  edited
-                                </span>
-                              )}
-
-                              <span className="text-[9px] text-slate-400">
-                                {formatMessageTime(message.timestamp)}
-                              </span>
-
-                              {renderMessageStatus(message)}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* INPUT */}
-
-          <form
-            onSubmit={handleSendMessage}
-            className="border-t border-slate-200 bg-[#f0f2f5] px-3 py-3 sm:px-4"
-          >
-            <div className="flex items-end gap-2">
-              <textarea
-                value={messageText}
-                onChange={(event) => setMessageText(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
-                    event.preventDefault();
-
-                    if (messageText.trim() && !sending) {
-                      event.currentTarget.form?.requestSubmit();
-                    }
-                  }
-                }}
-                rows={1}
-                placeholder={`Message ${advisorName}...`}
-                disabled={sending}
-                className="min-h-[46px] flex-1 resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-100"
-              />
-
-              <button
-                type="submit"
-                disabled={!messageText.trim() || sending || !connected}
-                className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-                aria-label="Send message"
-              >
-                <Send size={19} />
-              </button>
+              <p className="text-xs sm:text-sm text-[#6B7D70] truncate">
+                {editingText}
+              </p>
             </div>
 
-            <p className="mt-1.5 px-2 text-[10px] text-slate-400">
-              Enter to send · Shift + Enter for a new line
-            </p>
-          </form>
+            <button
+              type="button"
+              onClick={cancelEditing}
+              className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center hover:bg-[#F3F7F1]"
+              aria-label="Cancel editing"
+            >
+              <X size={17} />
+            </button>
+          </div>
         </div>
-      </main>
+      )}
+
+      {/* ======================================================
+          INPUT
+      ======================================================= */}
+
+      <footer className="shrink-0 bg-white border-t border-[#DCE8DD] px-2.5 sm:px-4 md:px-6 py-2.5 sm:py-3">
+        <form
+          onSubmit={editingMessageId ? saveEdit : handleSendMessage}
+          className="w-full max-w-4xl mx-auto flex items-end gap-1.5 sm:gap-2"
+        >
+          <div className="flex-1 min-w-0 bg-[#F3F7F1] rounded-2xl px-3 sm:px-4 py-2 border border-transparent focus-within:border-[#DCE8DD]">
+            <textarea
+              ref={inputRef}
+              value={editingMessageId ? editingText : messageText}
+              onChange={(event) => handleInputChange(event.target.value)}
+              onKeyDown={handleInputKeyDown}
+              rows={1}
+              placeholder={
+                editingMessageId ? "Edit message..." : "Write a message..."
+              }
+              className="w-full bg-transparent resize-none outline-none text-[13px] sm:text-sm text-[#173B28] placeholder:text-[#8A968D] max-h-28 sm:max-h-32 leading-5"
+            />
+
+            <div className="hidden sm:block text-[10px] text-[#8A968D] mt-1">
+              Enter to {editingMessageId ? "save" : "send"} • Shift + Enter for
+              new line
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={
+              !connected ||
+              !(editingMessageId ? editingText.trim() : messageText.trim())
+            }
+            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full bg-[#2F8F4E] text-white flex items-center justify-center transition hover:bg-[#176B3A] active:bg-[#176B3A] disabled:opacity-40 disabled:cursor-not-allowed"
+            aria-label={editingMessageId ? "Save edit" : "Send message"}
+          >
+            {editingMessageId ? (
+              <Check size={18} />
+            ) : (
+              <Send size={17} className="ml-0.5" />
+            )}
+          </button>
+        </form>
+      </footer>
+
+      {/* ======================================================
+          DELETE MESSAGE MODAL
+      ======================================================= */}
+
+      {showDeleteModal && deleteTarget && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/30 backdrop-blur-[1px] flex items-end sm:items-center justify-center"
+          onClick={() => {
+            setShowDeleteModal(false);
+
+            setDeleteTarget(null);
+          }}
+        >
+          <div
+            onClick={(event) => event.stopPropagation()}
+            className="w-full sm:max-w-sm bg-white sm:rounded-2xl rounded-t-2xl shadow-2xl border border-[#DCE8DD] overflow-hidden"
+          >
+            <div className="p-4 sm:p-5 border-b border-[#DCE8DD]">
+              <h3 className="font-semibold text-[#173B28] text-base">
+                Delete message
+              </h3>
+
+              <p className="text-xs sm:text-sm text-[#6B7D70] mt-1">
+                Choose how you want to delete this message.
+              </p>
+            </div>
+
+            <div className="p-2.5 sm:p-3">
+              {/* DELETE FOR ME */}
+              <button
+                type="button"
+                onClick={() => deleteMessage("me")}
+                className="w-full p-3 rounded-xl flex items-center gap-3 text-left transition hover:bg-[#F3F7F1]"
+              >
+                <Trash2 size={18} className="text-[#6B7D70] shrink-0" />
+
+                <div>
+                  <p className="text-sm font-medium text-[#173B28]">
+                    Delete for me
+                  </p>
+
+                  <p className="text-xs text-[#6B7D70]">
+                    Remove it from your chat.
+                  </p>
+                </div>
+              </button>
+
+              {/* DELETE FOR EVERYONE */}
+              {deleteTarget.sender === "admin" && (
+                <button
+                  type="button"
+                  onClick={() => deleteMessage("everyone")}
+                  className="w-full p-3 rounded-xl flex items-center gap-3 text-left transition hover:bg-red-50"
+                >
+                  <Trash2 size={18} className="text-red-500 shrink-0" />
+
+                  <div>
+                    <p className="text-sm font-medium text-red-600">
+                      Delete for everyone
+                    </p>
+
+                    <p className="text-xs text-[#6B7D70]">
+                      Remove it for both users.
+                    </p>
+                  </div>
+                </button>
+              )}
+            </div>
+
+            <div className="p-3 border-t border-[#DCE8DD] flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false);
+
+                  setDeleteTarget(null);
+                }}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-[#173B28] hover:bg-[#F3F7F1]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================
+          DELETE CONVERSATION MODAL
+      ======================================================= */}
+
+      {showDeleteConversationModal && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/30 backdrop-blur-[1px] flex items-end sm:items-center justify-center"
+          onClick={() => setShowDeleteConversationModal(false)}
+        >
+          <div
+            onClick={(event) => event.stopPropagation()}
+            className="w-full sm:max-w-md bg-white sm:rounded-2xl rounded-t-2xl shadow-2xl border border-[#DCE8DD] overflow-hidden"
+          >
+            <div className="p-5 sm:p-6">
+              <div className="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-4">
+                <Trash2 size={22} />
+              </div>
+
+              <h3 className="text-lg font-semibold text-[#173B28]">
+                Hide conversation?
+              </h3>
+
+              <p className="mt-2 text-sm leading-6 text-[#6B7D70]">
+                This will hide the conversation from your admin messages. The
+                conversation and its messages will remain stored in MongoDB.
+              </p>
+
+              <div className="mt-5 flex flex-col-reverse sm:flex-row justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConversationModal(false)}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-sm font-medium text-[#173B28] hover:bg-[#F3F7F1]"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={deleteConversation}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-red-600 text-white text-sm font-medium hover:bg-red-700"
+                >
+                  Hide conversation
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
