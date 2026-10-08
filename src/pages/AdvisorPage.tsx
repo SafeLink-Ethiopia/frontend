@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import {
   ArrowLeft,
   Check,
@@ -7,6 +8,7 @@ import {
   Search,
   Send,
   X,
+  Copy,
 } from "lucide-react";
 
 import {
@@ -46,10 +48,16 @@ function formatDate(timestamp: string) {
   const date = new Date(timestamp);
   const today = new Date();
   const yesterday = new Date();
+
   yesterday.setDate(yesterday.getDate() - 1);
 
-  if (date.toDateString() === today.toDateString()) return "Today";
-  if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+  if (date.toDateString() === today.toDateString()) {
+    return "Today";
+  }
+
+  if (date.toDateString() === yesterday.toDateString()) {
+    return "Yesterday";
+  }
 
   return date.toLocaleDateString([], {
     day: "numeric",
@@ -60,6 +68,7 @@ function formatDate(timestamp: string) {
 
 function getInitials(sessionId: string) {
   const clean = sessionId.replace(/^SL-/i, "");
+
   return clean.slice(0, 2).toUpperCase() || "SL";
 }
 
@@ -96,29 +105,47 @@ export default function AdvisorPage() {
     useState<Conversation | null>(null);
 
   const [message, setMessage] = useState("");
+
   const [loading, setLoading] = useState(false);
 
   const [conversationSearch, setConversationSearch] = useState("");
 
   const [showMobileChat, setShowMobileChat] = useState(false);
+
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
+
   const [showListMenu, setShowListMenu] = useState(false);
 
   const [deleteMode, setDeleteMode] = useState(false);
+
   const [selectedMessageIds, setSelectedMessageIds] = useState<string[]>([]);
 
   const [chatDeleteMode, setChatDeleteMode] = useState(false);
+
   const [selectedConversationIds, setSelectedConversationIds] = useState<
     string[]
   >([]);
 
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+
   const [editingText, setEditingText] = useState("");
 
   const [openMessageMenu, setOpenMessageMenu] = useState<string | null>(null);
 
+  /* ================================================================ */
+  /* Reply state                                                       */
+  /* ================================================================ */
+
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+
+  /* ================================================================ */
+  /* Facilities                                                        */
+  /* ================================================================ */
+
   const [showFacilities, setShowFacilities] = useState(false);
+
   const [showCustomFacility, setShowCustomFacility] = useState(false);
+
   const [facilitySearch, setFacilitySearch] = useState("");
 
   const [customFacility, setCustomFacility] = useState({
@@ -141,16 +168,18 @@ export default function AdvisorPage() {
   );
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   /* ================================================================ */
-  /* Load facilities                                                  */
+  /* Load facilities                                                   */
   /* ================================================================ */
 
   useEffect(() => {
     void (async () => {
       try {
         const list = await getFacilities();
+
         if (list.length > 0) {
           setFacilities(list.map(mapMongoFacility));
         }
@@ -161,7 +190,7 @@ export default function AdvisorPage() {
   }, []);
 
   /* ================================================================ */
-  /* Load conversations                                               */
+  /* Load conversations                                                */
   /* ================================================================ */
 
   const loadConversations = async () => {
@@ -210,7 +239,7 @@ export default function AdvisorPage() {
   }, []);
 
   /* ================================================================ */
-  /* Refresh selected conversation + mark seen                        */
+  /* Refresh selected conversation + mark seen                         */
   /* ================================================================ */
 
   useEffect(() => {
@@ -250,19 +279,28 @@ export default function AdvisorPage() {
     return () => clearInterval(interval);
   }, [selectedConversation?.conversation_id]);
 
+  /* ================================================================ */
+  /* Scroll to bottom                                                  */
+  /* ================================================================ */
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
   }, [selectedConversation?.messages.length]);
 
   /* ================================================================ */
-  /* Selection helpers                                                */
+  /* Selection helpers                                                 */
   /* ================================================================ */
 
   const handleSelectConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation);
+
     setShowMobileChat(true);
+
     setShowFacilities(false);
     setShowCustomFacility(false);
+
     setShowHeaderMenu(false);
     setShowListMenu(false);
 
@@ -273,8 +311,11 @@ export default function AdvisorPage() {
     setSelectedConversationIds([]);
 
     setOpenMessageMenu(null);
+
     setEditingMessageId(null);
     setEditingText("");
+
+    setReplyingTo(null);
   };
 
   const toggleConversationSelection = (conversationId: string) => {
@@ -292,7 +333,9 @@ export default function AdvisorPage() {
   };
 
   const confirmSelectedConversationsDeletion = async () => {
-    if (selectedConversationIds.length === 0 || loading) return;
+    if (selectedConversationIds.length === 0 || loading) {
+      return;
+    }
 
     const confirmed = window.confirm(
       `Delete ${selectedConversationIds.length} selected chat${
@@ -319,6 +362,7 @@ export default function AdvisorPage() {
       setSelectedConversationIds([]);
     } catch (error) {
       console.error("Failed to delete selected conversations:", error);
+
       alert("Failed to delete selected chats.");
     } finally {
       setLoading(false);
@@ -326,38 +370,147 @@ export default function AdvisorPage() {
   };
 
   /* ================================================================ */
-  /* Send / edit / delete                                             */
+  /* Send message                                                      */
   /* ================================================================ */
 
   const handleSendMessage = async () => {
-    if (!selectedConversation || !message.trim() || loading) return;
+    if (!selectedConversation || !message.trim() || loading) {
+      return;
+    }
 
     try {
       setLoading(true);
 
+      /*
+       * The current backend accepts plain text.
+       *
+       * When replying, we include the replied
+       * message as a quote so the existing API
+       * does not need to change.
+       */
+      let messageToSend = message.trim();
+
+      if (replyingTo) {
+        const quotedText = replyingTo.text.trim();
+
+        messageToSend = `↩ Reply to: "${quotedText}"\n\n${messageToSend}`;
+      }
+
       const updated = await sendAdvisorMessage(
         selectedConversation.conversation_id,
-        message.trim(),
+        messageToSend,
       );
 
       setSelectedConversation(updated);
+
       setMessage("");
 
+      setReplyingTo(null);
+
       await loadConversations();
+
       requestAnimationFrame(() => inputRef.current?.focus());
     } catch (error) {
       console.error("Failed to send advisor message:", error);
+
       alert("Failed to send message.");
     } finally {
       setLoading(false);
     }
   };
 
+  /* ================================================================ */
+  /* Copy message                                                      */
+  /* ================================================================ */
+
+  const handleCopyMessage = async (currentMessage: Message) => {
+    if (currentMessage.deleted || !currentMessage.text) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(currentMessage.text);
+
+      setOpenMessageMenu(null);
+    } catch (error) {
+      console.error("Failed to copy message:", error);
+
+      /*
+       * Fallback for browsers where clipboard
+       * permission is unavailable.
+       */
+      try {
+        const textarea = document.createElement("textarea");
+
+        textarea.value = currentMessage.text;
+
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+
+        document.body.appendChild(textarea);
+
+        textarea.focus();
+        textarea.select();
+
+        document.execCommand("copy");
+
+        document.body.removeChild(textarea);
+
+        setOpenMessageMenu(null);
+      } catch (fallbackError) {
+        console.error("Clipboard fallback failed:", fallbackError);
+
+        alert("Unable to copy this message.");
+      }
+    }
+  };
+
+  /* ================================================================ */
+  /* Reply message                                                     */
+  /* ================================================================ */
+
+  const handleReplyMessage = (currentMessage: Message) => {
+    if (currentMessage.deleted) return;
+
+    setReplyingTo(currentMessage);
+
+    setOpenMessageMenu(null);
+
+    setEditingMessageId(null);
+    setEditingText("");
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
+  };
+
+  /* ================================================================ */
+  /* Cancel reply                                                      */
+  /* ================================================================ */
+
+  const cancelReply = () => {
+    setReplyingTo(null);
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
+  };
+
+  /* ================================================================ */
+  /* Edit message                                                      */
+  /* ================================================================ */
+
   const startEditing = (currentMessage: Message) => {
-    if (currentMessage.sender !== "advisor" || currentMessage.deleted) return;
+    if (currentMessage.sender !== "advisor" || currentMessage.deleted) {
+      return;
+    }
 
     setEditingMessageId(currentMessage.message_id);
+
     setEditingText(currentMessage.text);
+
+    setReplyingTo(null);
+
     setOpenMessageMenu(null);
 
     requestAnimationFrame(() => inputRef.current?.focus());
@@ -389,14 +542,20 @@ export default function AdvisorPage() {
       );
 
       setSelectedConversation(updated);
+
       cancelEditing();
     } catch (error) {
       console.error("Failed to edit message:", error);
+
       alert("Failed to edit message.");
     } finally {
       setLoading(false);
     }
   };
+
+  /* ================================================================ */
+  /* Delete message                                                    */
+  /* ================================================================ */
 
   const deleteOneMessage = async (currentMessage: Message) => {
     if (
@@ -409,6 +568,7 @@ export default function AdvisorPage() {
     }
 
     const confirmed = window.confirm("Delete this message?");
+
     if (!confirmed) return;
 
     try {
@@ -421,17 +581,25 @@ export default function AdvisorPage() {
       );
 
       setSelectedConversation(updated);
+
       setOpenMessageMenu(null);
     } catch (error) {
       console.error("Failed to delete message:", error);
+
       alert("Failed to delete message.");
     } finally {
       setLoading(false);
     }
   };
 
+  /* ================================================================ */
+  /* Message selection                                                 */
+  /* ================================================================ */
+
   const toggleMessageSelection = (currentMessage: Message) => {
-    if (currentMessage.sender !== "advisor" || currentMessage.deleted) return;
+    if (currentMessage.sender !== "advisor" || currentMessage.deleted) {
+      return;
+    }
 
     setSelectedMessageIds((current) =>
       current.includes(currentMessage.message_id)
@@ -469,9 +637,11 @@ export default function AdvisorPage() {
       );
 
       setSelectedConversation(updated);
+
       cancelDeleteMode();
     } catch (error) {
       console.error("Failed to delete selected messages:", error);
+
       alert("Failed to delete selected messages.");
     } finally {
       setLoading(false);
@@ -479,7 +649,7 @@ export default function AdvisorPage() {
   };
 
   /* ================================================================ */
-  /* Facilities                                                       */
+  /* Facilities                                                        */
   /* ================================================================ */
 
   const handleRecommendFacility = async (facility: {
@@ -516,6 +686,7 @@ export default function AdvisorPage() {
       await loadConversations();
     } catch (error) {
       console.error("Failed to recommend facility:", error);
+
       alert("Failed to recommend facility.");
     } finally {
       setLoading(false);
@@ -532,9 +703,13 @@ export default function AdvisorPage() {
         await addFacility(
           {
             facility_name: customFacility.facility_name.trim(),
+
             location: customFacility.location.trim(),
+
             contact: customFacility.contact.trim(),
+
             support_types: ["general"],
+
             description:
               customFacility.notes.trim() ||
               "Added by advisor during a conversation.",
@@ -544,6 +719,7 @@ export default function AdvisorPage() {
 
         try {
           const list = await getFacilities();
+
           if (list.length > 0) {
             setFacilities(list.map(mapMongoFacility));
           }
@@ -559,21 +735,27 @@ export default function AdvisorPage() {
   };
 
   /* ================================================================ */
-  /* Derived                                                          */
+  /* Derived                                                           */
   /* ================================================================ */
 
   const latestMessage = (conversation: Conversation) => {
-    if (conversation.messages.length === 0) return "No messages yet";
+    if (conversation.messages.length === 0) {
+      return "No messages yet";
+    }
 
     const last = conversation.messages[conversation.messages.length - 1];
 
-    if (last.deleted) return "Message deleted";
+    if (last.deleted) {
+      return "Message deleted";
+    }
 
     return last.sender === "advisor" ? `You: ${last.text}` : last.text;
   };
 
   const latestMessageTime = (conversation: Conversation) => {
-    if (conversation.messages.length === 0) return "";
+    if (conversation.messages.length === 0) {
+      return "";
+    }
 
     const last = conversation.messages[conversation.messages.length - 1];
 
@@ -582,7 +764,10 @@ export default function AdvisorPage() {
 
   const filteredConversations = useMemo(() => {
     const query = conversationSearch.trim().toLowerCase();
-    if (!query) return conversations;
+
+    if (!query) {
+      return conversations;
+    }
 
     return conversations.filter(
       (conversation) =>
@@ -621,17 +806,16 @@ export default function AdvisorPage() {
   return (
     <div className="h-[100dvh] w-full overflow-hidden bg-[#FAFBF7] text-[#173B28]">
       <div className="flex h-full w-full overflow-hidden">
-        {/* ============================================================
+        {/* ==========================================================
             CONVERSATION LIST
-        ============================================================ */}
+        =========================================================== */}
 
         <aside
           className={`${
             showMobileChat ? "hidden" : "flex"
           } h-full w-full flex-col border-r border-[#DCE8DD] bg-[#FAFBF7] md:flex md:w-[350px] lg:w-[390px]`}
         >
-          {/* Title */}
-          <div className="shrink-0 px-6 pt-7 pb-4">
+          <div className="shrink-0 px-6 pb-4 pt-7">
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-2xl font-semibold tracking-tight text-[#176B3A]">
@@ -667,9 +851,13 @@ export default function AdvisorPage() {
                             type="button"
                             onClick={() => {
                               setChatDeleteMode(true);
+
                               setSelectedConversationIds([]);
+
                               setShowListMenu(false);
+
                               setDeleteMode(false);
+
                               setSelectedMessageIds([]);
                             }}
                             className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
@@ -681,9 +869,13 @@ export default function AdvisorPage() {
                             type="button"
                             onClick={() => {
                               setShowListMenu(false);
+
                               setDeleteMode(true);
+
                               setSelectedMessageIds([]);
+
                               setChatDeleteMode(false);
+
                               setSelectedConversationIds([]);
                             }}
                             className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
@@ -707,6 +899,7 @@ export default function AdvisorPage() {
             </div>
 
             {/* Search */}
+
             <div className="relative mt-5">
               <Search
                 size={18}
@@ -722,7 +915,8 @@ export default function AdvisorPage() {
             </div>
           </div>
 
-          {/* Selection bars */}
+          {/* Chat deletion bar */}
+
           {chatDeleteMode && (
             <div className="flex shrink-0 items-center justify-between border-y border-[#DCE8DD] bg-[#E7F1E3] px-5 py-3">
               <span className="text-sm font-medium text-[#173B28]">
@@ -749,6 +943,8 @@ export default function AdvisorPage() {
               </div>
             </div>
           )}
+
+          {/* Message deletion bar */}
 
           {deleteMode && (
             <div className="flex shrink-0 items-center justify-between border-y border-[#DCE8DD] bg-[#E7F1E3] px-5 py-3">
@@ -778,7 +974,8 @@ export default function AdvisorPage() {
             </div>
           )}
 
-          {/* List */}
+          {/* Conversation list */}
+
           <div className="flex-1 overflow-y-auto">
             {filteredConversations.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center px-8 text-center">
@@ -817,6 +1014,7 @@ export default function AdvisorPage() {
                         toggleConversationSelection(
                           conversation.conversation_id,
                         );
+
                         return;
                       }
 
@@ -840,7 +1038,6 @@ export default function AdvisorPage() {
                       </div>
                     )}
 
-                    {/* Avatar */}
                     <div className="relative shrink-0">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E7F1E3] text-sm font-semibold text-[#176B3A]">
                         {getInitials(conversation.session_id)}
@@ -879,9 +1076,9 @@ export default function AdvisorPage() {
           </div>
         </aside>
 
-        {/* ============================================================
+        {/* ==========================================================
             CHAT
-        ============================================================ */}
+        =========================================================== */}
 
         <main
           className={`${
@@ -906,7 +1103,10 @@ export default function AdvisorPage() {
             </div>
           ) : (
             <>
-              {/* Header */}
+              {/* ======================================================
+                  HEADER
+              ======================================================= */}
+
               <header className="relative z-20 flex h-[76px] shrink-0 items-center gap-3 border-b border-[#DCE8DD] bg-white px-4 shadow-sm sm:px-6">
                 <button
                   type="button"
@@ -953,7 +1153,9 @@ export default function AdvisorPage() {
                           type="button"
                           onClick={() => {
                             setShowHeaderMenu(false);
+
                             setDeleteMode(true);
+
                             setSelectedMessageIds([]);
                           }}
                           className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
@@ -965,6 +1167,7 @@ export default function AdvisorPage() {
                           type="button"
                           onClick={() => {
                             setShowHeaderMenu(false);
+
                             setShowFacilities(true);
                           }}
                           className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
@@ -978,10 +1181,16 @@ export default function AdvisorPage() {
                           type="button"
                           onClick={() => {
                             setShowHeaderMenu(false);
+
                             setSelectedConversation(null);
+
                             setShowMobileChat(false);
+
                             setEditingMessageId(null);
+
                             setSelectedMessageIds([]);
+
+                            setReplyingTo(null);
                           }}
                           className="w-full px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
                         >
@@ -993,7 +1202,10 @@ export default function AdvisorPage() {
                 </div>
               </header>
 
-              {/* Messages */}
+              {/* ======================================================
+                  MESSAGES
+              ======================================================= */}
+
               <div className="relative min-h-0 flex-1 bg-[#F3F7F1]/60">
                 <div className="pointer-events-none absolute inset-0 opacity-[0.05]">
                   <div className="h-full w-full bg-[radial-gradient(circle_at_20%_20%,#2F8F4E_1px,transparent_1px)] [background-size:24px_24px]" />
@@ -1029,6 +1241,9 @@ export default function AdvisorPage() {
 
                         const showDate = shouldShowDateSeparator(all, index);
 
+                        const messageMenuOpen =
+                          openMessageMenu === currentMessage.message_id;
+
                         return (
                           <div key={currentMessage.message_id}>
                             {showDate && (
@@ -1049,6 +1264,8 @@ export default function AdvisorPage() {
                                   isAdvisor ? "flex-row-reverse" : "flex-row"
                                 }`}
                               >
+                                {/* Delete selection */}
+
                                 {deleteMode &&
                                   isAdvisor &&
                                   !currentMessage.deleted && (
@@ -1069,6 +1286,8 @@ export default function AdvisorPage() {
                                   )}
 
                                 <div className="relative min-w-0">
+                                  {/* Message bubble */}
+
                                   <div
                                     className={`rounded-2xl px-4 py-2.5 shadow-sm ${
                                       isAdvisor
@@ -1124,58 +1343,106 @@ export default function AdvisorPage() {
                                     )}
                                   </div>
 
-                                  {/* Per-message menu */}
-                                  {openMessageMenu ===
-                                    currentMessage.message_id && (
+                                  {/* ==================================================
+                                      MESSAGE MENU
+                                  =================================================== */}
+
+                                  {messageMenuOpen && (
                                     <>
                                       <div
                                         className="fixed inset-0 z-20"
                                         onClick={() => setOpenMessageMenu(null)}
                                       />
 
-                                      <div className="absolute right-0 top-full z-30 mt-1 w-32 overflow-hidden rounded-xl border border-[#DCE8DD] bg-white shadow-xl">
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            startEditing(currentMessage)
-                                          }
-                                          className="w-full px-3 py-2.5 text-left text-sm text-[#173B28] hover:bg-[#F3F7F1]"
-                                        >
-                                          Edit
-                                        </button>
+                                      <div className="absolute right-0 top-full z-30 mt-1 w-36 overflow-hidden rounded-xl border border-[#DCE8DD] bg-white shadow-xl">
+                                        {/* Reply */}
 
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            deleteOneMessage(currentMessage)
-                                          }
-                                          className="w-full px-3 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
-                                        >
-                                          Delete
-                                        </button>
+                                        {!currentMessage.deleted && (
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handleReplyMessage(currentMessage)
+                                            }
+                                            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-[#173B28] hover:bg-[#F3F7F1]"
+                                          >
+                                            <span className="text-base">↩</span>
+
+                                            <span>Reply</span>
+                                          </button>
+                                        )}
+
+                                        {/* Copy */}
+
+                                        {!currentMessage.deleted && (
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handleCopyMessage(currentMessage)
+                                            }
+                                            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-[#173B28] hover:bg-[#F3F7F1]"
+                                          >
+                                            <Copy size={15} />
+
+                                            <span>Copy</span>
+                                          </button>
+                                        )}
+
+                                        {/* Edit */}
+
+                                        {isAdvisor &&
+                                          !currentMessage.deleted && (
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                startEditing(currentMessage)
+                                              }
+                                              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-[#173B28] hover:bg-[#F3F7F1]"
+                                            >
+                                              <span>✏️</span>
+
+                                              <span>Edit</span>
+                                            </button>
+                                          )}
+
+                                        {/* Delete */}
+
+                                        {isAdvisor &&
+                                          !currentMessage.deleted && (
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                deleteOneMessage(currentMessage)
+                                              }
+                                              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
+                                            >
+                                              <span>🗑️</span>
+
+                                              <span>Delete</span>
+                                            </button>
+                                          )}
                                       </div>
                                     </>
                                   )}
                                 </div>
 
-                                {isAdvisor &&
-                                  !deleteMode &&
-                                  !currentMessage.deleted && (
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        setOpenMessageMenu((current) =>
-                                          current === currentMessage.message_id
-                                            ? null
-                                            : currentMessage.message_id,
-                                        )
-                                      }
-                                      className="mb-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#6B7D70] opacity-0 transition hover:bg-white group-hover:opacity-100"
-                                      aria-label="Message actions"
-                                    >
-                                      <MoreVertical size={15} />
-                                    </button>
-                                  )}
+                                {/* More button */}
+
+                                {!deleteMode && !currentMessage.deleted && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setOpenMessageMenu((current) =>
+                                        current === currentMessage.message_id
+                                          ? null
+                                          : currentMessage.message_id,
+                                      )
+                                    }
+                                    className="mb-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#6B7D70] opacity-0 transition hover:bg-white group-hover:opacity-100"
+                                    aria-label="Message actions"
+                                  >
+                                    <MoreVertical size={15} />
+                                  </button>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1184,6 +1451,7 @@ export default function AdvisorPage() {
                     )}
 
                     {/* Facility recommendation */}
+
                     {selectedConversation.recommendation && (
                       <div className="mt-2 flex justify-end">
                         <div className="max-w-[88%] rounded-2xl border border-[#DCE8DD] bg-white p-4 shadow-sm sm:max-w-[70%]">
@@ -1220,7 +1488,44 @@ export default function AdvisorPage() {
                 </div>
               </div>
 
-              {/* Edit bar */}
+              {/* ======================================================
+                  REPLY BAR
+              ======================================================= */}
+
+              {replyingTo && (
+                <div className="flex shrink-0 items-center gap-3 border-t border-[#DCE8DD] bg-white px-4 py-2.5 sm:px-6">
+                  <div className="h-10 w-1 shrink-0 rounded-full bg-[#2F8F4E]" />
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-[#2F8F4E]">
+                        Replying to{" "}
+                        {replyingTo.sender === "advisor"
+                          ? "yourself"
+                          : sessionDisplay}
+                      </span>
+                    </div>
+
+                    <p className="mt-0.5 truncate text-sm text-[#6B7D70]">
+                      {replyingTo.text}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={cancelReply}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#6B7D70] hover:bg-[#F3F7F1]"
+                    aria-label="Cancel reply"
+                  >
+                    <X size={17} />
+                  </button>
+                </div>
+              )}
+
+              {/* ======================================================
+                  EDIT BAR
+              ======================================================= */}
+
               {editingMessageId && (
                 <div className="flex shrink-0 items-center gap-3 border-t border-[#DCE8DD] bg-white px-4 py-2.5 sm:px-6">
                   <div className="h-9 w-1 shrink-0 rounded-full bg-[#2F8F4E]" />
@@ -1246,7 +1551,10 @@ export default function AdvisorPage() {
                 </div>
               )}
 
-              {/* Composer */}
+              {/* ======================================================
+                  COMPOSER
+              ======================================================= */}
+
               <footer className="shrink-0 border-t border-[#DCE8DD] bg-white px-4 py-4 sm:px-6">
                 <div className="mx-auto flex max-w-4xl items-end gap-3">
                   <textarea
@@ -1272,7 +1580,9 @@ export default function AdvisorPage() {
                     placeholder={
                       editingMessageId
                         ? "Edit message..."
-                        : `Message ${sessionDisplay}...`
+                        : replyingTo
+                          ? "Write a reply..."
+                          : `Message ${sessionDisplay}...`
                     }
                     className="max-h-32 min-h-[48px] flex-1 resize-none rounded-3xl border border-[#DCE8DD] bg-[#FAFBF7] px-5 py-3 text-sm text-[#173B28] outline-none placeholder:text-[#8A968D] focus:border-[#2F8F4E]"
                   />
@@ -1306,9 +1616,9 @@ export default function AdvisorPage() {
           )}
         </main>
 
-        {/* ============================================================
+        {/* ==========================================================
             FACILITY MODAL
-        ============================================================ */}
+        =========================================================== */}
 
         {showFacilities && (
           <div
@@ -1338,7 +1648,9 @@ export default function AdvisorPage() {
                   type="button"
                   onClick={() => {
                     setShowFacilities(false);
+
                     setShowCustomFacility(false);
+
                     setFacilitySearch("");
                   }}
                   className="flex h-9 w-9 items-center justify-center rounded-full text-[#173B28] hover:bg-[#F3F7F1]"
@@ -1377,9 +1689,13 @@ export default function AdvisorPage() {
                         onClick={() =>
                           handleRecommendFacility({
                             facility_id: facility.facility_id,
+
                             facility_name: facility.facility_name,
+
                             location: facility.location,
+
                             contact: facility.contact,
+
                             notes: facility.notes || "",
                           })
                         }
