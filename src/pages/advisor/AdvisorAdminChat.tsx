@@ -1,13 +1,6 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  Check,
-  CheckCheck,
-  Edit3,
-  Send,
-  Trash2,
-  X,
-} from "lucide-react";
+import { Check, CheckCheck, Edit3, Send, Trash2, X } from "lucide-react";
 import axios from "axios";
 import socket from "../../services/socket";
 
@@ -50,21 +43,21 @@ export default function AdvisorAdminChat() {
     conversationId: string;
   }>();
 
-  const [conversation, setConversation] =
-    useState<Conversation | null>(null);
+  const [conversation, setConversation] = useState<Conversation | null>(null);
 
   const [message, setMessage] = useState("");
 
-  const [editingMessageId, setEditingMessageId] =
-    useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
 
   const [editingText, setEditingText] = useState("");
 
-  const [selectedMessageId, setSelectedMessageId] =
-    useState<string | null>(null);
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
+    null,
+  );
 
-  const [confirmDeleteMessageId, setConfirmDeleteMessageId] =
-    useState<string | null>(null);
+  const [confirmDeleteMessageId, setConfirmDeleteMessageId] = useState<
+    string | null
+  >(null);
 
   const [confirmDeleteConversation, setConfirmDeleteConversation] =
     useState(false);
@@ -122,8 +115,7 @@ export default function AdvisorAdminChat() {
           }
 
           setError(
-            err.response?.data?.message ||
-              "Could not load the conversation.",
+            err.response?.data?.message || "Could not load the conversation.",
           );
         } else {
           setError("Could not load the conversation.");
@@ -190,10 +182,7 @@ export default function AdvisorAdminChat() {
     const joinConversation = () => {
       socket.emit("join_conversation", currentConversationId);
 
-      console.log(
-        "[Socket] Joined conversation:",
-        currentConversationId,
-      );
+      console.log("[Socket] Joined conversation:", currentConversationId);
     };
 
     const handleConnect = () => {
@@ -256,9 +245,7 @@ export default function AdvisorAdminChat() {
         return {
           ...current,
           messages: current.messages.map((msg) =>
-            msg.message_id === data.message.message_id
-              ? data.message
-              : msg,
+            msg.message_id === data.message.message_id ? data.message : msg,
           ),
         };
       });
@@ -443,21 +430,12 @@ export default function AdvisorAdminChat() {
     socket.on("connect", handleConnect);
     socket.on("new_message", handleNewMessage);
     socket.on("message_edited", handleMessageEdited);
-    socket.on(
-      "message_deleted_for_me",
-      handleMessageDeletedForMe,
-    );
-    socket.on(
-      "message_deleted_for_everyone",
-      handleMessageDeletedForEveryone,
-    );
+    socket.on("message_deleted_for_me", handleMessageDeletedForMe);
+    socket.on("message_deleted_for_everyone", handleMessageDeletedForEveryone);
     socket.on("message_deleted", handleMessageDeleted);
     socket.on("message_delivered", handleMessageDelivered);
     socket.on("message_read", handleMessageRead);
-    socket.on(
-      "conversation_deleted",
-      handleConversationDeleted,
-    );
+    socket.on("conversation_deleted", handleConversationDeleted);
     socket.on("message_error", handleMessageError);
 
     if (socket.connected) {
@@ -470,10 +448,7 @@ export default function AdvisorAdminChat() {
       socket.off("connect", handleConnect);
       socket.off("new_message", handleNewMessage);
       socket.off("message_edited", handleMessageEdited);
-      socket.off(
-        "message_deleted_for_me",
-        handleMessageDeletedForMe,
-      );
+      socket.off("message_deleted_for_me", handleMessageDeletedForMe);
       socket.off(
         "message_deleted_for_everyone",
         handleMessageDeletedForEveryone,
@@ -481,10 +456,7 @@ export default function AdvisorAdminChat() {
       socket.off("message_deleted", handleMessageDeleted);
       socket.off("message_delivered", handleMessageDelivered);
       socket.off("message_read", handleMessageRead);
-      socket.off(
-        "conversation_deleted",
-        handleConversationDeleted,
-      );
+      socket.off("conversation_deleted", handleConversationDeleted);
       socket.off("message_error", handleMessageError);
     };
   }, [conversation?.conversation_id, navigate]);
@@ -499,10 +471,7 @@ export default function AdvisorAdminChat() {
     }
 
     const unreadAdminMessages = conversation.messages.filter(
-      (msg) =>
-        msg.sender === "admin" &&
-        !msg.readAt &&
-        !msg.deletedForAdvisor,
+      (msg) => msg.sender === "admin" && !msg.readAt && !msg.deletedForAdvisor,
     );
 
     unreadAdminMessages.forEach((msg) => {
@@ -559,11 +528,7 @@ export default function AdvisorAdminChat() {
   // ============================================================
 
   const startEditing = (msg: Message) => {
-    if (
-      msg.sender !== "advisor" ||
-      msg.deleted ||
-      msg.deletedForEveryone
-    ) {
+    if (msg.sender !== "advisor" || msg.deleted || msg.deletedForEveryone) {
       return;
     }
 
@@ -588,11 +553,7 @@ export default function AdvisorAdminChat() {
   // ============================================================
 
   const saveEdit = () => {
-    if (
-      !conversation ||
-      !editingMessageId ||
-      !editingText.trim()
-    ) {
+    if (!conversation || !editingMessageId || !editingText.trim()) {
       return;
     }
 
@@ -623,10 +584,7 @@ export default function AdvisorAdminChat() {
   // DELETE MESSAGE
   // ============================================================
 
-  const deleteMessage = (
-    messageId: string,
-    deleteType: DeleteType,
-  ) => {
+  const deleteMessage = (messageId: string, deleteType: DeleteType) => {
     if (!conversation) {
       return;
     }
@@ -694,29 +652,14 @@ export default function AdvisorAdminChat() {
     }
 
     if (msg.readAt) {
-      return (
-        <CheckCheck
-          size={14}
-          className="text-[#f0e2d6]"
-        />
-      );
+      return <CheckCheck size={14} className="text-[#f0e2d6]" />;
     }
 
     if (msg.deliveredAt) {
-      return (
-        <CheckCheck
-          size={14}
-          className="text-[#f0e2d6]/60"
-        />
-      );
+      return <CheckCheck size={14} className="text-[#f0e2d6]/60" />;
     }
 
-    return (
-      <Check
-        size={14}
-        className="text-[#f0e2d6]/60"
-      />
-    );
+    return <Check size={14} className="text-[#f0e2d6]/60" />;
   };
 
   // ============================================================
@@ -729,9 +672,7 @@ export default function AdvisorAdminChat() {
         <div className="text-center">
           <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-[#a79093]/30 border-t-[#3e1919]" />
 
-          <p className="text-sm text-[#a79093]">
-            Loading conversation...
-          </p>
+          <p className="text-sm text-[#a79093]">Loading conversation...</p>
         </div>
       </main>
     );
@@ -792,14 +733,10 @@ export default function AdvisorAdminChat() {
 
                     <span
                       className={`text-xs font-medium ${
-                        connected
-                          ? "text-[#3e1919]"
-                          : "text-[#a79093]"
+                        connected ? "text-[#3e1919]" : "text-[#a79093]"
                       }`}
                     >
-                      {connected
-                        ? "Connected"
-                        : "Disconnected"}
+                      {connected ? "Connected" : "Disconnected"}
                     </span>
                   </div>
 
@@ -815,9 +752,7 @@ export default function AdvisorAdminChat() {
 
               <button
                 type="button"
-                onClick={() =>
-                  setConfirmDeleteConversation(true)
-                }
+                onClick={() => setConfirmDeleteConversation(true)}
                 title="Hide conversation"
                 className="flex items-center justify-center gap-2 border border-[#a79093]/40 px-4 py-2 text-sm font-semibold text-[#a79093] transition hover:border-[#3e1919] hover:bg-[#f0e2d6] hover:text-[#3e1919]"
               >
@@ -849,11 +784,9 @@ export default function AdvisorAdminChat() {
               conversation.messages.map((msg) => {
                 const isAdvisor = msg.sender === "advisor";
 
-                const isSelected =
-                  selectedMessageId === msg.message_id;
+                const isSelected = selectedMessageId === msg.message_id;
 
-                const isEditing =
-                  editingMessageId === msg.message_id;
+                const isEditing = editingMessageId === msg.message_id;
 
                 const isConfirmingDelete =
                   confirmDeleteMessageId === msg.message_id;
@@ -866,16 +799,12 @@ export default function AdvisorAdminChat() {
                   <div
                     key={msg.message_id}
                     className={`flex ${
-                      isAdvisor
-                        ? "justify-end"
-                        : "justify-start"
+                      isAdvisor ? "justify-end" : "justify-start"
                     }`}
                   >
                     <div
                       className={`relative flex max-w-[92%] sm:max-w-[75%] ${
-                        isAdvisor
-                          ? "justify-end"
-                          : "justify-start"
+                        isAdvisor ? "justify-end" : "justify-start"
                       }`}
                     >
                       {/* DELETE OPTIONS */}
@@ -892,18 +821,13 @@ export default function AdvisorAdminChat() {
                               </p>
 
                               <p className="mt-1 text-xs leading-5 text-[#a79093]">
-                                Choose how you want to remove
-                                this message.
+                                Choose how you want to remove this message.
                               </p>
                             </div>
 
                             <button
                               type="button"
-                              onClick={() =>
-                                setConfirmDeleteMessageId(
-                                  null,
-                                )
-                              }
+                              onClick={() => setConfirmDeleteMessageId(null)}
                               className="text-[#a79093] hover:text-[#3e1919]"
                             >
                               <X size={16} />
@@ -914,10 +838,7 @@ export default function AdvisorAdminChat() {
                             <button
                               type="button"
                               onClick={() =>
-                                deleteMessage(
-                                  msg.message_id,
-                                  "me",
-                                )
+                                deleteMessage(msg.message_id, "me")
                               }
                               className="w-full border border-[#a79093]/30 px-3 py-3 text-left transition hover:bg-[#f0e2d6]"
                             >
@@ -926,18 +847,14 @@ export default function AdvisorAdminChat() {
                               </span>
 
                               <span className="mt-1 block text-[11px] text-[#a79093]">
-                                Remove it from your view
-                                only.
+                                Remove it from your view only.
                               </span>
                             </button>
 
                             <button
                               type="button"
                               onClick={() =>
-                                deleteMessage(
-                                  msg.message_id,
-                                  "everyone",
-                                )
+                                deleteMessage(msg.message_id, "everyone")
                               }
                               className="w-full border border-[#3e1919]/30 px-3 py-3 text-left transition hover:bg-[#f0e2d6]"
                             >
@@ -946,18 +863,14 @@ export default function AdvisorAdminChat() {
                               </span>
 
                               <span className="mt-1 block text-[11px] text-[#a79093]">
-                                Replace it with a deleted
-                                message for both sides.
+                                Replace it with a deleted message for both
+                                sides.
                               </span>
                             </button>
 
                             <button
                               type="button"
-                              onClick={() =>
-                                setConfirmDeleteMessageId(
-                                  null,
-                                )
-                              }
+                              onClick={() => setConfirmDeleteMessageId(null)}
                               className="w-full px-3 py-2 text-xs font-semibold text-[#a79093] transition hover:text-[#3e1919]"
                             >
                               Cancel
@@ -967,33 +880,27 @@ export default function AdvisorAdminChat() {
                       )}
 
                       {/* ACTION MENU */}
-                      {isSelected &&
-                        isAdvisor &&
-                        !isDeleted && (
-                          <div className="absolute bottom-full right-0 z-40 mb-2 flex overflow-hidden border border-[#a79093]/30 bg-[#f7f5f6] shadow-xl">
-                            <button
-                              type="button"
-                              onClick={() => startEditing(msg)}
-                              className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-[#3e1919] transition hover:bg-[#f0e2d6]"
-                            >
-                              <Edit3 size={14} />
-                              Edit
-                            </button>
+                      {isSelected && isAdvisor && !isDeleted && (
+                        <div className="absolute bottom-full right-0 z-40 mb-2 flex overflow-hidden border border-[#a79093]/30 bg-[#f7f5f6] shadow-xl">
+                          <button
+                            type="button"
+                            onClick={() => startEditing(msg)}
+                            className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-[#3e1919] transition hover:bg-[#f0e2d6]"
+                          >
+                            <Edit3 size={14} />
+                            Edit
+                          </button>
 
-                            <button
-                              type="button"
-                              onClick={() =>
-                                requestDeleteMessage(
-                                  msg.message_id,
-                                )
-                              }
-                              className="flex items-center gap-2 border-l border-[#a79093]/30 px-4 py-2.5 text-xs font-semibold text-[#3e1919] transition hover:bg-[#f0e2d6]"
-                            >
-                              <Trash2 size={14} />
-                              Delete
-                            </button>
-                          </div>
-                        )}
+                          <button
+                            type="button"
+                            onClick={() => requestDeleteMessage(msg.message_id)}
+                            className="flex items-center gap-2 border-l border-[#a79093]/30 px-4 py-2.5 text-xs font-semibold text-[#3e1919] transition hover:bg-[#f0e2d6]"
+                          >
+                            <Trash2 size={14} />
+                            Delete
+                          </button>
+                        </div>
+                      )}
 
                       {/* EDIT */}
                       {isEditing ? (
@@ -1001,9 +908,7 @@ export default function AdvisorAdminChat() {
                           <textarea
                             value={editingText}
                             onChange={(event) =>
-                              setEditingText(
-                                event.target.value,
-                              )
+                              setEditingText(event.target.value)
                             }
                             autoFocus
                             rows={3}
@@ -1044,14 +949,10 @@ export default function AdvisorAdminChat() {
                               type="button"
                               onClick={() => {
                                 setSelectedMessageId(
-                                  isSelected
-                                    ? null
-                                    : msg.message_id,
+                                  isSelected ? null : msg.message_id,
                                 );
 
-                                setConfirmDeleteMessageId(
-                                  null,
-                                );
+                                setConfirmDeleteMessageId(null);
                               }}
                               className="absolute inset-0 z-10 cursor-pointer"
                               aria-label="Message options"
@@ -1086,9 +987,7 @@ export default function AdvisorAdminChat() {
                                   : "text-[#a79093]"
                               }`}
                             >
-                              {new Date(
-                                msg.timestamp,
-                              ).toLocaleTimeString([], {
+                              {new Date(msg.timestamp).toLocaleTimeString([], {
                                 hour: "2-digit",
                                 minute: "2-digit",
                               })}
@@ -1123,21 +1022,12 @@ export default function AdvisorAdminChat() {
               <input
                 type="text"
                 value={message}
-                onChange={(event) =>
-                  setMessage(event.target.value)
-                }
+                onChange={(event) => setMessage(event.target.value)}
                 onKeyDown={(event) => {
-                  if (
-                    event.key === "Enter" &&
-                    !event.shiftKey
-                  ) {
+                  if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
 
-                    if (
-                      message.trim() &&
-                      !sending &&
-                      connected
-                    ) {
+                    if (message.trim() && !sending && connected) {
                       event.currentTarget.form?.requestSubmit();
                     }
                   }
@@ -1149,11 +1039,7 @@ export default function AdvisorAdminChat() {
 
               <button
                 type="submit"
-                disabled={
-                  !message.trim() ||
-                  sending ||
-                  !connected
-                }
+                disabled={!message.trim() || sending || !connected}
                 className="flex shrink-0 items-center justify-center gap-2 bg-[#3e1919] px-4 py-3 text-sm font-semibold text-[#f0e2d6] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 sm:px-6"
               >
                 <Send size={16} />
@@ -1165,8 +1051,8 @@ export default function AdvisorAdminChat() {
             </div>
 
             <p className="mt-2 text-center text-[10px] text-[#a79093]">
-              Press Enter to send. Click one of your messages to
-              edit or delete it.
+              Press Enter to send. Click one of your messages to edit or delete
+              it.
             </p>
           </form>
         </div>
@@ -1188,17 +1074,15 @@ export default function AdvisorAdminChat() {
             </h2>
 
             <p className="mt-2 text-center text-sm leading-6 text-[#a79093]">
-              This conversation will disappear from your
-              messages, but the conversation and all messages will
-              remain safely stored in MongoDB.
+              This conversation will disappear from your messages, but the
+              conversation and all messages will remain safely stored in
+              MongoDB.
             </p>
 
             <div className="mt-6 flex gap-3">
               <button
                 type="button"
-                onClick={() =>
-                  setConfirmDeleteConversation(false)
-                }
+                onClick={() => setConfirmDeleteConversation(false)}
                 className="flex-1 border border-[#a79093]/40 px-4 py-2.5 text-sm font-semibold text-[#3e1919] transition hover:bg-[#f0e2d6]"
               >
                 Cancel

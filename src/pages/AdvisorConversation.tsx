@@ -98,9 +98,7 @@ export default function AdvisorConversation() {
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <div className="mb-6">
-          <p className="text-sm font-medium text-[#a79093]">
-            SafeLink Advisor
-          </p>
+          <p className="text-sm font-medium text-[#a79093]">SafeLink Advisor</p>
 
           <h1 className="mt-1 text-2xl font-bold capitalize text-[#3e1919]">
             {conversation.advisor_type} Conversation
@@ -135,16 +133,14 @@ export default function AdvisorConversation() {
                   <div
                     key={msg.message_id}
                     className={`flex ${
-                      msg.sender === "advisor"
-                        ? "justify-end"
-                        : "justify-start"
+                      msg.sender === "advisor" ? "justify-end" : "justify-start"
                     }`}
                   >
                     <div
                       className={`max-w-[75%] rounded-2xl px-4 py-3 ${
                         msg.sender === "advisor"
                           ? "bg-[#3e1919] text-[#f7f5f6]"
-                          : "bg-[#f0e2d6] text-[#3e1919]"
+                          : "bg-[#f0d6d6] text-[#e51313]"
                       }`}
                     >
                       <p className="mb-1 text-xs font-semibold opacity-70">

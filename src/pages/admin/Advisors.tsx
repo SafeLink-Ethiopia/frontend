@@ -1,6 +1,19 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import {
+  Activity,
+  ArrowUpRight,
+  BriefcaseBusiness,
+  CheckCircle2,
+  Clock3,
+  Edit3,
+  Mail,
+  MapPin,
+  ShieldCheck,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
 
 interface Advisor {
   _id?: string;
@@ -22,49 +35,97 @@ interface AdvisorsResponse {
   advisors: Advisor[];
 }
 
-export default function Advisors() {
-  const navigate = useNavigate();
+const API_URL = "http://localhost:5000/api/advisors";
 
+/*
+|--------------------------------------------------------------------------
+| SafeLink Ethiopia — Previous Page Color Palette
+|--------------------------------------------------------------------------
+|
+| Mist       #FAFBF7
+| Mint       #E7F1E3
+| Leaf       #2F8F4E
+| Forest     #176B3A
+| Ink        #173B28
+|
+*/
+
+const COLORS = {
+  mist: "#FAFBF7",
+  mint: "#E7F1E3",
+  leaf: "#2F8F4E",
+  forest: "#176B3A",
+  ink: "#173B28",
+};
+
+export default function Advisors() {
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+
+  const [notice, setNotice] = useState("");
+  const [noticeType, setNoticeType] = useState<"success" | "error">("success");
 
   const [selectedAdvisor, setSelectedAdvisor] = useState<Advisor | null>(null);
+
   const [editingAdvisor, setEditingAdvisor] = useState<Advisor | null>(null);
+
   const [advisorToDelete, setAdvisorToDelete] = useState<Advisor | null>(null);
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  /*
+  |--------------------------------------------------------------------------
+  | Notification
+  |--------------------------------------------------------------------------
+  */
+
+  const showNotice = (
+    message: string,
+    type: "success" | "error" = "success",
+  ) => {
+    setNotice(message);
+    setNoticeType(type);
+
+    window.setTimeout(() => {
+      setNotice("");
+    }, 3500);
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Fetch advisors
+  |--------------------------------------------------------------------------
+  */
+
   const fetchAdvisors = async () => {
     try {
       setLoading(true);
-      setError("");
 
       const token = localStorage.getItem("adminToken");
 
       if (!token) {
-        setError("Admin authentication required.");
+        showNotice("Admin authentication required.", "error");
         return;
       }
 
-      const response = await axios.get<AdvisorsResponse>(
-        "http://localhost:5000/api/advisors",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await axios.get<AdvisorsResponse>(API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       setAdvisors(response.data.advisors || []);
     } catch (error) {
       console.error("Failed to fetch advisors:", error);
 
       if (axios.isAxiosError(error)) {
-        setError(error.response?.data?.message || "Failed to load advisors.");
+        showNotice(
+          error.response?.data?.message || "Failed to load advisors.",
+          "error",
+        );
       } else {
-        setError("Something went wrong while loading advisors.");
+        showNotice("Something went wrong while loading advisors.", "error");
       }
     } finally {
       setLoading(false);
@@ -75,25 +136,30 @@ export default function Advisors() {
     fetchAdvisors();
   }, []);
 
+  /*
+  |--------------------------------------------------------------------------
+  | Toggle advisor status
+  |--------------------------------------------------------------------------
+  */
+
   const handleToggleActive = async (advisor: Advisor) => {
     if (!advisor.advisor_id) {
-      setError("Advisor ID is missing.");
+      showNotice("Advisor ID is missing.", "error");
       return;
     }
 
     try {
       setIsUpdating(true);
-      setError("");
 
       const token = localStorage.getItem("adminToken");
 
       if (!token) {
-        setError("Admin authentication required.");
+        showNotice("Admin authentication required.", "error");
         return;
       }
 
       const response = await axios.patch(
-        `http://localhost:5000/api/advisors/${advisor.advisor_id}/active`,
+        `${API_URL}/${advisor.advisor_id}/active`,
         {
           active: !advisor.active,
         },
@@ -116,46 +182,68 @@ export default function Advisors() {
             : item,
         ),
       );
+
+      if (selectedAdvisor?.advisor_id === advisor.advisor_id) {
+        setSelectedAdvisor((current) =>
+          current
+            ? {
+                ...current,
+                active: updatedAdvisor.active ?? !advisor.active,
+              }
+            : null,
+        );
+      }
+
+      showNotice(
+        `${advisor.name} is now ${
+          (updatedAdvisor.active ?? !advisor.active) ? "active" : "inactive"
+        }.`,
+      );
     } catch (error) {
       console.error("Failed to update advisor status:", error);
 
       if (axios.isAxiosError(error)) {
-        setError(
+        showNotice(
           error.response?.data?.message || "Failed to update advisor status.",
+          "error",
         );
       } else {
-        setError("Something went wrong.");
+        showNotice("Something went wrong while updating the advisor.", "error");
       }
     } finally {
       setIsUpdating(false);
     }
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Delete advisor
+  |--------------------------------------------------------------------------
+  */
+
   const handleDeleteAdvisor = async () => {
     if (!advisorToDelete?.advisor_id) {
-      setError("Advisor ID is missing.");
+      showNotice("Advisor ID is missing.", "error");
       return;
     }
 
     try {
       setIsDeleting(true);
-      setError("");
 
       const token = localStorage.getItem("adminToken");
 
       if (!token) {
-        setError("Admin authentication required.");
+        showNotice("Admin authentication required.", "error");
         return;
       }
 
-      await axios.delete(
-        `http://localhost:5000/api/advisors/${advisorToDelete.advisor_id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      await axios.delete(`${API_URL}/${advisorToDelete.advisor_id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
+
+      const deletedName = advisorToDelete.name;
 
       setAdvisors((currentAdvisors) =>
         currentAdvisors.filter(
@@ -164,38 +252,49 @@ export default function Advisors() {
       );
 
       setAdvisorToDelete(null);
+      setSelectedAdvisor(null);
+
+      showNotice(`${deletedName} was removed successfully.`);
     } catch (error) {
       console.error("Failed to delete advisor:", error);
 
       if (axios.isAxiosError(error)) {
-        setError(error.response?.data?.message || "Failed to delete advisor.");
+        showNotice(
+          error.response?.data?.message || "Failed to delete advisor.",
+          "error",
+        );
       } else {
-        setError("Something went wrong while deleting advisor.");
+        showNotice("Something went wrong while deleting the advisor.", "error");
       }
     } finally {
       setIsDeleting(false);
     }
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Update advisor
+  |--------------------------------------------------------------------------
+  */
+
   const handleUpdateAdvisor = async () => {
     if (!editingAdvisor?.advisor_id) {
-      setError("Advisor ID is missing.");
+      showNotice("Advisor ID is missing.", "error");
       return;
     }
 
     try {
       setIsUpdating(true);
-      setError("");
 
       const token = localStorage.getItem("adminToken");
 
       if (!token) {
-        setError("Admin authentication required.");
+        showNotice("Admin authentication required.", "error");
         return;
       }
 
       const response = await axios.patch(
-        `http://localhost:5000/api/advisors/${editingAdvisor.advisor_id}`,
+        `${API_URL}/${editingAdvisor.advisor_id}`,
         {
           name: editingAdvisor.name,
           email: editingAdvisor.email,
@@ -226,188 +325,551 @@ export default function Advisors() {
         ),
       );
 
+      setSelectedAdvisor((current) =>
+        current?.advisor_id === editingAdvisor.advisor_id
+          ? {
+              ...current,
+              ...updatedAdvisor,
+            }
+          : current,
+      );
+
       setEditingAdvisor(null);
+
+      showNotice(
+        `${editingAdvisor.name}'s information was updated successfully.`,
+      );
     } catch (error) {
       console.error("Failed to update advisor:", error);
 
       if (axios.isAxiosError(error)) {
-        setError(error.response?.data?.message || "Failed to update advisor.");
+        showNotice(
+          error.response?.data?.message || "Failed to update advisor.",
+          "error",
+        );
       } else {
-        setError("Something went wrong while updating advisor.");
+        showNotice("Something went wrong while updating the advisor.", "error");
       }
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const handleOpenChat = (advisor: Advisor) => {
-    if (!advisor.advisor_id) {
-      setError("This advisor does not have an advisor ID.");
-      return;
-    }
+  /*
+  |--------------------------------------------------------------------------
+  | Helpers
+  |--------------------------------------------------------------------------
+  */
 
-    navigate(`/admin/advisors/${advisor.advisor_id}/chat`);
+  const getInitials = (name: string) => {
+    if (!name) return "AD";
+
+    return name
+      .trim()
+      .split(/\s+/)
+      .map((part) => part[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
   };
 
-  return (
-    <main className="min-h-screen bg-[#f7f5f6] text-[#3e1919]">
-      <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
-        {/* Header */}
-        <header className="border-b border-[#a79093]/30 pb-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#a79093]">
-            SafeLink Administration
-          </p>
+  const activeCount = advisors.filter((advisor) => advisor.active).length;
 
-          <div className="mt-4 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+  const inactiveCount = advisors.length - activeCount;
+
+  /*
+  |--------------------------------------------------------------------------
+  | Render
+  |--------------------------------------------------------------------------
+  */
+
+  return (
+    <main
+      className="min-h-screen"
+      style={{
+        backgroundColor: COLORS.mist,
+        color: COLORS.ink,
+      }}
+    >
+      <div className="mx-auto max-w-[1500px] px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
+        {/* =========================================================
+            HEADER
+        ========================================================= */}
+
+        <header
+          className="border-b pb-7"
+          style={{
+            borderColor: COLORS.mint,
+          }}
+        >
+          <div className="flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
+            {/* Brand + Title */}
+
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-[#3e1919] sm:text-4xl">
+              <div className="mb-4 flex items-center gap-2"></div>
+
+              <h1
+                className="text-3xl font-bold tracking-tight sm:text-4xl"
+                style={{
+                  color: COLORS.ink,
+                }}
+              >
                 Advisors
               </h1>
 
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#a79093]">
-                Manage advisor accounts, availability, information, and
-                communication from one place.
+              <p
+                className="mt-3 max-w-2xl text-sm leading-6"
+                style={{
+                  color: COLORS.forest,
+                }}
+              >
+                Manage your advisor team, monitor availability, update profiles,
+                and maintain your support network.
               </p>
             </div>
 
-            <div className="border-l-2 border-[#3e1919] pl-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
-                Directory
-              </p>
+            {/* =====================================================
+                STATISTICS
+            ===================================================== */}
 
-              <p className="mt-1 text-sm font-medium text-[#3e1919]">
-                {advisors.length}{" "}
-                {advisors.length === 1 ? "advisor" : "advisors"}
-              </p>
+            <div className="grid grid-cols-3 gap-3">
+              {/* Total */}
+
+              <div
+                className="min-w-[125px] rounded-2xl border px-4 py-3.5"
+                style={{
+                  backgroundColor: COLORS.mint,
+                  borderColor: COLORS.mint,
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex h-9 w-9 items-center justify-center rounded-xl"
+                    style={{
+                      backgroundColor: COLORS.leaf,
+                      color: COLORS.mist,
+                    }}
+                  >
+                    <Users size={17} />
+                  </div>
+
+                  <div>
+                    <p
+                      className="text-lg font-bold"
+                      style={{
+                        color: COLORS.ink,
+                      }}
+                    >
+                      {advisors.length}
+                    </p>
+
+                    <p
+                      className="text-[10px] font-medium"
+                      style={{
+                        color: COLORS.forest,
+                      }}
+                    >
+                      Total
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Active */}
+
+              <div
+                className="min-w-[125px] rounded-2xl border px-4 py-3.5"
+                style={{
+                  backgroundColor: COLORS.mist,
+                  borderColor: COLORS.mint,
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex h-9 w-9 items-center justify-center rounded-xl"
+                    style={{
+                      backgroundColor: COLORS.mint,
+                      color: COLORS.leaf,
+                    }}
+                  >
+                    <CheckCircle2 size={17} />
+                  </div>
+
+                  <div>
+                    <p
+                      className="text-lg font-bold"
+                      style={{
+                        color: COLORS.ink,
+                      }}
+                    >
+                      {activeCount}
+                    </p>
+
+                    <p
+                      className="text-[10px] font-medium"
+                      style={{
+                        color: COLORS.forest,
+                      }}
+                    >
+                      Active
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Inactive */}
+
+              <div
+                className="min-w-[125px] rounded-2xl border px-4 py-3.5"
+                style={{
+                  backgroundColor: COLORS.mist,
+                  borderColor: COLORS.mint,
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex h-9 w-9 items-center justify-center rounded-xl"
+                    style={{
+                      backgroundColor: COLORS.mint,
+                      color: COLORS.forest,
+                    }}
+                  >
+                    <Activity size={17} />
+                  </div>
+
+                  <div>
+                    <p
+                      className="text-lg font-bold"
+                      style={{
+                        color: COLORS.ink,
+                      }}
+                    >
+                      {inactiveCount}
+                    </p>
+
+                    <p
+                      className="text-[10px] font-medium"
+                      style={{
+                        color: COLORS.forest,
+                      }}
+                    >
+                      Inactive
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </header>
 
-        {/* Error */}
-        {error && (
-          <div className="mt-6 flex items-start justify-between gap-5 border-l-4 border-[#3e1919] bg-[#f0e2d6] px-5 py-4">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
-                Notice
-              </p>
+        {/* =========================================================
+            NOTICE
+        ========================================================= */}
 
-              <p className="mt-1 text-sm leading-6 text-[#3e1919]">
-                {error}
-              </p>
+        {notice && (
+          <div
+            className="mt-5 flex items-center justify-between gap-4 rounded-2xl border px-4 py-3.5 shadow-sm"
+            style={{
+              backgroundColor: COLORS.mint,
+              borderColor: COLORS.mint,
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                style={{
+                  backgroundColor: COLORS.leaf,
+                  color: COLORS.mist,
+                }}
+              >
+                {noticeType === "success" ? (
+                  <CheckCircle2 size={15} />
+                ) : (
+                  <X size={15} />
+                )}
+              </div>
+
+              <div>
+                <p
+                  className="text-[10px] font-bold uppercase tracking-[0.15em]"
+                  style={{
+                    color: COLORS.forest,
+                  }}
+                >
+                  {noticeType === "success" ? "Completed" : "Attention"}
+                </p>
+
+                <p
+                  className="mt-0.5 text-sm"
+                  style={{
+                    color: COLORS.ink,
+                  }}
+                >
+                  {notice}
+                </p>
+              </div>
             </div>
 
             <button
               type="button"
-              onClick={() => setError("")}
-              className="shrink-0 text-xl leading-none text-[#a79093] transition hover:text-[#3e1919]"
-              aria-label="Close error"
+              onClick={() => setNotice("")}
+              className="rounded-full p-1.5 transition hover:opacity-70"
+              style={{
+                color: COLORS.forest,
+              }}
             >
-              ×
+              <X size={16} />
             </button>
           </div>
         )}
 
-        {/* Content */}
-        <section className="mt-10">
-          {loading ? (
-            <div className="border-y border-[#a79093]/30 py-20 text-center">
-              <div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-[#a79093]/30 border-t-[#3e1919]" />
+        {/* =========================================================
+            DIRECTORY
+        ========================================================= */}
 
-              <p className="mt-4 text-sm text-[#a79093]">
+        <section className="mt-9">
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div></div>
+
+            <div
+              className="rounded-full px-3 py-1.5 text-[10px] font-semibold"
+              style={{
+                backgroundColor: COLORS.mint,
+                color: COLORS.forest,
+              }}
+            >
+              {advisors.length} {advisors.length === 1 ? "advisor" : "advisors"}{" "}
+              registered
+            </div>
+          </div>
+
+          {/* =======================================================
+              LOADING
+          ======================================================= */}
+
+          {loading ? (
+            <div
+              className="rounded-[22px] border py-20 text-center"
+              style={{
+                backgroundColor: COLORS.mist,
+                borderColor: COLORS.mint,
+              }}
+            >
+              <div
+                className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl"
+                style={{
+                  backgroundColor: COLORS.mint,
+                  color: COLORS.leaf,
+                }}
+              >
+                <Users size={21} />
+              </div>
+
+              <p
+                className="mt-4 text-sm font-semibold"
+                style={{
+                  color: COLORS.ink,
+                }}
+              >
                 Loading advisor directory...
+              </p>
+
+              <p
+                className="mt-1 text-xs"
+                style={{
+                  color: COLORS.forest,
+                }}
+              >
+                Please wait a moment.
               </p>
             </div>
           ) : advisors.length === 0 ? (
-            <div className="border-y border-[#a79093]/30 py-16">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a79093]">
-                Directory
-              </p>
+            /* =====================================================
+               EMPTY
+            ===================================================== */
 
-              <h2 className="mt-2 text-2xl font-semibold text-[#3e1919]">
+            <div
+              className="rounded-[22px] border py-20 text-center"
+              style={{
+                backgroundColor: COLORS.mint,
+                borderColor: COLORS.mint,
+              }}
+            >
+              <div
+                className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl"
+                style={{
+                  backgroundColor: COLORS.leaf,
+                  color: COLORS.mist,
+                }}
+              >
+                <Users size={24} />
+              </div>
+
+              <h3
+                className="mt-5 text-xl font-bold"
+                style={{
+                  color: COLORS.ink,
+                }}
+              >
                 No advisors found
-              </h2>
+              </h3>
 
-              <p className="mt-3 max-w-xl text-sm leading-6 text-[#a79093]">
-                There are currently no advisors available in the system.
+              <p
+                className="mx-auto mt-2 max-w-md text-sm leading-6"
+                style={{
+                  color: COLORS.forest,
+                }}
+              >
+                There are currently no advisors registered in the SafeLink
+                system.
               </p>
             </div>
           ) : (
-            <div>
-              <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a79093]">
-                    Directory
-                  </p>
+            /* =====================================================
+               TABLE
+            ===================================================== */
 
-                  <h2 className="mt-1 text-xl font-semibold text-[#3e1919]">
-                    Advisor accounts
-                  </h2>
-                </div>
+            <div
+              className="overflow-hidden rounded-[22px] border shadow-[0_12px_35px_rgba(23,59,40,0.07)]"
+              style={{
+                backgroundColor: COLORS.mist,
+                borderColor: COLORS.mint,
+              }}
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[1100px] border-collapse">
+                  {/* HEADER */}
 
-                <p className="text-xs text-[#a79093]">
-                  Manage status, profile information, and communication.
-                </p>
-              </div>
-
-              <div className="overflow-x-auto border-y border-[#a79093]/30">
-                <table className="min-w-[1100px] w-full">
                   <thead>
-                    <tr className="border-b border-[#a79093]/30">
-                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
-                        Advisor
+                    <tr
+                      style={{
+                        backgroundColor: COLORS.mint,
+                      }}
+                    >
+                      <th className="px-6 py-4 text-left">
+                        <span
+                          className="text-[10px] font-bold uppercase tracking-[0.16em]"
+                          style={{
+                            color: COLORS.forest,
+                          }}
+                        >
+                          Advisor
+                        </span>
                       </th>
 
-                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
-                        Contact
+                      <th className="px-5 py-4 text-left">
+                        <span
+                          className="text-[10px] font-bold uppercase tracking-[0.16em]"
+                          style={{
+                            color: COLORS.forest,
+                          }}
+                        >
+                          Contact
+                        </span>
                       </th>
 
-                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
-                        Type
+                      <th className="px-5 py-4 text-left">
+                        <span
+                          className="text-[10px] font-bold uppercase tracking-[0.16em]"
+                          style={{
+                            color: COLORS.forest,
+                          }}
+                        >
+                          Type
+                        </span>
                       </th>
 
-                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
-                        Location
+                      <th className="px-5 py-4 text-left">
+                        <span
+                          className="text-[10px] font-bold uppercase tracking-[0.16em]"
+                          style={{
+                            color: COLORS.forest,
+                          }}
+                        >
+                          Location
+                        </span>
                       </th>
 
-                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
-                        Status
+                      <th className="px-5 py-4 text-left">
+                        <span
+                          className="text-[10px] font-bold uppercase tracking-[0.16em]"
+                          style={{
+                            color: COLORS.forest,
+                          }}
+                        >
+                          Hours
+                        </span>
                       </th>
 
-                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
-                        Actions
+                      <th className="px-5 py-4 text-left">
+                        <span
+                          className="text-[10px] font-bold uppercase tracking-[0.16em]"
+                          style={{
+                            color: COLORS.forest,
+                          }}
+                        >
+                          Status
+                        </span>
+                      </th>
+
+                      <th className="px-6 py-4 text-right">
+                        <span
+                          className="text-[10px] font-bold uppercase tracking-[0.16em]"
+                          style={{
+                            color: COLORS.forest,
+                          }}
+                        >
+                          Actions
+                        </span>
                       </th>
                     </tr>
                   </thead>
 
+                  {/* BODY */}
+
                   <tbody>
-                    {advisors.map((advisor) => (
+                    {advisors.map((advisor, index) => (
                       <tr
-                        key={
-                          advisor.advisor_id || advisor._id || advisor.email
-                        }
-                        className="border-b border-[#a79093]/15 last:border-b-0 transition-colors hover:bg-[#f0e2d6]/40"
+                        key={advisor.advisor_id || advisor._id || advisor.email}
+                        className="group transition-colors hover:bg-[#E7F1E3]"
+                        style={{
+                          borderTop:
+                            index === 0
+                              ? `1px solid ${COLORS.mint}`
+                              : `1px solid ${COLORS.mint}`,
+                        }}
                       >
                         {/* Advisor */}
-                        <td className="px-4 py-5">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#3e1919] text-xs font-semibold text-[#f7f5f6]">
-                              {advisor.name
-                                ? advisor.name
-                                    .split(" ")
-                                    .map((part) => part[0])
-                                    .slice(0, 2)
-                                    .join("")
-                                    .toUpperCase()
-                                : "AD"}
+
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-3.5">
+                            <div
+                              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                              style={{
+                                backgroundColor: COLORS.mint,
+                                color: COLORS.forest,
+                              }}
+                            >
+                              {getInitials(advisor.name)}
                             </div>
 
-                            <div>
-                              <p className="text-sm font-medium text-[#3e1919]">
+                            <div className="min-w-0">
+                              <p
+                                className="truncate text-sm font-bold"
+                                style={{
+                                  color: COLORS.ink,
+                                }}
+                              >
                                 {advisor.name}
                               </p>
 
                               {advisor.advisor_id && (
-                                <p className="mt-1 text-[11px] text-[#a79093]">
+                                <p
+                                  className="mt-1 truncate text-[10px]"
+                                  style={{
+                                    color: COLORS.forest,
+                                  }}
+                                >
                                   {advisor.advisor_id}
                                 </p>
                               )}
@@ -416,87 +878,166 @@ export default function Advisors() {
                         </td>
 
                         {/* Contact */}
-                        <td className="px-4 py-5">
-                          <p className="text-sm text-[#3e1919]">
-                            {advisor.email}
-                          </p>
 
-                          {advisor.phone_number && (
-                            <p className="mt-1 text-xs text-[#a79093]">
-                              {advisor.phone_number}
-                            </p>
-                          )}
+                        <td className="px-5 py-5">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Mail
+                                size={13}
+                                style={{
+                                  color: COLORS.leaf,
+                                }}
+                              />
+
+                              <span
+                                className="max-w-[210px] truncate text-xs"
+                                style={{
+                                  color: COLORS.ink,
+                                }}
+                              >
+                                {advisor.email}
+                              </span>
+                            </div>
+
+                            {advisor.phone_number && (
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className="flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold"
+                                  style={{
+                                    backgroundColor: COLORS.mint,
+                                    color: COLORS.forest,
+                                  }}
+                                >
+                                  #
+                                </span>
+
+                                <span
+                                  className="text-[11px]"
+                                  style={{
+                                    color: COLORS.forest,
+                                  }}
+                                >
+                                  {advisor.phone_number}
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </td>
 
                         {/* Type */}
-                        <td className="px-4 py-5">
-                          <span className="border border-[#a79093]/35 bg-[#f0e2d6] px-2.5 py-1 text-[11px] font-medium capitalize text-[#3e1919]">
-                            {advisor.type}
-                          </span>
+
+                        <td className="px-5 py-5">
+                          <div
+                            className="inline-flex items-center gap-2 rounded-full px-3 py-1.5"
+                            style={{
+                              backgroundColor: COLORS.mint,
+                              color: COLORS.forest,
+                            }}
+                          >
+                            <BriefcaseBusiness size={12} />
+
+                            <span className="text-[10px] font-bold capitalize">
+                              {advisor.type}
+                            </span>
+                          </div>
                         </td>
 
                         {/* Location */}
-                        <td className="px-4 py-5 text-sm text-[#a79093]">
-                          {advisor.location || "—"}
+
+                        <td className="px-5 py-5">
+                          <div className="flex items-center gap-2">
+                            <MapPin
+                              size={14}
+                              style={{
+                                color: COLORS.leaf,
+                              }}
+                            />
+
+                            <span
+                              className="max-w-[150px] truncate text-xs"
+                              style={{
+                                color: COLORS.forest,
+                              }}
+                            >
+                              {advisor.location || "Not provided"}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Hours */}
+
+                        <td className="px-5 py-5">
+                          <div className="flex items-center gap-2">
+                            <Clock3
+                              size={14}
+                              style={{
+                                color: COLORS.leaf,
+                              }}
+                            />
+
+                            <span
+                              className="text-xs"
+                              style={{
+                                color: COLORS.ink,
+                              }}
+                            >
+                              {advisor.working_hours?.start || "--:--"}
+                              {" – "}
+                              {advisor.working_hours?.end || "--:--"}
+                            </span>
+                          </div>
                         </td>
 
                         {/* Status */}
-                        <td className="px-4 py-5">
+
+                        <td className="px-5 py-5">
                           <button
                             type="button"
                             onClick={() => handleToggleActive(advisor)}
                             disabled={
                               isUpdating || isDeleting || !advisor.advisor_id
                             }
-                            className="group flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[10px] font-bold transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                            style={{
+                              backgroundColor: COLORS.mint,
+                              color: advisor.active
+                                ? COLORS.forest
+                                : COLORS.ink,
+                            }}
                           >
                             <span
-                              className={`h-2 w-2 ${
-                                advisor.active
-                                  ? "bg-[#3e1919]"
-                                  : "bg-[#a79093]"
-                              }`}
+                              className="h-1.5 w-1.5 rounded-full"
+                              style={{
+                                backgroundColor: advisor.active
+                                  ? COLORS.leaf
+                                  : COLORS.forest,
+                              }}
                             />
 
-                            <span
-                              className={`text-xs font-medium ${
-                                advisor.active
-                                  ? "text-[#3e1919]"
-                                  : "text-[#a79093]"
-                              }`}
-                            >
-                              {advisor.active ? "Active" : "Inactive"}
-                            </span>
-
-                            <span className="text-[10px] text-[#a79093] opacity-0 transition group-hover:opacity-100">
-                              Toggle
-                            </span>
+                            {advisor.active ? "Active" : "Inactive"}
                           </button>
                         </td>
 
                         {/* Actions */}
-                        <td className="px-4 py-5">
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedAdvisor(advisor)}
-                              className="border border-[#a79093]/35 px-3 py-1.5 text-xs font-medium text-[#3e1919] transition hover:border-[#3e1919] hover:bg-[#f0e2d6]"
-                            >
-                              View
-                            </button>
+
+                        <td className="px-6 py-5">
+                          <div className="flex items-center justify-end gap-2">
+                            {/* View */}
 
                             <button
                               type="button"
-                              onClick={() => handleOpenChat(advisor)}
-                              disabled={
-                                isUpdating ||
-                                isDeleting ||
-                                !advisor.advisor_id
-                              }
-                              className="bg-[#3e1919] px-3 py-1.5 text-xs font-medium text-[#f7f5f6] transition hover:bg-[#3e1919]/90 disabled:cursor-not-allowed disabled:opacity-50"
+                              onClick={() => setSelectedAdvisor(advisor)}
+                              className="flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[11px] font-bold transition hover:bg-[#E7F1E3]"
+                              style={{
+                                borderColor: COLORS.mint,
+                                color: COLORS.ink,
+                              }}
                             >
-                              Chat
+                              View
+                              <ArrowUpRight size={13} />
                             </button>
+
+                            {/* Edit */}
 
                             <button
                               type="button"
@@ -510,26 +1051,34 @@ export default function Advisors() {
                                 })
                               }
                               disabled={
-                                isUpdating ||
-                                isDeleting ||
-                                !advisor.advisor_id
+                                isUpdating || isDeleting || !advisor.advisor_id
                               }
-                              className="border border-[#a79093]/35 px-3 py-1.5 text-xs font-medium text-[#3e1919] transition hover:border-[#3e1919] hover:bg-[#f0e2d6] disabled:cursor-not-allowed disabled:opacity-50"
+                              className="flex h-9 w-9 items-center justify-center rounded-xl border transition hover:bg-[#E7F1E3] disabled:cursor-not-allowed disabled:opacity-50"
+                              style={{
+                                borderColor: COLORS.mint,
+                                color: COLORS.forest,
+                              }}
+                              title="Edit advisor"
                             >
-                              Edit
+                              <Edit3 size={14} />
                             </button>
+
+                            {/* Delete */}
 
                             <button
                               type="button"
                               onClick={() => setAdvisorToDelete(advisor)}
                               disabled={
-                                isUpdating ||
-                                isDeleting ||
-                                !advisor.advisor_id
+                                isUpdating || isDeleting || !advisor.advisor_id
                               }
-                              className="px-3 py-1.5 text-xs font-medium text-[#a79093] transition hover:bg-[#f0e2d6] hover:text-[#3e1919] disabled:cursor-not-allowed disabled:opacity-50"
+                              className="flex h-9 w-9 items-center justify-center rounded-xl border transition hover:bg-[#E7F1E3] disabled:cursor-not-allowed disabled:opacity-50"
+                              style={{
+                                borderColor: COLORS.mint,
+                                color: COLORS.forest,
+                              }}
+                              title="Delete advisor"
                             >
-                              {isDeleting ? "Deleting..." : "Delete"}
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         </td>
@@ -538,406 +1087,756 @@ export default function Advisors() {
                   </tbody>
                 </table>
               </div>
+
+              {/* TABLE FOOTER */}
+
+              <div
+                className="flex flex-col gap-2 border-t px-6 py-4 sm:flex-row sm:items-center sm:justify-between"
+                style={{
+                  backgroundColor: COLORS.mint,
+                  borderColor: COLORS.mint,
+                }}
+              ></div>
             </div>
           )}
         </section>
 
-        {/* View Modal */}
-        {selectedAdvisor && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3e1919]/60 p-4">
-            <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto bg-[#f7f5f6] shadow-2xl">
-              <div className="flex items-start justify-between border-b border-[#a79093]/30 px-6 py-5">
+        {/* =========================================================
+            FOOTER
+        ========================================================= */}
+      </div>
+
+      {/* ===========================================================
+          VIEW MODAL
+      =========================================================== */}
+
+      {selectedAdvisor && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+          style={{
+            backgroundColor: "rgba(23,59,40,0.40)",
+          }}
+        >
+          <div
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-[26px] border shadow-2xl"
+            style={{
+              backgroundColor: COLORS.mist,
+              borderColor: COLORS.mint,
+            }}
+          >
+            {/* Header */}
+
+            <div
+              className="flex items-start justify-between border-b px-6 py-6"
+              style={{
+                backgroundColor: COLORS.mint,
+                borderColor: COLORS.mint,
+              }}
+            >
+              <div className="flex items-center gap-4">
+                <div
+                  className="flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold"
+                  style={{
+                    backgroundColor: COLORS.leaf,
+                    color: COLORS.mist,
+                  }}
+                >
+                  {getInitials(selectedAdvisor.name)}
+                </div>
+
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+                  <p
+                    className="text-[9px] font-bold uppercase tracking-[0.18em]"
+                    style={{
+                      color: COLORS.leaf,
+                    }}
+                  >
                     Advisor profile
                   </p>
 
-                  <h2 className="mt-1 text-xl font-semibold text-[#3e1919]">
-                    Advisor details
+                  <h2
+                    className="mt-1 text-xl font-bold"
+                    style={{
+                      color: COLORS.ink,
+                    }}
+                  >
+                    {selectedAdvisor.name}
                   </h2>
-                </div>
 
-                <button
-                  type="button"
-                  onClick={() => setSelectedAdvisor(null)}
-                  className="text-2xl leading-none text-[#a79093] transition hover:text-[#3e1919]"
-                  aria-label="Close"
-                >
-                  ×
-                </button>
+                  <p
+                    className="mt-1 text-xs capitalize"
+                    style={{
+                      color: COLORS.forest,
+                    }}
+                  >
+                    {selectedAdvisor.type}
+                  </p>
+                </div>
               </div>
 
-              <div className="divide-y divide-[#a79093]/20 px-6">
-                {[
-                  ["Advisor ID", selectedAdvisor.advisor_id || "—"],
-                  ["Name", selectedAdvisor.name],
-                  ["Email", selectedAdvisor.email],
-                  ["Gender", selectedAdvisor.gender],
-                  ["Type", selectedAdvisor.type],
-                  ["Phone", selectedAdvisor.phone_number || "—"],
-                  ["Location", selectedAdvisor.location || "—"],
-                  [
-                    "Working hours",
-                    `${selectedAdvisor.working_hours?.start || "—"} - ${
-                      selectedAdvisor.working_hours?.end || "—"
-                    }`,
-                  ],
-                ].map(([label, value]) => (
-                  <div
-                    key={label}
-                    className="flex items-start justify-between gap-6 py-4"
+              <button
+                type="button"
+                onClick={() => setSelectedAdvisor(null)}
+                className="rounded-full p-2 transition hover:bg-[#FAFBF7]"
+                style={{
+                  color: COLORS.ink,
+                }}
+              >
+                <X size={17} />
+              </button>
+            </div>
+
+            {/* Details */}
+
+            <div>
+              {[
+                ["Advisor ID", selectedAdvisor.advisor_id || "—"],
+                ["Name", selectedAdvisor.name],
+                ["Email", selectedAdvisor.email],
+                ["Gender", selectedAdvisor.gender],
+                ["Type", selectedAdvisor.type],
+                ["Phone", selectedAdvisor.phone_number || "Not provided"],
+                ["Location", selectedAdvisor.location || "Not provided"],
+                [
+                  "Working hours",
+                  `${selectedAdvisor.working_hours?.start || "--"} - ${
+                    selectedAdvisor.working_hours?.end || "--"
+                  }`,
+                ],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="flex items-center justify-between gap-6 border-b px-6 py-4"
+                  style={{
+                    borderColor: COLORS.mint,
+                  }}
+                >
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-[0.13em]"
+                    style={{
+                      color: COLORS.forest,
+                    }}
                   >
-                    <p className="shrink-0 text-[10px] uppercase tracking-[0.14em] text-[#a79093]">
-                      {label}
-                    </p>
-
-                    <p className="max-w-[62%] break-words text-right text-sm text-[#3e1919]">
-                      {value}
-                    </p>
-                  </div>
-                ))}
-
-                <div className="flex items-center justify-between gap-6 py-4">
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-[#a79093]">
-                    Status
+                    {label}
                   </p>
 
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`h-2 w-2 ${
-                        selectedAdvisor.active
-                          ? "bg-[#3e1919]"
-                          : "bg-[#a79093]"
-                      }`}
-                    />
-
-                    <p className="text-sm font-medium text-[#3e1919]">
-                      {selectedAdvisor.active ? "Active" : "Inactive"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 border-t border-[#a79093]/30 px-6 py-5">
-                <button
-                  type="button"
-                  onClick={() => handleOpenChat(selectedAdvisor)}
-                  disabled={!selectedAdvisor.advisor_id}
-                  className="bg-[#3e1919] px-5 py-2.5 text-sm font-medium text-[#f7f5f6] transition hover:bg-[#3e1919]/90 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Open chat
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedAdvisor(null)}
-                  className="border border-[#a79093]/40 px-5 py-2.5 text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6]"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Edit Modal */}
-        {editingAdvisor && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3e1919]/60 p-4">
-            <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto bg-[#f7f5f6] shadow-2xl">
-              <div className="flex items-start justify-between border-b border-[#a79093]/30 px-6 py-5">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a79093]">
-                    Advisor management
-                  </p>
-
-                  <h2 className="mt-1 text-xl font-semibold text-[#3e1919]">
-                    Edit advisor
-                  </h2>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setEditingAdvisor(null)}
-                  className="text-2xl leading-none text-[#a79093] transition hover:text-[#3e1919]"
-                  aria-label="Close"
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className="grid gap-x-6 gap-y-5 px-6 py-6 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
-                    Advisor ID
-                  </label>
-
-                  <input
-                    type="text"
-                    value={editingAdvisor.advisor_id || ""}
-                    disabled
-                    className="w-full border border-[#a79093]/25 bg-[#f0e2d6]/60 px-3 py-2.5 text-sm text-[#a79093] outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
-                    Name
-                  </label>
-
-                  <input
-                    type="text"
-                    value={editingAdvisor.name}
-                    onChange={(event) =>
-                      setEditingAdvisor({
-                        ...editingAdvisor,
-                        name: event.target.value,
-                      })
-                    }
-                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
-                    Email
-                  </label>
-
-                  <input
-                    type="email"
-                    value={editingAdvisor.email}
-                    onChange={(event) =>
-                      setEditingAdvisor({
-                        ...editingAdvisor,
-                        email: event.target.value,
-                      })
-                    }
-                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
-                    Gender
-                  </label>
-
-                  <select
-                    value={editingAdvisor.gender}
-                    onChange={(event) =>
-                      setEditingAdvisor({
-                        ...editingAdvisor,
-                        gender: event.target.value,
-                      })
-                    }
-                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
+                  <p
+                    className="max-w-[60%] break-words text-right text-sm"
+                    style={{
+                      color: COLORS.ink,
+                    }}
                   >
-                    <option value="">Select gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
+                    {value}
+                  </p>
                 </div>
+              ))}
 
-                <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
-                    Type
-                  </label>
-
-                  <input
-                    type="text"
-                    value={editingAdvisor.type}
-                    onChange={(event) =>
-                      setEditingAdvisor({
-                        ...editingAdvisor,
-                        type: event.target.value,
-                      })
-                    }
-                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
-                    Phone number
-                  </label>
-
-                  <input
-                    type="text"
-                    value={editingAdvisor.phone_number || ""}
-                    onChange={(event) =>
-                      setEditingAdvisor({
-                        ...editingAdvisor,
-                        phone_number: event.target.value,
-                      })
-                    }
-                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
-                    Location
-                  </label>
-
-                  <input
-                    type="text"
-                    value={editingAdvisor.location || ""}
-                    onChange={(event) =>
-                      setEditingAdvisor({
-                        ...editingAdvisor,
-                        location: event.target.value,
-                      })
-                    }
-                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
-                    Working hours start
-                  </label>
-
-                  <input
-                    type="time"
-                    value={editingAdvisor.working_hours?.start || ""}
-                    onChange={(event) =>
-                      setEditingAdvisor({
-                        ...editingAdvisor,
-                        working_hours: {
-                          start: event.target.value,
-                          end: editingAdvisor.working_hours?.end || "",
-                        },
-                      })
-                    }
-                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
-                    Working hours end
-                  </label>
-
-                  <input
-                    type="time"
-                    value={editingAdvisor.working_hours?.end || ""}
-                    onChange={(event) =>
-                      setEditingAdvisor({
-                        ...editingAdvisor,
-                        working_hours: {
-                          start: editingAdvisor.working_hours?.start || "",
-                          end: event.target.value,
-                        },
-                      })
-                    }
-                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
-                  />
-                </div>
-
-                <div className="border-t border-[#a79093]/20 pt-5 md:col-span-2">
-                  <label className="flex cursor-pointer items-center gap-3">
-                    <input
-                      id="advisor-active"
-                      type="checkbox"
-                      checked={editingAdvisor.active}
-                      onChange={(event) =>
-                        setEditingAdvisor({
-                          ...editingAdvisor,
-                          active: event.target.checked,
-                        })
-                      }
-                      className="h-4 w-4 accent-[#3e1919]"
-                    />
-
-                    <span>
-                      <span className="block text-sm font-medium text-[#3e1919]">
-                        Advisor is active
-                      </span>
-
-                      <span className="mt-0.5 block text-xs text-[#a79093]">
-                        Active advisors can receive and manage conversations.
-                      </span>
-                    </span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 border-t border-[#a79093]/30 px-6 py-5">
-                <button
-                  type="button"
-                  onClick={() => setEditingAdvisor(null)}
-                  disabled={isUpdating}
-                  className="border border-[#a79093]/40 px-5 py-2.5 text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6] disabled:opacity-50"
+              <div className="flex items-center justify-between px-6 py-5">
+                <p
+                  className="text-[10px] font-bold uppercase tracking-[0.13em]"
+                  style={{
+                    color: COLORS.forest,
+                  }}
                 >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleUpdateAdvisor}
-                  disabled={isUpdating}
-                  className="bg-[#3e1919] px-5 py-2.5 text-sm font-medium text-[#f7f5f6] transition hover:bg-[#3e1919]/90 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isUpdating ? "Saving..." : "Save changes"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Delete Modal */}
-        {advisorToDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3e1919]/60 p-4">
-            <div className="w-full max-w-md bg-[#f7f5f6] shadow-2xl">
-              <div className="border-b border-[#a79093]/30 px-6 py-5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a79093]">
-                  Confirmation required
+                  Status
                 </p>
 
-                <h2 className="mt-2 text-xl font-semibold text-[#3e1919]">
-                  Delete advisor
+                <div
+                  className="flex items-center gap-2 rounded-full px-3 py-1.5 text-[10px] font-bold"
+                  style={{
+                    backgroundColor: COLORS.mint,
+                    color: COLORS.forest,
+                  }}
+                >
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{
+                      backgroundColor: COLORS.leaf,
+                    }}
+                  />
+
+                  {selectedAdvisor.active ? "Active" : "Inactive"}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+
+            <div
+              className="flex justify-end border-t px-6 py-5"
+              style={{
+                borderColor: COLORS.mint,
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setSelectedAdvisor(null)}
+                className="rounded-xl px-5 py-2.5 text-xs font-bold transition hover:opacity-80"
+                style={{
+                  backgroundColor: COLORS.leaf,
+                  color: COLORS.mist,
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===========================================================
+          EDIT MODAL
+      =========================================================== */}
+
+      {editingAdvisor && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+          style={{
+            backgroundColor: "rgba(23,59,40,0.40)",
+          }}
+        >
+          <div
+            className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[26px] border shadow-2xl"
+            style={{
+              backgroundColor: COLORS.mist,
+              borderColor: COLORS.mint,
+            }}
+          >
+            {/* Header */}
+
+            <div
+              className="flex items-start justify-between border-b px-6 py-6"
+              style={{
+                backgroundColor: COLORS.mint,
+                borderColor: COLORS.mint,
+              }}
+            >
+              <div>
+                <p
+                  className="text-[9px] font-bold uppercase tracking-[0.18em]"
+                  style={{
+                    color: COLORS.leaf,
+                  }}
+                >
+                  Advisor management
+                </p>
+
+                <h2
+                  className="mt-1 text-xl font-bold"
+                  style={{
+                    color: COLORS.ink,
+                  }}
+                >
+                  Edit advisor
                 </h2>
               </div>
 
-              <div className="px-6 py-6">
-                <p className="text-sm leading-6 text-[#a79093]">
-                  Are you sure you want to delete{" "}
-                  <span className="font-semibold text-[#3e1919]">
-                    {advisorToDelete.name}
-                  </span>
-                  ?
-                </p>
+              <button
+                type="button"
+                onClick={() => setEditingAdvisor(null)}
+                className="rounded-full p-2"
+                style={{
+                  color: COLORS.ink,
+                }}
+              >
+                <X size={17} />
+              </button>
+            </div>
 
-                <div className="mt-5 border-l-2 border-[#3e1919] bg-[#f0e2d6] px-4 py-3">
-                  <p className="text-xs leading-5 text-[#3e1919]">
-                    This action cannot be undone. The advisor will be removed
-                    from the administration directory.
+            {/* Form */}
+
+            <div className="grid gap-5 px-6 py-6 md:grid-cols-2">
+              {/* Advisor ID */}
+
+              <div>
+                <label
+                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.13em]"
+                  style={{
+                    color: COLORS.forest,
+                  }}
+                >
+                  Advisor ID
+                </label>
+
+                <input
+                  type="text"
+                  value={editingAdvisor.advisor_id || ""}
+                  disabled
+                  className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+                  style={{
+                    backgroundColor: COLORS.mint,
+                    borderColor: COLORS.mint,
+                    color: COLORS.forest,
+                  }}
+                />
+              </div>
+
+              {/* Name */}
+
+              <div>
+                <label
+                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.13em]"
+                  style={{
+                    color: COLORS.forest,
+                  }}
+                >
+                  Name
+                </label>
+
+                <input
+                  type="text"
+                  value={editingAdvisor.name}
+                  onChange={(event) =>
+                    setEditingAdvisor({
+                      ...editingAdvisor,
+                      name: event.target.value,
+                    })
+                  }
+                  className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+                  style={{
+                    backgroundColor: COLORS.mist,
+                    borderColor: COLORS.mint,
+                    color: COLORS.ink,
+                  }}
+                />
+              </div>
+
+              {/* Email */}
+
+              <div>
+                <label
+                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.13em]"
+                  style={{
+                    color: COLORS.forest,
+                  }}
+                >
+                  Email
+                </label>
+
+                <input
+                  type="email"
+                  value={editingAdvisor.email}
+                  onChange={(event) =>
+                    setEditingAdvisor({
+                      ...editingAdvisor,
+                      email: event.target.value,
+                    })
+                  }
+                  className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+                  style={{
+                    backgroundColor: COLORS.mist,
+                    borderColor: COLORS.mint,
+                    color: COLORS.ink,
+                  }}
+                />
+              </div>
+
+              {/* Gender */}
+
+              <div>
+                <label
+                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.13em]"
+                  style={{
+                    color: COLORS.forest,
+                  }}
+                >
+                  Gender
+                </label>
+
+                <select
+                  value={editingAdvisor.gender}
+                  onChange={(event) =>
+                    setEditingAdvisor({
+                      ...editingAdvisor,
+                      gender: event.target.value,
+                    })
+                  }
+                  className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+                  style={{
+                    backgroundColor: COLORS.mist,
+                    borderColor: COLORS.mint,
+                    color: COLORS.ink,
+                  }}
+                >
+                  <option value="">Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              {/* Type */}
+
+              <div>
+                <label
+                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.13em]"
+                  style={{
+                    color: COLORS.forest,
+                  }}
+                >
+                  Type
+                </label>
+
+                <input
+                  type="text"
+                  value={editingAdvisor.type}
+                  onChange={(event) =>
+                    setEditingAdvisor({
+                      ...editingAdvisor,
+                      type: event.target.value,
+                    })
+                  }
+                  className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+                  style={{
+                    backgroundColor: COLORS.mist,
+                    borderColor: COLORS.mint,
+                    color: COLORS.ink,
+                  }}
+                />
+              </div>
+
+              {/* Phone */}
+
+              <div>
+                <label
+                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.13em]"
+                  style={{
+                    color: COLORS.forest,
+                  }}
+                >
+                  Phone number
+                </label>
+
+                <input
+                  type="text"
+                  value={editingAdvisor.phone_number || ""}
+                  onChange={(event) =>
+                    setEditingAdvisor({
+                      ...editingAdvisor,
+                      phone_number: event.target.value,
+                    })
+                  }
+                  className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+                  style={{
+                    backgroundColor: COLORS.mist,
+                    borderColor: COLORS.mint,
+                    color: COLORS.ink,
+                  }}
+                />
+              </div>
+
+              {/* Location */}
+
+              <div>
+                <label
+                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.13em]"
+                  style={{
+                    color: COLORS.forest,
+                  }}
+                >
+                  Location
+                </label>
+
+                <input
+                  type="text"
+                  value={editingAdvisor.location || ""}
+                  onChange={(event) =>
+                    setEditingAdvisor({
+                      ...editingAdvisor,
+                      location: event.target.value,
+                    })
+                  }
+                  className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+                  style={{
+                    backgroundColor: COLORS.mist,
+                    borderColor: COLORS.mint,
+                    color: COLORS.ink,
+                  }}
+                />
+              </div>
+
+              {/* Start */}
+
+              <div>
+                <label
+                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.13em]"
+                  style={{
+                    color: COLORS.forest,
+                  }}
+                >
+                  Working hours start
+                </label>
+
+                <input
+                  type="time"
+                  value={editingAdvisor.working_hours?.start || ""}
+                  onChange={(event) =>
+                    setEditingAdvisor({
+                      ...editingAdvisor,
+                      working_hours: {
+                        start: event.target.value,
+                        end: editingAdvisor.working_hours?.end || "",
+                      },
+                    })
+                  }
+                  className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+                  style={{
+                    backgroundColor: COLORS.mist,
+                    borderColor: COLORS.mint,
+                    color: COLORS.ink,
+                  }}
+                />
+              </div>
+
+              {/* End */}
+
+              <div>
+                <label
+                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.13em]"
+                  style={{
+                    color: COLORS.forest,
+                  }}
+                >
+                  Working hours end
+                </label>
+
+                <input
+                  type="time"
+                  value={editingAdvisor.working_hours?.end || ""}
+                  onChange={(event) =>
+                    setEditingAdvisor({
+                      ...editingAdvisor,
+                      working_hours: {
+                        start: editingAdvisor.working_hours?.start || "",
+                        end: event.target.value,
+                      },
+                    })
+                  }
+                  className="w-full rounded-xl border px-3 py-2.5 text-sm outline-none"
+                  style={{
+                    backgroundColor: COLORS.mist,
+                    borderColor: COLORS.mint,
+                    color: COLORS.ink,
+                  }}
+                />
+              </div>
+
+              {/* Active */}
+
+              <div
+                className="rounded-2xl border p-4 md:col-span-2"
+                style={{
+                  backgroundColor: COLORS.mint,
+                  borderColor: COLORS.mint,
+                }}
+              >
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={editingAdvisor.active}
+                    onChange={(event) =>
+                      setEditingAdvisor({
+                        ...editingAdvisor,
+                        active: event.target.checked,
+                      })
+                    }
+                    className="h-4 w-4"
+                    style={{
+                      accentColor: COLORS.leaf,
+                    }}
+                  />
+
+                  <div>
+                    <p
+                      className="text-sm font-bold"
+                      style={{
+                        color: COLORS.ink,
+                      }}
+                    >
+                      Advisor is active
+                    </p>
+
+                    <p
+                      className="mt-1 text-xs"
+                      style={{
+                        color: COLORS.forest,
+                      }}
+                    >
+                      Active advisors can receive and manage conversations.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Footer */}
+
+            <div
+              className="flex justify-end gap-2 border-t px-6 py-5"
+              style={{
+                borderColor: COLORS.mint,
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setEditingAdvisor(null)}
+                disabled={isUpdating}
+                className="rounded-xl border px-5 py-2.5 text-sm font-bold"
+                style={{
+                  borderColor: COLORS.mint,
+                  color: COLORS.forest,
+                  backgroundColor: COLORS.mist,
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleUpdateAdvisor}
+                disabled={isUpdating}
+                className="rounded-xl px-5 py-2.5 text-sm font-bold transition hover:opacity-90 disabled:opacity-50"
+                style={{
+                  backgroundColor: COLORS.leaf,
+                  color: COLORS.mist,
+                }}
+              >
+                {isUpdating ? "Saving..." : "Save changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===========================================================
+          DELETE CONFIRMATION
+      =========================================================== */}
+
+      {advisorToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+          style={{
+            backgroundColor: "rgba(23,59,40,0.40)",
+          }}
+        >
+          <div
+            className="w-full max-w-md overflow-hidden rounded-[26px] border shadow-2xl"
+            style={{
+              backgroundColor: COLORS.mist,
+              borderColor: COLORS.mint,
+            }}
+          >
+            <div
+              className="px-6 py-6"
+              style={{
+                backgroundColor: COLORS.mint,
+              }}
+            >
+              <div
+                className="flex h-12 w-12 items-center justify-center rounded-2xl"
+                style={{
+                  backgroundColor: COLORS.leaf,
+                  color: COLORS.mist,
+                }}
+              >
+                <Trash2 size={20} />
+              </div>
+
+              <h2
+                className="mt-5 text-xl font-bold"
+                style={{
+                  color: COLORS.ink,
+                }}
+              >
+                Remove advisor?
+              </h2>
+
+              <p
+                className="mt-2 text-sm leading-6"
+                style={{
+                  color: COLORS.forest,
+                }}
+              >
+                You are about to remove{" "}
+                <strong
+                  style={{
+                    color: COLORS.ink,
+                  }}
+                >
+                  {advisorToDelete.name}
+                </strong>{" "}
+                from the advisor directory.
+              </p>
+            </div>
+
+            <div className="px-6 py-5">
+              <div
+                className="rounded-2xl border px-4 py-4"
+                style={{
+                  backgroundColor: COLORS.mist,
+                  borderColor: COLORS.mint,
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <CheckCircle2
+                    size={17}
+                    className="mt-0.5 shrink-0"
+                    style={{
+                      color: COLORS.leaf,
+                    }}
+                  />
+
+                  <p
+                    className="text-xs leading-5"
+                    style={{
+                      color: COLORS.forest,
+                    }}
+                  >
+                    Please confirm that you want to permanently remove this
+                    advisor. This action cannot be undone.
                   </p>
                 </div>
               </div>
+            </div>
 
-              <div className="flex justify-end gap-3 border-t border-[#a79093]/30 px-6 py-5">
-                <button
-                  type="button"
-                  onClick={() => setAdvisorToDelete(null)}
-                  disabled={isDeleting}
-                  className="border border-[#a79093]/40 px-5 py-2.5 text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6] disabled:opacity-50"
-                >
-                  Cancel
-                </button>
+            <div
+              className="flex justify-end gap-2 border-t px-6 py-5"
+              style={{
+                borderColor: COLORS.mint,
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setAdvisorToDelete(null)}
+                disabled={isDeleting}
+                className="rounded-xl border px-5 py-2.5 text-sm font-bold"
+                style={{
+                  borderColor: COLORS.mint,
+                  color: COLORS.forest,
+                  backgroundColor: COLORS.mist,
+                }}
+              >
+                Cancel
+              </button>
 
-                <button
-                  type="button"
-                  onClick={handleDeleteAdvisor}
-                  disabled={isDeleting}
-                  className="bg-[#3e1919] px-5 py-2.5 text-sm font-medium text-[#f7f5f6] transition hover:bg-[#3e1919]/90 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isDeleting ? "Deleting..." : "Delete advisor"}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handleDeleteAdvisor}
+                disabled={isDeleting}
+                className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition hover:opacity-90 disabled:opacity-50"
+                style={{
+                  backgroundColor: COLORS.forest,
+                  color: COLORS.mist,
+                }}
+              >
+                <Trash2 size={14} />
+
+                {isDeleting ? "Removing..." : "Remove advisor"}
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </main>
   );
 }
