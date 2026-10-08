@@ -1,6 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+
+/*
+  Palette (soft leaf green)
+  #FAFBF7  mist     - light page background
+  #E7F1E3  mint     - soft green cards, highlights
+  #2F8F4E  leaf     - accent, borders, light green
+  #2F8F4E  green    - primary buttons, logo
+  #176B3A  forest   - dark surfaces
+  #173B28  ink      - body text
+*/
 
 interface Advisor {
   _id?: string;
@@ -35,6 +45,27 @@ export default function Advisors() {
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // For the 3-dot dropdown: track which advisor's menu is open
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+
+    if (openMenuId) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [openMenuId]);
 
   const fetchAdvisors = async () => {
     try {
@@ -249,33 +280,36 @@ export default function Advisors() {
     navigate(`/admin/advisors/${advisor.advisor_id}/chat`);
   };
 
+  const getAdvisorKey = (advisor: Advisor) =>
+    advisor.advisor_id || advisor._id || advisor.email;
+
   return (
-    <main className="min-h-screen bg-[#f7f5f6] text-[#3e1919]">
+    <main className="min-h-screen bg-[#FAFBF7] text-[#173B28]">
       <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
         {/* Header */}
-        <header className="border-b border-[#a79093]/30 pb-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#a79093]">
+        <header className="border-b border-[#E7F1E3] pb-8">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#2F8F4E]">
             SafeLink Administration
           </p>
 
           <div className="mt-4 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-[#3e1919] sm:text-4xl">
+              <h1 className="text-3xl font-semibold tracking-tight text-[#176B3A] sm:text-4xl">
                 Advisors
               </h1>
 
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#a79093]">
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#173B28]/65">
                 Manage advisor accounts, availability, information, and
                 communication from one place.
               </p>
             </div>
 
-            <div className="border-l-2 border-[#3e1919] pl-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+            <div className="border-l-2 border-[#2F8F4E] pl-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2F8F4E]">
                 Directory
               </p>
 
-              <p className="mt-1 text-sm font-medium text-[#3e1919]">
+              <p className="mt-1 text-sm font-medium text-[#176B3A]">
                 {advisors.length}{" "}
                 {advisors.length === 1 ? "advisor" : "advisors"}
               </p>
@@ -285,21 +319,19 @@ export default function Advisors() {
 
         {/* Error */}
         {error && (
-          <div className="mt-6 flex items-start justify-between gap-5 border-l-4 border-[#3e1919] bg-[#f0e2d6] px-5 py-4">
+          <div className="mt-6 flex items-start justify-between gap-5 rounded-2xl border border-[#2F8F4E]/30 bg-[#E7F1E3] px-5 py-4">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2F8F4E]">
                 Notice
               </p>
 
-              <p className="mt-1 text-sm leading-6 text-[#3e1919]">
-                {error}
-              </p>
+              <p className="mt-1 text-sm leading-6 text-[#173B28]">{error}</p>
             </div>
 
             <button
               type="button"
               onClick={() => setError("")}
-              className="shrink-0 text-xl leading-none text-[#a79093] transition hover:text-[#3e1919]"
+              className="shrink-0 text-xl leading-none text-[#2F8F4E] transition hover:text-[#176B3A]"
               aria-label="Close error"
             >
               ×
@@ -310,24 +342,24 @@ export default function Advisors() {
         {/* Content */}
         <section className="mt-10">
           {loading ? (
-            <div className="border-y border-[#a79093]/30 py-20 text-center">
-              <div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-[#a79093]/30 border-t-[#3e1919]" />
+            <div className="rounded-2xl border border-[#E7F1E3] bg-white py-20 text-center">
+              <div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-[#E7F1E3] border-t-[#2F8F4E]" />
 
-              <p className="mt-4 text-sm text-[#a79093]">
+              <p className="mt-4 text-sm text-[#173B28]/65">
                 Loading advisor directory...
               </p>
             </div>
           ) : advisors.length === 0 ? (
-            <div className="border-y border-[#a79093]/30 py-16">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+            <div className="rounded-2xl border border-[#E7F1E3] bg-white px-6 py-16">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
                 Directory
               </p>
 
-              <h2 className="mt-2 text-2xl font-semibold text-[#3e1919]">
+              <h2 className="mt-2 text-2xl font-semibold text-[#176B3A]">
                 No advisors found
               </h2>
 
-              <p className="mt-3 max-w-xl text-sm leading-6 text-[#a79093]">
+              <p className="mt-3 max-w-xl text-sm leading-6 text-[#173B28]/65">
                 There are currently no advisors available in the system.
               </p>
             </div>
@@ -335,206 +367,189 @@ export default function Advisors() {
             <div>
               <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
                     Directory
                   </p>
 
-                  <h2 className="mt-1 text-xl font-semibold text-[#3e1919]">
+                  <h2 className="mt-1 text-xl font-semibold text-[#176B3A]">
                     Advisor accounts
                   </h2>
                 </div>
 
-                <p className="text-xs text-[#a79093]">
-                  Manage status, profile information, and communication.
+                <p className="text-xs text-[#173B28]/65">
+                  Click an advisor to view details, manage status, or open a
+                  conversation.
                 </p>
               </div>
 
-              <div className="overflow-x-auto border-y border-[#a79093]/30">
-                <table className="min-w-[1100px] w-full">
+              <div className="overflow-x-auto rounded-2xl border border-[#E7F1E3] bg-white">
+                <table className="w-full min-w-[820px]">
                   <thead>
-                    <tr className="border-b border-[#a79093]/30">
-                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+                    <tr className="border-b border-[#E7F1E3]">
+                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2F8F4E]">
                         Advisor
                       </th>
 
-                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2F8F4E]">
                         Contact
                       </th>
 
-                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2F8F4E]">
                         Type
                       </th>
 
-                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
-                        Location
-                      </th>
-
-                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2F8F4E]">
                         Status
                       </th>
 
-                      <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-[#a79093]">
-                        Actions
+                      <th className="px-4 py-4 text-right text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2F8F4E]">
+                        {/* actions */}
                       </th>
                     </tr>
                   </thead>
 
                   <tbody>
-                    {advisors.map((advisor) => (
-                      <tr
-                        key={
-                          advisor.advisor_id || advisor._id || advisor.email
-                        }
-                        className="border-b border-[#a79093]/15 last:border-b-0 transition-colors hover:bg-[#f0e2d6]/40"
-                      >
-                        {/* Advisor */}
-                        <td className="px-4 py-5">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#3e1919] text-xs font-semibold text-[#f7f5f6]">
-                              {advisor.name
-                                ? advisor.name
-                                    .split(" ")
-                                    .map((part) => part[0])
-                                    .slice(0, 2)
-                                    .join("")
-                                    .toUpperCase()
-                                : "AD"}
-                            </div>
+                    {advisors.map((advisor) => {
+                      const key = getAdvisorKey(advisor);
+                      const isMenuOpen = openMenuId === key;
 
-                            <div>
-                              <p className="text-sm font-medium text-[#3e1919]">
-                                {advisor.name}
-                              </p>
-
-                              {advisor.advisor_id && (
-                                <p className="mt-1 text-[11px] text-[#a79093]">
-                                  {advisor.advisor_id}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Contact */}
-                        <td className="px-4 py-5">
-                          <p className="text-sm text-[#3e1919]">
-                            {advisor.email}
-                          </p>
-
-                          {advisor.phone_number && (
-                            <p className="mt-1 text-xs text-[#a79093]">
-                              {advisor.phone_number}
-                            </p>
-                          )}
-                        </td>
-
-                        {/* Type */}
-                        <td className="px-4 py-5">
-                          <span className="border border-[#a79093]/35 bg-[#f0e2d6] px-2.5 py-1 text-[11px] font-medium capitalize text-[#3e1919]">
-                            {advisor.type}
-                          </span>
-                        </td>
-
-                        {/* Location */}
-                        <td className="px-4 py-5 text-sm text-[#a79093]">
-                          {advisor.location || "—"}
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-4 py-5">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleActive(advisor)}
-                            disabled={
-                              isUpdating || isDeleting || !advisor.advisor_id
-                            }
-                            className="group flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            <span
-                              className={`h-2 w-2 ${
-                                advisor.active
-                                  ? "bg-[#3e1919]"
-                                  : "bg-[#a79093]"
-                              }`}
-                            />
-
-                            <span
-                              className={`text-xs font-medium ${
-                                advisor.active
-                                  ? "text-[#3e1919]"
-                                  : "text-[#a79093]"
-                              }`}
-                            >
-                              {advisor.active ? "Active" : "Inactive"}
-                            </span>
-
-                            <span className="text-[10px] text-[#a79093] opacity-0 transition group-hover:opacity-100">
-                              Toggle
-                            </span>
-                          </button>
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-4 py-5">
-                          <div className="flex items-center gap-1.5">
+                      return (
+                        <tr
+                          key={key}
+                          className="border-b border-[#E7F1E3]/60 last:border-b-0 transition-colors hover:bg-[#FAFBF7]"
+                        >
+                          {/* Advisor */}
+                          <td className="px-4 py-5">
                             <button
                               type="button"
                               onClick={() => setSelectedAdvisor(advisor)}
-                              className="border border-[#a79093]/35 px-3 py-1.5 text-xs font-medium text-[#3e1919] transition hover:border-[#3e1919] hover:bg-[#f0e2d6]"
+                              className="flex items-center gap-3 text-left"
                             >
-                              View
-                            </button>
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#2F8F4E] text-xs font-semibold text-white">
+                                {advisor.name
+                                  ? advisor.name
+                                      .split(" ")
+                                      .map((part) => part[0])
+                                      .slice(0, 2)
+                                      .join("")
+                                      .toUpperCase()
+                                  : "AD"}
+                              </div>
 
+                              <div>
+                                <p className="text-sm font-medium text-[#176B3A]">
+                                  {advisor.name}
+                                </p>
+
+                                {advisor.advisor_id && (
+                                  <p className="mt-1 text-[11px] text-[#173B28]/55">
+                                    {advisor.advisor_id}
+                                  </p>
+                                )}
+                              </div>
+                            </button>
+                          </td>
+
+                          {/* Contact */}
+                          <td className="px-4 py-5">
+                            <p className="text-sm text-[#173B28]">
+                              {advisor.email}
+                            </p>
+
+                            {advisor.phone_number && (
+                              <p className="mt-1 text-xs text-[#173B28]/55">
+                                {advisor.phone_number}
+                              </p>
+                            )}
+                          </td>
+
+                          {/* Type */}
+                          <td className="px-4 py-5">
+                            <span className="inline-flex rounded-full border border-[#2F8F4E]/30 bg-[#E7F1E3] px-2.5 py-1 text-[11px] font-medium capitalize text-[#176B3A]">
+                              {advisor.type}
+                            </span>
+                          </td>
+
+                          {/* Status */}
+                          <td className="px-4 py-5">
                             <button
                               type="button"
-                              onClick={() => handleOpenChat(advisor)}
+                              onClick={() => handleToggleActive(advisor)}
                               disabled={
-                                isUpdating ||
-                                isDeleting ||
-                                !advisor.advisor_id
+                                isUpdating || isDeleting || !advisor.advisor_id
                               }
-                              className="bg-[#3e1919] px-3 py-1.5 text-xs font-medium text-[#f7f5f6] transition hover:bg-[#3e1919]/90 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="group flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                              Chat
-                            </button>
+                              <span
+                                className={`h-2 w-2 rounded-full ${
+                                  advisor.active
+                                    ? "bg-[#2F8F4E]"
+                                    : "bg-[#173B28]/30"
+                                }`}
+                              />
 
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setEditingAdvisor({
-                                  ...advisor,
-                                  working_hours: advisor.working_hours || {
-                                    start: "",
-                                    end: "",
-                                  },
-                                })
-                              }
-                              disabled={
-                                isUpdating ||
-                                isDeleting ||
-                                !advisor.advisor_id
-                              }
-                              className="border border-[#a79093]/35 px-3 py-1.5 text-xs font-medium text-[#3e1919] transition hover:border-[#3e1919] hover:bg-[#f0e2d6] disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              Edit
+                              <span
+                                className={`text-xs font-medium ${
+                                  advisor.active
+                                    ? "text-[#176B3A]"
+                                    : "text-[#173B28]/55"
+                                }`}
+                              >
+                                {advisor.active ? "Active" : "Inactive"}
+                              </span>
                             </button>
+                          </td>
 
-                            <button
-                              type="button"
-                              onClick={() => setAdvisorToDelete(advisor)}
-                              disabled={
-                                isUpdating ||
-                                isDeleting ||
-                                !advisor.advisor_id
-                              }
-                              className="px-3 py-1.5 text-xs font-medium text-[#a79093] transition hover:bg-[#f0e2d6] hover:text-[#3e1919] disabled:cursor-not-allowed disabled:opacity-50"
+                          {/* 3-dot menu */}
+                          <td className="px-4 py-5 text-right">
+                            <div
+                              className="relative inline-block text-left"
+                              ref={isMenuOpen ? menuRef : null}
                             >
-                              {isDeleting ? "Deleting..." : "Delete"}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setOpenMenuId(isMenuOpen ? null : key)
+                                }
+                                className="flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-[#173B28]/60 transition hover:border-[#E7F1E3] hover:bg-[#FAFBF7] hover:text-[#176B3A]"
+                                aria-label="Open actions menu"
+                                aria-haspopup="true"
+                                aria-expanded={isMenuOpen}
+                              >
+                                <svg
+                                  width="4"
+                                  height="16"
+                                  viewBox="0 0 4 16"
+                                  fill="currentColor"
+                                  aria-hidden="true"
+                                >
+                                  <circle cx="2" cy="2" r="1.6" />
+                                  <circle cx="2" cy="8" r="1.6" />
+                                  <circle cx="2" cy="14" r="1.6" />
+                                </svg>
+                              </button>
+
+                              {isMenuOpen && (
+                                <div className="absolute right-0 z-20 mt-2 w-40 overflow-hidden rounded-xl border border-[#E7F1E3] bg-white shadow-lg">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      setSelectedAdvisor(advisor);
+                                    }}
+                                    className="block w-full px-4 py-2.5 text-left text-sm text-[#173B28] transition hover:bg-[#FAFBF7] hover:text-[#176B3A]"
+                                  >
+                                    View details
+                                  </button>
+
+                                 
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -544,15 +559,15 @@ export default function Advisors() {
 
         {/* View Modal */}
         {selectedAdvisor && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3e1919]/60 p-4">
-            <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto bg-[#f7f5f6] shadow-2xl">
-              <div className="flex items-start justify-between border-b border-[#a79093]/30 px-6 py-5">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#173B28]/60 p-4 backdrop-blur-sm">
+            <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl">
+              <div className="flex items-start justify-between border-b border-[#E7F1E3] px-6 py-5">
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
                     Advisor profile
                   </p>
 
-                  <h2 className="mt-1 text-xl font-semibold text-[#3e1919]">
+                  <h2 className="mt-1 text-xl font-semibold text-[#176B3A]">
                     Advisor details
                   </h2>
                 </div>
@@ -560,14 +575,14 @@ export default function Advisors() {
                 <button
                   type="button"
                   onClick={() => setSelectedAdvisor(null)}
-                  className="text-2xl leading-none text-[#a79093] transition hover:text-[#3e1919]"
+                  className="text-2xl leading-none text-[#173B28]/40 transition hover:text-[#176B3A]"
                   aria-label="Close"
                 >
                   ×
                 </button>
               </div>
 
-              <div className="divide-y divide-[#a79093]/20 px-6">
+              <div className="divide-y divide-[#E7F1E3] px-6">
                 {[
                   ["Advisor ID", selectedAdvisor.advisor_id || "—"],
                   ["Name", selectedAdvisor.name],
@@ -587,43 +602,74 @@ export default function Advisors() {
                     key={label}
                     className="flex items-start justify-between gap-6 py-4"
                   >
-                    <p className="shrink-0 text-[10px] uppercase tracking-[0.14em] text-[#a79093]">
+                    <p className="shrink-0 text-[10px] uppercase tracking-[0.14em] text-[#2F8F4E]">
                       {label}
                     </p>
 
-                    <p className="max-w-[62%] break-words text-right text-sm text-[#3e1919]">
+                    <p className="max-w-[62%] break-words text-right text-sm text-[#173B28]">
                       {value}
                     </p>
                   </div>
                 ))}
 
                 <div className="flex items-center justify-between gap-6 py-4">
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-[#a79093]">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-[#2F8F4E]">
                     Status
                   </p>
 
                   <div className="flex items-center gap-2">
                     <span
-                      className={`h-2 w-2 ${
+                      className={`h-2 w-2 rounded-full ${
                         selectedAdvisor.active
-                          ? "bg-[#3e1919]"
-                          : "bg-[#a79093]"
+                          ? "bg-[#2F8F4E]"
+                          : "bg-[#173B28]/30"
                       }`}
                     />
 
-                    <p className="text-sm font-medium text-[#3e1919]">
+                    <p className="text-sm font-medium text-[#176B3A]">
                       {selectedAdvisor.active ? "Active" : "Inactive"}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 border-t border-[#a79093]/30 px-6 py-5">
+              {/* Actions inside view */}
+              <div className="flex flex-wrap justify-end gap-3 border-t border-[#E7F1E3] px-6 py-5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdvisorToDelete(selectedAdvisor);
+                    setSelectedAdvisor(null);
+                  }}
+                  disabled={!selectedAdvisor.advisor_id || isDeleting}
+                  className="rounded-full border border-[#2F8F4E]/30 px-5 py-2.5 text-sm font-medium text-[#173B28]/70 transition hover:border-[#2F8F4E]/60 hover:bg-[#FAFBF7] hover:text-[#176B3A] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Delete
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingAdvisor({
+                      ...selectedAdvisor,
+                      working_hours: selectedAdvisor.working_hours || {
+                        start: "",
+                        end: "",
+                      },
+                    });
+                    setSelectedAdvisor(null);
+                  }}
+                  disabled={!selectedAdvisor.advisor_id || isUpdating}
+                  className="rounded-full border border-[#2F8F4E]/40 px-5 py-2.5 text-sm font-medium text-[#176B3A] transition hover:border-[#2F8F4E] hover:bg-[#E7F1E3] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Edit
+                </button>
+
                 <button
                   type="button"
                   onClick={() => handleOpenChat(selectedAdvisor)}
                   disabled={!selectedAdvisor.advisor_id}
-                  className="bg-[#3e1919] px-5 py-2.5 text-sm font-medium text-[#f7f5f6] transition hover:bg-[#3e1919]/90 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-full bg-[#2F8F4E] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#176B3A] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Open chat
                 </button>
@@ -631,7 +677,7 @@ export default function Advisors() {
                 <button
                   type="button"
                   onClick={() => setSelectedAdvisor(null)}
-                  className="border border-[#a79093]/40 px-5 py-2.5 text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6]"
+                  className="rounded-full border border-[#2F8F4E]/40 px-5 py-2.5 text-sm font-medium text-[#176B3A] transition hover:bg-[#E7F1E3]"
                 >
                   Close
                 </button>
@@ -642,15 +688,15 @@ export default function Advisors() {
 
         {/* Edit Modal */}
         {editingAdvisor && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3e1919]/60 p-4">
-            <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto bg-[#f7f5f6] shadow-2xl">
-              <div className="flex items-start justify-between border-b border-[#a79093]/30 px-6 py-5">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#173B28]/60 p-4 backdrop-blur-sm">
+            <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+              <div className="flex items-start justify-between border-b border-[#E7F1E3] px-6 py-5">
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
                     Advisor management
                   </p>
 
-                  <h2 className="mt-1 text-xl font-semibold text-[#3e1919]">
+                  <h2 className="mt-1 text-xl font-semibold text-[#176B3A]">
                     Edit advisor
                   </h2>
                 </div>
@@ -658,7 +704,7 @@ export default function Advisors() {
                 <button
                   type="button"
                   onClick={() => setEditingAdvisor(null)}
-                  className="text-2xl leading-none text-[#a79093] transition hover:text-[#3e1919]"
+                  className="text-2xl leading-none text-[#173B28]/40 transition hover:text-[#176B3A]"
                   aria-label="Close"
                 >
                   ×
@@ -667,7 +713,7 @@ export default function Advisors() {
 
               <div className="grid gap-x-6 gap-y-5 px-6 py-6 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2F8F4E]">
                     Advisor ID
                   </label>
 
@@ -675,12 +721,12 @@ export default function Advisors() {
                     type="text"
                     value={editingAdvisor.advisor_id || ""}
                     disabled
-                    className="w-full border border-[#a79093]/25 bg-[#f0e2d6]/60 px-3 py-2.5 text-sm text-[#a79093] outline-none"
+                    className="w-full rounded-xl border border-[#E7F1E3] bg-[#FAFBF7] px-3 py-2.5 text-sm text-[#173B28]/55 outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2F8F4E]">
                     Name
                   </label>
 
@@ -693,12 +739,12 @@ export default function Advisors() {
                         name: event.target.value,
                       })
                     }
-                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
+                    className="w-full rounded-xl border border-[#E7F1E3] bg-white px-3 py-2.5 text-sm text-[#173B28] outline-none transition focus:border-[#2F8F4E] focus:ring-1 focus:ring-[#2F8F4E]/20"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2F8F4E]">
                     Email
                   </label>
 
@@ -711,12 +757,12 @@ export default function Advisors() {
                         email: event.target.value,
                       })
                     }
-                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
+                    className="w-full rounded-xl border border-[#E7F1E3] bg-white px-3 py-2.5 text-sm text-[#173B28] outline-none transition focus:border-[#2F8F4E] focus:ring-1 focus:ring-[#2F8F4E]/20"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2F8F4E]">
                     Gender
                   </label>
 
@@ -728,7 +774,7 @@ export default function Advisors() {
                         gender: event.target.value,
                       })
                     }
-                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
+                    className="w-full rounded-xl border border-[#E7F1E3] bg-white px-3 py-2.5 text-sm text-[#173B28] outline-none transition focus:border-[#2F8F4E] focus:ring-1 focus:ring-[#2F8F4E]/20"
                   >
                     <option value="">Select gender</option>
                     <option value="Male">Male</option>
@@ -738,7 +784,7 @@ export default function Advisors() {
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2F8F4E]">
                     Type
                   </label>
 
@@ -751,12 +797,12 @@ export default function Advisors() {
                         type: event.target.value,
                       })
                     }
-                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
+                    className="w-full rounded-xl border border-[#E7F1E3] bg-white px-3 py-2.5 text-sm text-[#173B28] outline-none transition focus:border-[#2F8F4E] focus:ring-1 focus:ring-[#2F8F4E]/20"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2F8F4E]">
                     Phone number
                   </label>
 
@@ -769,12 +815,12 @@ export default function Advisors() {
                         phone_number: event.target.value,
                       })
                     }
-                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
+                    className="w-full rounded-xl border border-[#E7F1E3] bg-white px-3 py-2.5 text-sm text-[#173B28] outline-none transition focus:border-[#2F8F4E] focus:ring-1 focus:ring-[#2F8F4E]/20"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2F8F4E]">
                     Location
                   </label>
 
@@ -787,12 +833,12 @@ export default function Advisors() {
                         location: event.target.value,
                       })
                     }
-                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
+                    className="w-full rounded-xl border border-[#E7F1E3] bg-white px-3 py-2.5 text-sm text-[#173B28] outline-none transition focus:border-[#2F8F4E] focus:ring-1 focus:ring-[#2F8F4E]/20"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2F8F4E]">
                     Working hours start
                   </label>
 
@@ -808,12 +854,12 @@ export default function Advisors() {
                         },
                       })
                     }
-                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
+                    className="w-full rounded-xl border border-[#E7F1E3] bg-white px-3 py-2.5 text-sm text-[#173B28] outline-none transition focus:border-[#2F8F4E] focus:ring-1 focus:ring-[#2F8F4E]/20"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#a79093]">
+                  <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2F8F4E]">
                     Working hours end
                   </label>
 
@@ -829,11 +875,11 @@ export default function Advisors() {
                         },
                       })
                     }
-                    className="w-full border border-[#a79093]/35 bg-white px-3 py-2.5 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919]"
+                    className="w-full rounded-xl border border-[#E7F1E3] bg-white px-3 py-2.5 text-sm text-[#173B28] outline-none transition focus:border-[#2F8F4E] focus:ring-1 focus:ring-[#2F8F4E]/20"
                   />
                 </div>
 
-                <div className="border-t border-[#a79093]/20 pt-5 md:col-span-2">
+                <div className="border-t border-[#E7F1E3] pt-5 md:col-span-2">
                   <label className="flex cursor-pointer items-center gap-3">
                     <input
                       id="advisor-active"
@@ -845,15 +891,15 @@ export default function Advisors() {
                           active: event.target.checked,
                         })
                       }
-                      className="h-4 w-4 accent-[#3e1919]"
+                      className="h-4 w-4 rounded accent-[#2F8F4E]"
                     />
 
                     <span>
-                      <span className="block text-sm font-medium text-[#3e1919]">
+                      <span className="block text-sm font-medium text-[#176B3A]">
                         Advisor is active
                       </span>
 
-                      <span className="mt-0.5 block text-xs text-[#a79093]">
+                      <span className="mt-0.5 block text-xs text-[#173B28]/55">
                         Active advisors can receive and manage conversations.
                       </span>
                     </span>
@@ -861,12 +907,12 @@ export default function Advisors() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 border-t border-[#a79093]/30 px-6 py-5">
+              <div className="flex justify-end gap-3 border-t border-[#E7F1E3] px-6 py-5">
                 <button
                   type="button"
                   onClick={() => setEditingAdvisor(null)}
                   disabled={isUpdating}
-                  className="border border-[#a79093]/40 px-5 py-2.5 text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6] disabled:opacity-50"
+                  className="rounded-full border border-[#2F8F4E]/40 px-5 py-2.5 text-sm font-medium text-[#176B3A] transition hover:bg-[#E7F1E3] disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -875,7 +921,7 @@ export default function Advisors() {
                   type="button"
                   onClick={handleUpdateAdvisor}
                   disabled={isUpdating}
-                  className="bg-[#3e1919] px-5 py-2.5 text-sm font-medium text-[#f7f5f6] transition hover:bg-[#3e1919]/90 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-full bg-[#2F8F4E] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#176B3A] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isUpdating ? "Saving..." : "Save changes"}
                 </button>
@@ -886,41 +932,41 @@ export default function Advisors() {
 
         {/* Delete Modal */}
         {advisorToDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3e1919]/60 p-4">
-            <div className="w-full max-w-md bg-[#f7f5f6] shadow-2xl">
-              <div className="border-b border-[#a79093]/30 px-6 py-5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a79093]">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#173B28]/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+              <div className="border-b border-[#E7F1E3] px-6 py-5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
                   Confirmation required
                 </p>
 
-                <h2 className="mt-2 text-xl font-semibold text-[#3e1919]">
+                <h2 className="mt-2 text-xl font-semibold text-[#176B3A]">
                   Delete advisor
                 </h2>
               </div>
 
               <div className="px-6 py-6">
-                <p className="text-sm leading-6 text-[#a79093]">
+                <p className="text-sm leading-6 text-[#173B28]/65">
                   Are you sure you want to delete{" "}
-                  <span className="font-semibold text-[#3e1919]">
+                  <span className="font-semibold text-[#176B3A]">
                     {advisorToDelete.name}
                   </span>
                   ?
                 </p>
 
-                <div className="mt-5 border-l-2 border-[#3e1919] bg-[#f0e2d6] px-4 py-3">
-                  <p className="text-xs leading-5 text-[#3e1919]">
+                <div className="mt-5 rounded-xl border border-[#2F8F4E]/30 bg-[#E7F1E3] px-4 py-3">
+                  <p className="text-xs leading-5 text-[#176B3A]">
                     This action cannot be undone. The advisor will be removed
                     from the administration directory.
                   </p>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 border-t border-[#a79093]/30 px-6 py-5">
+              <div className="flex justify-end gap-3 border-t border-[#E7F1E3] px-6 py-5">
                 <button
                   type="button"
                   onClick={() => setAdvisorToDelete(null)}
                   disabled={isDeleting}
-                  className="border border-[#a79093]/40 px-5 py-2.5 text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6] disabled:opacity-50"
+                  className="rounded-full border border-[#2F8F4E]/40 px-5 py-2.5 text-sm font-medium text-[#176B3A] transition hover:bg-[#E7F1E3] disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -929,7 +975,7 @@ export default function Advisors() {
                   type="button"
                   onClick={handleDeleteAdvisor}
                   disabled={isDeleting}
-                  className="bg-[#3e1919] px-5 py-2.5 text-sm font-medium text-[#f7f5f6] transition hover:bg-[#3e1919]/90 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-full bg-[#2F8F4E] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#176B3A] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isDeleting ? "Deleting..." : "Delete advisor"}
                 </button>
