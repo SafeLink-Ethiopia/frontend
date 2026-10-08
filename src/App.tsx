@@ -10,6 +10,7 @@ import {
 
 import InformationPage from "./pages/InformationPage";
 import { Assistant } from "./components/Assistant";
+import UserProfile from "./pages/UserProfile";
 
 // =========================
 // Public Pages
@@ -72,7 +73,7 @@ function LandingRoute({ hasSavedSession }: { hasSavedSession: boolean }) {
   return (
     <LandingPage
       onNeedHelp={() => navigate("/create")}
-      onHelping={() => navigate("/helping")}
+    
       hasSavedSession={hasSavedSession}
       onContinueSession={() => navigate("/login")}
     />
@@ -156,7 +157,7 @@ function App() {
           path="/advisor/user-conversations"
           element={<UserConversations />}
         />
-
+        <Route path="/user/profile" element={<UserProfile />} />
         <Route
           path="/"
           element={<LandingRoute hasSavedSession={hasSavedSession} />}
@@ -199,8 +200,6 @@ function App() {
 
         <Route path="/quick-exit" element={<QuickExitPage />} />
 
-    
-
         {/* =====================================================
             ADVISOR ROUTES
         ====================================================== */}
@@ -241,48 +240,29 @@ function App() {
           element={<AdvisorAdminChat />}
         /> */}
 
-
-
-
         {/* Advisor Dashboard / Application */}
-<Route element={<AdvisorLayout />}>
+        <Route element={<AdvisorLayout />}>
+          {/* Dashboard */}
+          <Route path="/advisor/dashboard" element={<AdvisorDashboardPage />} />
 
-  {/* Dashboard */}
-  <Route
-    path="/advisor/dashboard"
-    element={<AdvisorDashboardPage />}
-  />
+          {/* Profile */}
+          <Route path="/advisor/profile" element={<AdvisorProfilePage />} />
 
-  {/* Profile */}
-  <Route
-    path="/advisor/profile"
-    element={<AdvisorProfilePage />}
-  />
+          {/* Change password */}
+          <Route
+            path="/advisor/change-password"
+            element={<AdvisorProfilePage />}
+          />
 
-  {/* Change password */}
-  <Route
-    path="/advisor/change-password"
-    element={<AdvisorProfilePage />}
-  />
+          {/* Advisor messages */}
+          <Route path="/advisor/messages" element={<AdvisorMessages />} />
 
-  {/* Advisor messages */}
-  <Route
-    path="/advisor/messages"
-    element={<AdvisorMessages />}
-  />
-
-  {/* Advisor → Admin chat */}
-  <Route
-    path="/advisor/messages/:conversationId"
-    element={<AdvisorAdminChat />}
-  />
-
-</Route>
-
-
-
-
-
+          {/* Advisor → Admin chat */}
+          <Route
+            path="/advisor/messages/:conversationId"
+            element={<AdvisorAdminChat />}
+          />
+        </Route>
 
         {/* =====================================================
             ADMIN LOGIN
