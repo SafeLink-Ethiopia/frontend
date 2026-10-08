@@ -10,6 +10,7 @@ import {
 
 import InformationPage from "./pages/InformationPage";
 import { Assistant } from "./components/Assistant";
+import UserLayout from "./components/user/UserLayout";
 import UserProfile from "./pages/UserProfile";
 
 // =========================
@@ -154,16 +155,9 @@ function App() {
         ====================================================== */}
 
         <Route
-          path="/advisor/user-conversations"
-          element={<UserConversations />}
-        />
-        <Route path="/user/profile" element={<UserProfile />} />
-        <Route
           path="/"
           element={<LandingRoute hasSavedSession={hasSavedSession} />}
         />
-
-        <Route path="/information" element={<InformationPage />} />
 
         <Route
           path="/create"
@@ -171,8 +165,6 @@ function App() {
             <CreateSessionRoute onSessionCreated={handleSessionCreated} />
           }
         />
-
-        <Route path="/awareness" element={<AwarenessPage />} />
 
         <Route
           path="/session-created"
@@ -185,16 +177,17 @@ function App() {
             USER DASHBOARD
         ====================================================== */}
 
-        <Route path="/user/dashboard" element={<UserDashboard />} />
-
-        {/* User → Advisor Chat */}
-        <Route path="/user/dashboard/chat" element={<UserAdvisorChat />} />
-
-        {/* Old route kept for compatibility */}
-        <Route
-          path="/user/advisor-chat"
-          element={<Navigate to="/user/dashboard/chat" replace />}
-        />
+        <Route element={<UserLayout />}>
+          <Route path="/user/dashboard" element={<UserDashboard />} />
+          <Route path="/user/profile" element={<UserProfile />} />
+          <Route path="/user/dashboard/chat" element={<UserAdvisorChat />} />
+          <Route
+            path="/user/advisor-chat"
+            element={<Navigate to="/user/dashboard/chat" replace />}
+          />
+          <Route path="/awareness" element={<AwarenessPage />} />
+          <Route path="/information" element={<InformationPage />} />
+        </Route>
 
         <Route path="/helping" element={<HelpingRoute />} />
 
@@ -203,9 +196,6 @@ function App() {
         {/* =====================================================
             ADVISOR ROUTES
         ====================================================== */}
-
-        {/* Advisor landing / main page */}
-        <Route path="/advisor" element={<AdvisorPage />} />
 
         {/* Advisor login */}
         <Route path="/advisor/login" element={<AdvisorLoginPage />} />
@@ -241,27 +231,34 @@ function App() {
         /> */}
 
         {/* Advisor Dashboard / Application */}
-        <Route element={<AdvisorLayout />}>
+        <Route path="/advisor" element={<AdvisorLayout />}>
+          <Route index element={<AdvisorPage />} />
+          <Route
+            path="user-conversations"
+            element={<UserConversations />}
+          />
           {/* Dashboard */}
-          <Route path="/advisor/dashboard" element={<AdvisorDashboardPage />} />
+          <Route path="dashboard" element={<AdvisorDashboardPage />} />
 
           {/* Profile */}
-          <Route path="/advisor/profile" element={<AdvisorProfilePage />} />
+          <Route path="profile" element={<AdvisorProfilePage />} />
 
           {/* Change password */}
           <Route
-            path="/advisor/change-password"
+            path="change-password"
             element={<AdvisorProfilePage />}
           />
 
           {/* Advisor messages */}
-          <Route path="/advisor/messages" element={<AdvisorMessages />} />
+          <Route path="messages" element={<AdvisorMessages />} />
 
           {/* Advisor → Admin chat */}
           <Route
-            path="/advisor/messages/:conversationId"
+            path="messages/:conversationId"
             element={<AdvisorAdminChat />}
           />
+          <Route path="awareness" element={<AwarenessPage />} />
+          <Route path="information" element={<InformationPage />} />
         </Route>
 
         {/* =====================================================
@@ -274,40 +271,40 @@ function App() {
             PROTECTED ADMIN ROUTES
         ====================================================== */}
 
-        <Route element={<AdminProtectedRoute />}>
+        <Route path="/admin" element={<AdminProtectedRoute />}>
           <Route element={<AdminLayout />}>
             {/* Admin Dashboard */}
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
 
             {/* Awareness */}
-            <Route path="/admin/awareness" element={<AdminAwareness />} />
+            <Route path="awareness" element={<AdminAwareness />} />
 
             {/* Users */}
-            <Route path="/admin/users" element={<div>Users</div>} />
+            <Route path="users" element={<div>Users</div>} />
 
             {/* Reports */}
-            <Route path="/admin/reports" element={<div>Reports</div>} />
+            <Route path="reports" element={<div>Reports</div>} />
 
             {/* Resources */}
-            <Route path="/admin/resources" element={<div>Resources</div>} />
+            <Route path="resources" element={<div>Resources</div>} />
 
             {/* Settings */}
-            <Route path="/admin/settings" element={<div>Settings</div>} />
+            <Route path="settings" element={<div>Settings</div>} />
 
             {/* =================================================
                 ADVISOR MANAGEMENT
             ================================================== */}
 
-            <Route path="/admin/advisors/create" element={<CreateAdvisor />} />
+            <Route path="advisors/create" element={<CreateAdvisor />} />
 
-            <Route path="/admin/advisors" element={<Advisors />} />
+            <Route path="advisors" element={<Advisors />} />
 
             {/* =================================================
                 ADMIN → ADVISOR CHAT
             ================================================== */}
 
             <Route
-              path="/admin/advisors/:advisorId/chat"
+              path="advisors/:advisorId/chat"
               element={<AdminAdvisorChat />}
             />
 
@@ -315,7 +312,7 @@ function App() {
                 ADMIN MESSAGES
             ================================================== */}
 
-            <Route path="/admin/messages" element={<AdminMessages />} />
+            <Route path="messages" element={<AdminMessages />} />
           </Route>
         </Route>
 

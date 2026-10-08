@@ -8,9 +8,18 @@ import {
   Info,
   User,
   LogOut,
+  X,
 } from "lucide-react";
 
-export default function AdvisorSidebar() {
+type AdvisorSidebarProps = {
+  mobileMenuOpen: boolean;
+  onClose: () => void;
+};
+
+export default function AdvisorSidebar({
+  mobileMenuOpen,
+  onClose,
+}: AdvisorSidebarProps) {
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -20,10 +29,36 @@ export default function AdvisorSidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-[300px] flex-col bg-[#3e1919] px-5 py-9">
-
-      {/* Logo */}
-      {/* ...your existing logo code... */}
+    <aside
+      className={`${
+        mobileMenuOpen
+          ? "fixed inset-y-0 left-0 z-50 flex w-[min(85vw,300px)] shadow-xl"
+          : "fixed inset-y-0 left-0 z-40 hidden w-[300px] lg:flex"
+      } h-screen flex-col overflow-y-auto bg-[#3e1919] px-5 py-9`}
+    >
+      <div className="mb-10 flex items-center justify-between gap-4 px-2">
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f0e2d6]">
+            <Heart size={29} strokeWidth={2} className="text-[#3e1919]" />
+          </div>
+          <div>
+            <h1 className="text-[25px] font-bold leading-none text-[#f7f5f6]">
+              SafeLink
+            </h1>
+            <p className="mt-2 text-[10px] font-bold tracking-[3px] text-[#a79093]">
+              PRIVATE SUPPORT
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close advisor navigation"
+          className="rounded-lg p-2 text-[#f0e2d6] hover:bg-[#f0e2d6]/10 lg:hidden"
+        >
+          <X size={20} />
+        </button>
+      </div>
 
       <p className="mb-4 px-5 text-[12px] font-bold tracking-[2px] text-[#a79093]">
         YOUR SPACE
@@ -49,12 +84,12 @@ export default function AdvisorSidebar() {
           },
           {
             label: "Awareness",
-            path: "/awareness",
+            path: "/advisor/awareness",
             icon: Diamond,
           },
           {
             label: "Information",
-            path: "/information",
+            path: "/advisor/information",
             icon: Info,
           },
           {
@@ -70,6 +105,7 @@ export default function AdvisorSidebar() {
               key={link.path}
               to={link.path}
               end={link.path === "/advisor"}
+              onClick={onClose}
               className={({ isActive }) =>
                 `flex items-center gap-5 rounded-2xl px-5 py-5 text-[17px] transition ${
                   isActive

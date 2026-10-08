@@ -1,4 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ArrowLeft,
+  Check,
+  CheckCheck,
+  MoreVertical,
+  Search,
+  Send,
+  X,
+} from "lucide-react";
 
 import {
   Conversation,
@@ -22,6 +31,10 @@ import {
 
 import { FACILITIES, Facility } from "../data/facilities";
 
+/* ------------------------------------------------------------------ */
+/* Helpers                                                             */
+/* ------------------------------------------------------------------ */
+
 function formatTime(timestamp: string) {
   return new Date(timestamp).toLocaleTimeString([], {
     hour: "2-digit",
@@ -30,10 +43,24 @@ function formatTime(timestamp: string) {
 }
 
 function formatDate(timestamp: string) {
-  return new Date(timestamp).toLocaleDateString([], {
-    month: "short",
+  const date = new Date(timestamp);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) return "Today";
+  if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+
+  return date.toLocaleDateString([], {
     day: "numeric",
+    month: "long",
+    year: "numeric",
   });
+}
+
+function getInitials(sessionId: string) {
+  const clean = sessionId.replace(/^SL-/i, "");
+  return clean.slice(0, 2).toUpperCase() || "SL";
 }
 
 type RecommendationFacility = {
@@ -46,9 +73,7 @@ type RecommendationFacility = {
   support_types?: string[];
 };
 
-function mapMongoFacility(
-  f: MongoFacility
-): RecommendationFacility {
+function mapMongoFacility(f: MongoFacility): RecommendationFacility {
   return {
     facility_id: f.facility_id,
     facility_name: f.facility_name,
@@ -60,54 +85,40 @@ function mapMongoFacility(
   };
 }
 
-export default function AdvisorPage() {
-  const [conversations, setConversations] =
-    useState<Conversation[]>([]);
+/* ------------------------------------------------------------------ */
+/* Component                                                           */
+/* ------------------------------------------------------------------ */
 
-  const [
-    selectedConversation,
-    setSelectedConversation,
-  ] = useState<Conversation | null>(null);
+export default function AdvisorPage() {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+
+  const [selectedConversation, setSelectedConversation] =
+    useState<Conversation | null>(null);
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [showMobileChat, setShowMobileChat] =
-    useState(false);
+  const [conversationSearch, setConversationSearch] = useState("");
 
-  const [showHeaderMenu, setShowHeaderMenu] =
-    useState(false);
-
-  const [showListMenu, setShowListMenu] =
-    useState(false);
+  const [showMobileChat, setShowMobileChat] = useState(false);
+  const [showHeaderMenu, setShowHeaderMenu] = useState(false);
+  const [showListMenu, setShowListMenu] = useState(false);
 
   const [deleteMode, setDeleteMode] = useState(false);
+  const [selectedMessageIds, setSelectedMessageIds] = useState<string[]>([]);
 
-  const [selectedMessageIds, setSelectedMessageIds] =
-    useState<string[]>([]);
+  const [chatDeleteMode, setChatDeleteMode] = useState(false);
+  const [selectedConversationIds, setSelectedConversationIds] = useState<
+    string[]
+  >([]);
 
-  const [chatDeleteMode, setChatDeleteMode] =
-    useState(false);
-
-  const [
-    selectedConversationIds,
-    setSelectedConversationIds,
-  ] = useState<string[]>([]);
-
-  const [editingMessageId, setEditingMessageId] =
-    useState<string | null>(null);
-
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
 
-  const [openMessageMenu, setOpenMessageMenu] =
-    useState<string | null>(null);
+  const [openMessageMenu, setOpenMessageMenu] = useState<string | null>(null);
 
-  const [showFacilities, setShowFacilities] =
-    useState(false);
-
-  const [showCustomFacility, setShowCustomFacility] =
-    useState(false);
-
+  const [showFacilities, setShowFacilities] = useState(false);
+  const [showCustomFacility, setShowCustomFacility] = useState(false);
   const [facilitySearch, setFacilitySearch] = useState("");
 
   const [customFacility, setCustomFacility] = useState({
@@ -118,9 +129,7 @@ export default function AdvisorPage() {
     notes: "",
   });
 
-  const [facilities, setFacilities] = useState<
-    RecommendationFacility[]
-  >(
+  const [facilities, setFacilities] = useState<RecommendationFacility[]>(
     FACILITIES.map((f: Facility) => ({
       facility_id: f.facility_id,
       facility_name: f.facility_name,
@@ -128,11 +137,15 @@ export default function AdvisorPage() {
       contact: f.contact,
       description: f.description,
       support_types: f.support_types,
-    }))
+    })),
   );
 
-  const messagesEndRef =
-    useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  /* ================================================================ */
+  /* Load facilities                                                  */
+  /* ================================================================ */
 
   useEffect(() => {
     void (async () => {
@@ -142,13 +155,14 @@ export default function AdvisorPage() {
           setFacilities(list.map(mapMongoFacility));
         }
       } catch (error) {
-        console.error(
-          "Failed to load facilities from MongoDB:",
-          error
-        );
+        console.error("Failed to load facilities from MongoDB:", error);
       }
     })();
   }, []);
+
+  /* ================================================================ */
+  /* Load conversations                                               */
+  /* ================================================================ */
 
   const loadConversations = async () => {
     try {
@@ -159,49 +173,45 @@ export default function AdvisorPage() {
           data.map((conversation) => [
             conversation.conversation_id,
             conversation,
-          ])
-        ).values()
+          ]),
+        ).values(),
       );
 
       setConversations((current) =>
-        JSON.stringify(current) === JSON.stringify(unique)
-          ? current
-          : unique
+        JSON.stringify(current) === JSON.stringify(unique) ? current : unique,
       );
 
       if (selectedConversation) {
         const updated = unique.find(
           (conversation) =>
             conversation.conversation_id ===
-            selectedConversation.conversation_id
+            selectedConversation.conversation_id,
         );
 
         if (updated) {
           setSelectedConversation((current) =>
             current && JSON.stringify(current) === JSON.stringify(updated)
               ? current
-              : updated
+              : updated,
           );
         }
       }
     } catch (error) {
-      console.error(
-        "Failed to load conversations:",
-        error
-      );
+      console.error("Failed to load conversations:", error);
     }
   };
 
   useEffect(() => {
     loadConversations();
 
-    const interval = setInterval(
-      loadConversations,
-      2000
-    );
+    const interval = setInterval(loadConversations, 2000);
 
     return () => clearInterval(interval);
   }, []);
+
+  /* ================================================================ */
+  /* Refresh selected conversation + mark seen                        */
+  /* ================================================================ */
 
   useEffect(() => {
     if (!selectedConversation) return;
@@ -209,33 +219,24 @@ export default function AdvisorPage() {
     const refreshSelectedConversation = async () => {
       try {
         const updated = await getConversation(
-          selectedConversation.conversation_id
+          selectedConversation.conversation_id,
         );
 
         setSelectedConversation((current) =>
           current && JSON.stringify(current) === JSON.stringify(updated)
             ? current
-            : updated
+            : updated,
         );
       } catch (error) {
-        console.error(
-          "Failed to refresh selected conversation:",
-          error
-        );
+        console.error("Failed to refresh selected conversation:", error);
       }
     };
 
     const markSeen = async () => {
       try {
-        await markMessagesSeen(
-          selectedConversation.conversation_id,
-          "advisor"
-        );
+        await markMessagesSeen(selectedConversation.conversation_id, "advisor");
       } catch (error) {
-        console.error(
-          "Failed to mark messages as seen:",
-          error
-        );
+        console.error("Failed to mark messages as seen:", error);
       }
     };
 
@@ -250,14 +251,14 @@ export default function AdvisorPage() {
   }, [selectedConversation?.conversation_id]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [selectedConversation?.messages.length]);
 
-  const handleSelectConversation = (
-    conversation: Conversation
-  ) => {
+  /* ================================================================ */
+  /* Selection helpers                                                */
+  /* ================================================================ */
+
+  const handleSelectConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation);
     setShowMobileChat(true);
     setShowFacilities(false);
@@ -273,20 +274,15 @@ export default function AdvisorPage() {
 
     setOpenMessageMenu(null);
     setEditingMessageId(null);
+    setEditingText("");
   };
 
-  const toggleConversationSelection = (
-    conversationId: string
-  ) => {
-    setSelectedConversationIds((current) => {
-      if (current.includes(conversationId)) {
-        return current.filter(
-          (id) => id !== conversationId
-        );
-      }
-
-      return [...current, conversationId];
-    });
+  const toggleConversationSelection = (conversationId: string) => {
+    setSelectedConversationIds((current) =>
+      current.includes(conversationId)
+        ? current.filter((id) => id !== conversationId)
+        : [...current, conversationId],
+    );
   };
 
   const cancelChatDeleteMode = () => {
@@ -295,83 +291,62 @@ export default function AdvisorPage() {
     setShowListMenu(false);
   };
 
-  const confirmSelectedConversationsDeletion =
-    async () => {
+  const confirmSelectedConversationsDeletion = async () => {
+    if (selectedConversationIds.length === 0 || loading) return;
+
+    const confirmed = window.confirm(
+      `Delete ${selectedConversationIds.length} selected chat${
+        selectedConversationIds.length === 1 ? "" : "s"
+      } from the advisor list?`,
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setLoading(true);
+
+      await deleteSelectedConversations(selectedConversationIds);
+
       if (
-        selectedConversationIds.length === 0 ||
-        loading
+        selectedConversation &&
+        selectedConversationIds.includes(selectedConversation.conversation_id)
       ) {
-        return;
+        setSelectedConversation(null);
+        setShowMobileChat(false);
       }
 
-      const confirmed = window.confirm(
-        `Delete ${selectedConversationIds.length} selected chat${
-          selectedConversationIds.length === 1
-            ? ""
-            : "s"
-        } from the advisor list?`
-      );
+      setChatDeleteMode(false);
+      setSelectedConversationIds([]);
+    } catch (error) {
+      console.error("Failed to delete selected conversations:", error);
+      alert("Failed to delete selected chats.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      if (!confirmed) return;
-
-      try {
-        setLoading(true);
-
-        await deleteSelectedConversations(
-          selectedConversationIds
-        );
-
-        if (
-          selectedConversation &&
-          selectedConversationIds.includes(
-            selectedConversation.conversation_id
-          )
-        ) {
-          setSelectedConversation(null);
-          setShowMobileChat(false);
-        }
-
-        setChatDeleteMode(false);
-        setSelectedConversationIds([]);
-      } catch (error) {
-        console.error(
-          "Failed to delete selected conversations:",
-          error
-        );
-
-        alert("Failed to delete selected chats.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  /* ================================================================ */
+  /* Send / edit / delete                                             */
+  /* ================================================================ */
 
   const handleSendMessage = async () => {
-    if (
-      !selectedConversation ||
-      !message.trim() ||
-      loading
-    ) {
-      return;
-    }
+    if (!selectedConversation || !message.trim() || loading) return;
 
     try {
       setLoading(true);
 
       const updated = await sendAdvisorMessage(
         selectedConversation.conversation_id,
-        message.trim()
+        message.trim(),
       );
 
       setSelectedConversation(updated);
       setMessage("");
 
       await loadConversations();
+      requestAnimationFrame(() => inputRef.current?.focus());
     } catch (error) {
-      console.error(
-        "Failed to send advisor message:",
-        error
-      );
-
+      console.error("Failed to send advisor message:", error);
       alert("Failed to send message.");
     } finally {
       setLoading(false);
@@ -379,19 +354,13 @@ export default function AdvisorPage() {
   };
 
   const startEditing = (currentMessage: Message) => {
-    if (
-      currentMessage.sender !== "advisor" ||
-      currentMessage.deleted
-    ) {
-      return;
-    }
+    if (currentMessage.sender !== "advisor" || currentMessage.deleted) return;
 
-    setEditingMessageId(
-      currentMessage.message_id
-    );
-
+    setEditingMessageId(currentMessage.message_id);
     setEditingText(currentMessage.text);
     setOpenMessageMenu(null);
+
+    requestAnimationFrame(() => inputRef.current?.focus());
   };
 
   const cancelEditing = () => {
@@ -416,26 +385,20 @@ export default function AdvisorPage() {
         selectedConversation.conversation_id,
         editingMessageId,
         editingText.trim(),
-        "advisor"
+        "advisor",
       );
 
       setSelectedConversation(updated);
       cancelEditing();
     } catch (error) {
-      console.error(
-        "Failed to edit message:",
-        error
-      );
-
+      console.error("Failed to edit message:", error);
       alert("Failed to edit message.");
     } finally {
       setLoading(false);
     }
   };
 
-  const deleteOneMessage = async (
-    currentMessage: Message
-  ) => {
+  const deleteOneMessage = async (currentMessage: Message) => {
     if (
       !selectedConversation ||
       currentMessage.sender !== "advisor" ||
@@ -445,10 +408,7 @@ export default function AdvisorPage() {
       return;
     }
 
-    const confirmed = window.confirm(
-      "Delete this message?"
-    );
-
+    const confirmed = window.confirm("Delete this message?");
     if (!confirmed) return;
 
     try {
@@ -457,47 +417,27 @@ export default function AdvisorPage() {
       const updated = await deleteMessage(
         selectedConversation.conversation_id,
         currentMessage.message_id,
-        "advisor"
+        "advisor",
       );
 
       setSelectedConversation(updated);
       setOpenMessageMenu(null);
     } catch (error) {
-      console.error(
-        "Failed to delete message:",
-        error
-      );
-
+      console.error("Failed to delete message:", error);
       alert("Failed to delete message.");
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleMessageSelection = (
-    currentMessage: Message
-  ) => {
-    if (
-      currentMessage.sender !== "advisor" ||
-      currentMessage.deleted
-    ) {
-      return;
-    }
+  const toggleMessageSelection = (currentMessage: Message) => {
+    if (currentMessage.sender !== "advisor" || currentMessage.deleted) return;
 
-    setSelectedMessageIds((current) => {
-      if (
-        current.includes(currentMessage.message_id)
-      ) {
-        return current.filter(
-          (id) => id !== currentMessage.message_id
-        );
-      }
-
-      return [
-        ...current,
-        currentMessage.message_id,
-      ];
-    });
+    setSelectedMessageIds((current) =>
+      current.includes(currentMessage.message_id)
+        ? current.filter((id) => id !== currentMessage.message_id)
+        : [...current, currentMessage.message_id],
+    );
   };
 
   const cancelDeleteMode = () => {
@@ -507,18 +447,14 @@ export default function AdvisorPage() {
   };
 
   const confirmSelectedDeletion = async () => {
-    if (
-      !selectedConversation ||
-      selectedMessageIds.length === 0 ||
-      loading
-    ) {
+    if (!selectedConversation || selectedMessageIds.length === 0 || loading) {
       return;
     }
 
     const confirmed = window.confirm(
       `Delete ${selectedMessageIds.length} selected message${
         selectedMessageIds.length === 1 ? "" : "s"
-      }?`
+      }?`,
     );
 
     if (!confirmed) return;
@@ -529,22 +465,22 @@ export default function AdvisorPage() {
       const updated = await deleteSelectedMessages(
         selectedConversation.conversation_id,
         selectedMessageIds,
-        "advisor"
+        "advisor",
       );
 
       setSelectedConversation(updated);
       cancelDeleteMode();
     } catch (error) {
-      console.error(
-        "Failed to delete selected messages:",
-        error
-      );
-
+      console.error("Failed to delete selected messages:", error);
       alert("Failed to delete selected messages.");
     } finally {
       setLoading(false);
     }
   };
+
+  /* ================================================================ */
+  /* Facilities                                                       */
+  /* ================================================================ */
 
   const handleRecommendFacility = async (facility: {
     facility_id: string;
@@ -560,7 +496,7 @@ export default function AdvisorPage() {
 
       const updated = await recommendFacility(
         selectedConversation.conversation_id,
-        facility
+        facility,
       );
 
       setSelectedConversation(updated);
@@ -579,11 +515,7 @@ export default function AdvisorPage() {
 
       await loadConversations();
     } catch (error) {
-      console.error(
-        "Failed to recommend facility:",
-        error
-      );
-
+      console.error("Failed to recommend facility:", error);
       alert("Failed to recommend facility.");
     } finally {
       setLoading(false);
@@ -607,7 +539,7 @@ export default function AdvisorPage() {
               customFacility.notes.trim() ||
               "Added by advisor during a conversation.",
           },
-          token
+          token,
         );
 
         try {
@@ -619,223 +551,262 @@ export default function AdvisorPage() {
           // Ignore refresh errors.
         }
       } catch (error) {
-        console.error(
-          "Failed to save facility to MongoDB:",
-          error
-        );
+        console.error("Failed to save facility to MongoDB:", error);
       }
     }
 
     await handleRecommendFacility(customFacility);
   };
 
-  const latestMessage = (
-    conversation: Conversation
-  ) => {
-    if (conversation.messages.length === 0) {
-      return "No messages yet";
-    }
+  /* ================================================================ */
+  /* Derived                                                          */
+  /* ================================================================ */
 
-    const last =
-      conversation.messages[
-        conversation.messages.length - 1
-      ];
+  const latestMessage = (conversation: Conversation) => {
+    if (conversation.messages.length === 0) return "No messages yet";
 
-    if (last.deleted) {
-      return "Message deleted";
-    }
+    const last = conversation.messages[conversation.messages.length - 1];
 
-    return last.text;
+    if (last.deleted) return "Message deleted";
+
+    return last.sender === "advisor" ? `You: ${last.text}` : last.text;
   };
 
-  const latestMessageTime = (
-    conversation: Conversation
-  ) => {
-    if (conversation.messages.length === 0) {
-      return "";
-    }
+  const latestMessageTime = (conversation: Conversation) => {
+    if (conversation.messages.length === 0) return "";
 
-    const last =
-      conversation.messages[
-        conversation.messages.length - 1
-      ];
+    const last = conversation.messages[conversation.messages.length - 1];
 
-    return new Date(
-      last.timestamp
-    ).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return formatTime(last.timestamp);
   };
 
-  const filteredFacilities =
-    facilities.filter((facility) => {
-      const query =
-        facilitySearch.trim().toLowerCase();
+  const filteredConversations = useMemo(() => {
+    const query = conversationSearch.trim().toLowerCase();
+    if (!query) return conversations;
 
-      if (!query) return true;
+    return conversations.filter(
+      (conversation) =>
+        conversation.session_id.toLowerCase().includes(query) ||
+        conversation.conversation_id.toLowerCase().includes(query),
+    );
+  }, [conversations, conversationSearch]);
 
-      return (
-        facility.facility_id
-          .toLowerCase()
-          .includes(query) ||
-        facility.facility_name
-          .toLowerCase()
-          .includes(query) ||
-        facility.location
-          .toLowerCase()
-          .includes(query)
-      );
-    });
+  const filteredFacilities = facilities.filter((facility) => {
+    const query = facilitySearch.trim().toLowerCase();
 
-  const sessionDisplay =
-    selectedConversation?.session_id ||
-    "SafeLink user";
+    if (!query) return true;
+
+    return (
+      facility.facility_id.toLowerCase().includes(query) ||
+      facility.facility_name.toLowerCase().includes(query) ||
+      facility.location.toLowerCase().includes(query)
+    );
+  });
+
+  const sessionDisplay = selectedConversation?.session_id || "SafeLink user";
+
+  const shouldShowDateSeparator = (messages: Message[], index: number) => {
+    if (index === 0) return true;
+
+    return (
+      new Date(messages[index].timestamp).toDateString() !==
+      new Date(messages[index - 1].timestamp).toDateString()
+    );
+  };
+
+  /* ================================================================ */
+  /* UI                                                               */
+  /* ================================================================ */
 
   return (
-    <div className="h-screen w-full overflow-hidden bg-[#f7f5f6] text-[#3e1919]">
-      <div className="mx-auto flex h-full w-full max-w-[1600px] overflow-hidden bg-[#f7f5f6]">
+    <div className="h-[100dvh] w-full overflow-hidden bg-[#FAFBF7] text-[#173B28]">
+      <div className="flex h-full w-full overflow-hidden">
+        {/* ============================================================
+            CONVERSATION LIST
+        ============================================================ */}
 
         <aside
           className={`${
             showMobileChat ? "hidden" : "flex"
-          } h-full w-full flex-col border-r border-[#f0e2d6] bg-[#3e1919] md:flex md:w-[350px] lg:w-[390px]`}
+          } h-full w-full flex-col border-r border-[#DCE8DD] bg-[#FAFBF7] md:flex md:w-[350px] lg:w-[390px]`}
         >
-          <div className="flex shrink-0 items-center justify-between border-b border-[#f0e2d6]/20 px-5 py-4">
-            <div>
-              <h1 className="text-xl font-semibold tracking-tight text-[#f7f5f6]">
-                SafeLink
-              </h1>
+          {/* Title */}
+          <div className="shrink-0 px-6 pt-7 pb-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight text-[#176B3A]">
+                  Messages
+                </h1>
 
-              <p className="mt-0.5 text-xs text-[#a79093]">
-                Advisor conversations
-              </p>
+                <p className="mt-1 text-sm text-[#2F8F4E]">
+                  Chat with SafeLink users
+                </p>
+              </div>
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowListMenu((current) => !current)}
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-[#173B28] transition hover:bg-[#E7F1E3]"
+                  aria-label="Conversation list menu"
+                >
+                  <MoreVertical size={19} />
+                </button>
+
+                {showListMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-20"
+                      onClick={() => setShowListMenu(false)}
+                    />
+
+                    <div className="absolute right-0 top-11 z-30 w-52 overflow-hidden rounded-xl border border-[#DCE8DD] bg-white shadow-xl">
+                      {!chatDeleteMode ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setChatDeleteMode(true);
+                              setSelectedConversationIds([]);
+                              setShowListMenu(false);
+                              setDeleteMode(false);
+                              setSelectedMessageIds([]);
+                            }}
+                            className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
+                          >
+                            Delete chats
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowListMenu(false);
+                              setDeleteMode(true);
+                              setSelectedMessageIds([]);
+                              setChatDeleteMode(false);
+                              setSelectedConversationIds([]);
+                            }}
+                            className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
+                          >
+                            Delete messages
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={cancelChatDeleteMode}
+                          className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
+                        >
+                          Cancel selection
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() =>
-                  setShowListMenu((current) => !current)
-                }
-                className="flex h-10 w-10 items-center justify-center rounded-full text-xl text-[#f0e2d6] transition hover:bg-[#f0e2d6] hover:text-[#3e1919]"
-                aria-label="Conversation list menu"
-              >
-                ⋮
-              </button>
+            {/* Search */}
+            <div className="relative mt-5">
+              <Search
+                size={18}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-[#2F8F4E]"
+              />
 
-              {showListMenu && (
-                <div className="absolute right-0 top-12 z-30 w-56 overflow-hidden rounded-2xl border border-[#f0e2d6] bg-white shadow-2xl">
-                  {!chatDeleteMode ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setChatDeleteMode(true);
-                          setSelectedConversationIds([]);
-                          setShowListMenu(false);
-                          setDeleteMode(false);
-                          setSelectedMessageIds([]);
-                        }}
-                        className="w-full px-4 py-3 text-left text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6]"
-                      >
-                        Delete chats
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowListMenu(false);
-                          setDeleteMode(true);
-                          setSelectedMessageIds([]);
-                          setChatDeleteMode(false);
-                          setSelectedConversationIds([]);
-                        }}
-                        className="w-full px-4 py-3 text-left text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6]"
-                      >
-                        Delete messages
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={cancelChatDeleteMode}
-                      className="w-full px-4 py-3 text-left text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6]"
-                    >
-                      Cancel selection
-                    </button>
-                  )}
-                </div>
-              )}
+              <input
+                value={conversationSearch}
+                onChange={(event) => setConversationSearch(event.target.value)}
+                placeholder="Search users..."
+                className="h-12 w-full rounded-2xl border border-[#DCE8DD] bg-white pl-11 pr-4 text-sm text-[#173B28] outline-none placeholder:text-[#8A968D] focus:border-[#2F8F4E]"
+              />
             </div>
           </div>
 
+          {/* Selection bars */}
           {chatDeleteMode && (
-            <div className="flex shrink-0 items-center justify-between border-b border-[#f0e2d6]/20 bg-[#f0e2d6] px-4 py-3">
-              <span className="text-sm font-medium text-[#3e1919]">
+            <div className="flex shrink-0 items-center justify-between border-y border-[#DCE8DD] bg-[#E7F1E3] px-5 py-3">
+              <span className="text-sm font-medium text-[#173B28]">
                 {selectedConversationIds.length} selected
               </span>
 
-              <button
-                type="button"
-                disabled={
-                  selectedConversationIds.length === 0 ||
-                  loading
-                }
-                onClick={
-                  confirmSelectedConversationsDeletion
-                }
-                className="rounded-full bg-[#3e1919] px-3 py-1.5 text-xs font-semibold text-[#f7f5f6] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Delete selected
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={cancelChatDeleteMode}
+                  className="rounded-full px-3 py-1.5 text-xs font-medium text-[#173B28] hover:bg-white"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  disabled={selectedConversationIds.length === 0 || loading}
+                  onClick={confirmSelectedConversationsDeletion}
+                  className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Delete selected
+                </button>
+              </div>
             </div>
           )}
 
           {deleteMode && (
-            <div className="flex shrink-0 items-center justify-between border-b border-[#f0e2d6]/20 bg-[#f0e2d6] px-4 py-3">
-              <span className="text-sm font-medium text-[#3e1919]">
-                {selectedMessageIds.length} selected
+            <div className="flex shrink-0 items-center justify-between border-y border-[#DCE8DD] bg-[#E7F1E3] px-5 py-3">
+              <span className="text-sm font-medium text-[#173B28]">
+                {selectedMessageIds.length} message
+                {selectedMessageIds.length === 1 ? "" : "s"} selected
               </span>
 
-              <button
-                type="button"
-                disabled={
-                  selectedMessageIds.length === 0 || loading
-                }
-                onClick={confirmSelectedDeletion}
-                className="rounded-full bg-[#3e1919] px-3 py-1.5 text-xs font-semibold text-[#f7f5f6] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Delete selected
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={cancelDeleteMode}
+                  className="rounded-full px-3 py-1.5 text-xs font-medium text-[#173B28] hover:bg-white"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  disabled={selectedMessageIds.length === 0 || loading}
+                  onClick={confirmSelectedDeletion}
+                  className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Delete selected
+                </button>
+              </div>
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto bg-[#3e1919]">
-            {conversations.length === 0 ? (
+          {/* List */}
+          <div className="flex-1 overflow-y-auto">
+            {filteredConversations.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center px-8 text-center">
-                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[#f0e2d6]/20 bg-[#f0e2d6]/10 text-xl text-[#a79093]">
-                  ✦
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#E7F1E3] text-[#176B3A]">
+                  <Send size={22} />
                 </div>
 
-                <p className="font-semibold text-[#f7f5f6]">
-                  No conversations yet
+                <p className="font-semibold text-[#173B28]">
+                  {conversationSearch
+                    ? "No users found"
+                    : "No conversations yet"}
                 </p>
 
-                <p className="mt-1 text-sm leading-6 text-[#a79093]">
-                  New SafeLink support requests will appear here.
+                <p className="mt-1 text-sm leading-6 text-[#6B7D70]">
+                  {conversationSearch
+                    ? "Try another search term."
+                    : "New SafeLink support requests will appear here."}
                 </p>
               </div>
             ) : (
-              conversations.map((conversation) => {
+              filteredConversations.map((conversation) => {
                 const isSelected =
                   selectedConversation?.conversation_id ===
                   conversation.conversation_id;
 
-                const isChatSelected =
-                  selectedConversationIds.includes(
-                    conversation.conversation_id
-                  );
+                const isChatSelected = selectedConversationIds.includes(
+                  conversation.conversation_id,
+                );
 
                 return (
                   <button
@@ -844,79 +815,58 @@ export default function AdvisorPage() {
                     onClick={() => {
                       if (chatDeleteMode) {
                         toggleConversationSelection(
-                          conversation.conversation_id
+                          conversation.conversation_id,
                         );
                         return;
                       }
 
                       handleSelectConversation(conversation);
                     }}
-                    className={`flex w-full gap-3 border-b border-[#f0e2d6]/20 px-4 py-4 text-left transition ${
-                      isChatSelected
-                        ? "bg-[#f0e2d6] text-[#3e1919]"
-                        : isSelected
-                        ? "bg-[#a79093] text-[#f7f5f6]"
-                        : "text-[#f7f5f6] hover:bg-[#f0e2d6]/20"
+                    className={`flex w-full items-center gap-3 border-b border-[#DCE8DD] px-5 py-4 text-left transition ${
+                      isChatSelected || isSelected
+                        ? "bg-[#E7F1E3]"
+                        : "bg-[#FAFBF7] hover:bg-[#F3F7F1]"
                     }`}
                   >
                     {chatDeleteMode && (
                       <div
-                        className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs ${
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
                           isChatSelected
-                            ? "border-[#3e1919] bg-[#3e1919] text-[#f7f5f6]"
-                            : "border-[#f0e2d6]/50 bg-[#f0e2d6]/10 text-[#f7f5f6]"
+                            ? "border-[#2F8F4E] bg-[#2F8F4E] text-white"
+                            : "border-[#DCE8DD] bg-white text-transparent"
                         }`}
                       >
-                        {isChatSelected ? "✓" : ""}
+                        <Check size={13} strokeWidth={3} />
                       </div>
                     )}
 
+                    {/* Avatar */}
+                    <div className="relative shrink-0">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E7F1E3] text-sm font-semibold text-[#176B3A]">
+                        {getInitials(conversation.session_id)}
+                      </div>
+
+                      <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-[#2F8F4E]" />
+                    </div>
+
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-3">
-                        <p
-                          className={`truncate font-semibold ${
-                            isChatSelected
-                              ? "text-[#3e1919]"
-                              : "text-[#f7f5f6]"
-                          }`}
-                        >
+                        <p className="truncate font-semibold text-[#173B28]">
                           {conversation.session_id}
                         </p>
 
-                        <span
-                          className={`shrink-0 text-[11px] ${
-                            isChatSelected
-                              ? "text-[#a79093]"
-                              : "text-[#a79093]"
-                          }`}
-                        >
+                        <span className="shrink-0 text-[11px] text-[#6B7D70]">
                           {latestMessageTime(conversation)}
                         </span>
                       </div>
 
-                      <p
-                        className={`mt-1 truncate font-mono text-[10px] ${
-                          isChatSelected
-                            ? "text-[#a79093]"
-                            : "text-[#a79093]"
-                        }`}
-                      >
-                        {conversation.conversation_id}
-                      </p>
-
-                      <div className="mt-1.5 flex items-center gap-2">
-                        <p
-                          className={`min-w-0 flex-1 truncate text-sm ${
-                            isChatSelected
-                              ? "text-[#3e1919]/70"
-                              : "text-[#f0e2d6]/70"
-                          }`}
-                        >
+                      <div className="mt-1 flex items-center gap-2">
+                        <p className="min-w-0 flex-1 truncate text-sm text-[#6B7D70]">
                           {latestMessage(conversation)}
                         </p>
 
                         {conversation.urgent && (
-                          <span className="shrink-0 rounded-full bg-[#f0e2d6] px-2 py-0.5 text-[9px] font-bold text-[#3e1919]">
+                          <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-[9px] font-bold text-red-600">
                             URGENT
                           </span>
                         )}
@@ -929,69 +879,76 @@ export default function AdvisorPage() {
           </div>
         </aside>
 
+        {/* ============================================================
+            CHAT
+        ============================================================ */}
+
         <main
           className={`${
             showMobileChat ? "flex" : "hidden"
-          } relative h-full min-w-0 flex-1 flex-col bg-[#f7f5f6] md:flex`}
+          } relative h-full min-w-0 flex-1 flex-col bg-[#FAFBF7] md:flex`}
         >
           {!selectedConversation ? (
-            <div className="hidden h-full flex-col items-center justify-center bg-[#f7f5f6] md:flex">
+            <div className="hidden h-full flex-col items-center justify-center md:flex">
               <div className="max-w-sm px-8 text-center">
-                <div className="mb-6 text-4xl text-[#a79093]">
-                  ✦
+                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#E7F1E3] text-[#176B3A]">
+                  <Send size={26} />
                 </div>
 
-                <h2 className="text-xl font-semibold text-[#3e1919]">
+                <h2 className="text-xl font-semibold text-[#173B28]">
                   SafeLink Advisor
                 </h2>
 
-                <p className="mt-2 text-sm leading-6 text-[#a79093]">
+                <p className="mt-2 text-sm leading-6 text-[#6B7D70]">
                   Select a conversation to connect with a SafeLink user.
                 </p>
               </div>
             </div>
           ) : (
             <>
-              <header className="relative z-20 flex shrink-0 items-center gap-3 border-b border-[#f0e2d6] bg-white px-4 py-3 shadow-sm">
+              {/* Header */}
+              <header className="relative z-20 flex h-[76px] shrink-0 items-center gap-3 border-b border-[#DCE8DD] bg-white px-4 shadow-sm sm:px-6">
                 <button
                   type="button"
                   onClick={() => setShowMobileChat(false)}
-                  className="rounded-full p-2 text-xl text-[#3e1919] transition hover:bg-[#f0e2d6] md:hidden"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-[#173B28] transition hover:bg-[#F3F7F1] md:hidden"
                   aria-label="Back to conversations"
                 >
-                  ←
+                  <ArrowLeft size={19} />
                 </button>
 
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#E7F1E3] text-sm font-semibold text-[#176B3A]">
+                  {getInitials(sessionDisplay)}
+                </div>
+
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-[#3e1919]">
+                  <p className="truncate font-semibold text-[#173B28]">
                     {sessionDisplay}
                   </p>
 
-                  <p className="truncate font-mono text-[10px] text-[#a79093]">
+                  <p className="truncate text-sm text-[#6B7D70]">
                     {selectedConversation.conversation_id}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="hidden rounded-full bg-[#f0e2d6] px-3 py-1 text-[10px] font-semibold text-[#3e1919] sm:block">
-                    <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-[#3e1919]" />
-                    Connected
-                  </span>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowHeaderMenu((current) => !current)}
+                    className="flex h-10 w-10 items-center justify-center rounded-full text-[#173B28] transition hover:bg-[#F3F7F1]"
+                    aria-label="Conversation menu"
+                  >
+                    <MoreVertical size={19} />
+                  </button>
 
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowHeaderMenu((current) => !current)
-                      }
-                      className="flex h-9 w-9 items-center justify-center rounded-full text-xl text-[#a79093] transition hover:bg-[#f0e2d6] hover:text-[#3e1919]"
-                      aria-label="Conversation menu"
-                    >
-                      ⋮
-                    </button>
+                  {showHeaderMenu && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-30"
+                        onClick={() => setShowHeaderMenu(false)}
+                      />
 
-                    {showHeaderMenu && (
-                      <div className="absolute right-0 top-11 z-40 w-52 overflow-hidden rounded-2xl border border-[#f0e2d6] bg-white shadow-2xl">
+                      <div className="absolute right-0 top-12 z-40 w-52 overflow-hidden rounded-xl border border-[#DCE8DD] bg-white shadow-xl">
                         <button
                           type="button"
                           onClick={() => {
@@ -999,7 +956,7 @@ export default function AdvisorPage() {
                             setDeleteMode(true);
                             setSelectedMessageIds([]);
                           }}
-                          className="w-full px-4 py-3 text-left text-sm text-[#3e1919] transition hover:bg-[#f0e2d6]"
+                          className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
                         >
                           Delete messages
                         </button>
@@ -1010,12 +967,12 @@ export default function AdvisorPage() {
                             setShowHeaderMenu(false);
                             setShowFacilities(true);
                           }}
-                          className="w-full px-4 py-3 text-left text-sm text-[#3e1919] transition hover:bg-[#f0e2d6]"
+                          className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
                         >
                           Recommend facility
                         </button>
 
-                        <div className="my-1 border-t border-[#f0e2d6]" />
+                        <div className="border-t border-[#DCE8DD]" />
 
                         <button
                           type="button"
@@ -1026,168 +983,163 @@ export default function AdvisorPage() {
                             setEditingMessageId(null);
                             setSelectedMessageIds([]);
                           }}
-                          className="w-full px-4 py-3 text-left text-sm font-medium text-[#3e1919] transition hover:bg-[#f0e2d6]"
+                          className="w-full px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
                         >
-                          Log out
+                          Close chat
                         </button>
                       </div>
-                    )}
-                  </div>
+                    </>
+                  )}
                 </div>
               </header>
 
-              <div className="relative flex min-h-0 flex-1 flex-col bg-[#f7f5f6] p-0 md:p-6">
-                <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#f7f5f6] text-[#3e1919] shadow-2xl md:rounded-[2rem] md:border md:border-[#f0e2d6]">
-                  <div className="pointer-events-none absolute inset-0 opacity-[0.03]">
-                    <div className="h-full w-full bg-[radial-gradient(circle_at_20%_20%,#3e1919_1px,transparent_1px)] [background-size:24px_24px]" />
-                  </div>
+              {/* Messages */}
+              <div className="relative min-h-0 flex-1 bg-[#F3F7F1]/60">
+                <div className="pointer-events-none absolute inset-0 opacity-[0.05]">
+                  <div className="h-full w-full bg-[radial-gradient(circle_at_20%_20%,#2F8F4E_1px,transparent_1px)] [background-size:24px_24px]" />
+                </div>
 
-                  <div className="relative flex-1 overflow-y-auto px-3 py-5 sm:px-6">
-                    <div className="mx-auto flex max-w-4xl flex-col gap-2">
-                      {selectedConversation.messages.map(
-                        (currentMessage) => {
-                          const isAdvisor =
-                            currentMessage.sender === "advisor";
+                <div className="relative h-full overflow-y-auto px-3 py-5 sm:px-8">
+                  <div className="mx-auto flex max-w-4xl flex-col">
+                    {selectedConversation.messages.length === 0 && (
+                      <div className="flex min-h-[45vh] items-center justify-center">
+                        <div className="text-center">
+                          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#E7F1E3] text-[#176B3A]">
+                            <Send size={23} />
+                          </div>
 
-                          const isSelectedForDelete =
-                            selectedMessageIds.includes(
-                              currentMessage.message_id
-                            );
+                          <h2 className="text-sm font-semibold text-[#173B28]">
+                            No messages yet
+                          </h2>
 
-                          if (currentMessage.deleted) {
-                            return (
-                              <div
-                                key={currentMessage.message_id}
-                                className={`flex ${
-                                  isAdvisor
-                                    ? "justify-end"
-                                    : "justify-start"
-                                }`}
-                              >
-                                <div className="rounded-2xl border border-[#f0e2d6] bg-[#f0e2d6] px-4 py-2.5 text-sm italic text-[#a79093]">
-                                  Message deleted
-                                </div>
+                          <p className="mt-1 text-sm text-[#6B7D70]">
+                            Say hello to start the conversation.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedConversation.messages.map(
+                      (currentMessage, index, all) => {
+                        const isAdvisor = currentMessage.sender === "advisor";
+
+                        const isSelectedForDelete = selectedMessageIds.includes(
+                          currentMessage.message_id,
+                        );
+
+                        const showDate = shouldShowDateSeparator(all, index);
+
+                        return (
+                          <div key={currentMessage.message_id}>
+                            {showDate && (
+                              <div className="my-4 flex justify-center">
+                                <span className="rounded-full border border-[#DCE8DD] bg-white px-3 py-1 text-[10px] text-[#6B7D70] shadow-sm sm:text-xs">
+                                  {formatDate(currentMessage.timestamp)}
+                                </span>
                               </div>
-                            );
-                          }
+                            )}
 
-                          return (
                             <div
-                              key={currentMessage.message_id}
-                              className={`group flex ${
-                                isAdvisor
-                                  ? "justify-end"
-                                  : "justify-start"
+                              className={`group mb-2 flex ${
+                                isAdvisor ? "justify-end" : "justify-start"
                               }`}
                             >
                               <div
-                                className={`flex max-w-[88%] flex-col sm:max-w-[70%] ${
-                                  isAdvisor
-                                    ? "items-end"
-                                    : "items-start"
+                                className={`flex max-w-[88%] items-end gap-2 sm:max-w-[70%] ${
+                                  isAdvisor ? "flex-row-reverse" : "flex-row"
                                 }`}
                               >
-                                <div
-                                  className={`relative flex items-end gap-1 ${
-                                    isAdvisor
-                                      ? "flex-row-reverse"
-                                      : "flex-row"
-                                  }`}
-                                >
-                                  {deleteMode && isAdvisor && (
+                                {deleteMode &&
+                                  isAdvisor &&
+                                  !currentMessage.deleted && (
                                     <button
                                       type="button"
                                       onClick={() =>
-                                        toggleMessageSelection(
-                                          currentMessage
-                                        )
+                                        toggleMessageSelection(currentMessage)
                                       }
-                                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-xs transition ${
+                                      className={`mb-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border transition ${
                                         isSelectedForDelete
-                                          ? "border-[#3e1919] bg-[#3e1919] text-[#f7f5f6]"
-                                          : "border-[#a79093] bg-white text-[#3e1919]"
+                                          ? "border-[#2F8F4E] bg-[#2F8F4E] text-white"
+                                          : "border-[#DCE8DD] bg-white text-transparent"
                                       }`}
                                       aria-label="Select message"
                                     >
-                                      {isSelectedForDelete ? "✓" : ""}
+                                      <Check size={14} strokeWidth={3} />
                                     </button>
                                   )}
 
+                                <div className="relative min-w-0">
                                   <div
-                                    className={`relative rounded-2xl px-4 py-2.5 shadow-sm ${
+                                    className={`rounded-2xl px-4 py-2.5 shadow-sm ${
                                       isAdvisor
-                                        ? "rounded-br-md bg-[#3e1919] text-[#f7f5f6]"
-                                        : "rounded-bl-md bg-[#f0e2d6] text-[#3e1919]"
+                                        ? "rounded-br-md bg-[#E7F1E3] text-[#173B28]"
+                                        : "rounded-bl-md border border-[#DCE8DD] bg-white text-[#173B28]"
+                                    } ${
+                                      currentMessage.deleted ? "opacity-75" : ""
                                     } ${
                                       isSelectedForDelete
-                                        ? "ring-2 ring-[#a79093]"
+                                        ? "ring-2 ring-[#2F8F4E]/40"
                                         : ""
                                     }`}
                                   >
-                                    <p
-                                      className={`mb-1 text-[11px] font-semibold ${
-                                        isAdvisor
-                                          ? "text-[#f0e2d6]"
-                                          : "text-[#a79093]"
-                                      }`}
-                                    >
-                                      {isAdvisor ? "Advisor" : "You"}
-                                    </p>
-
-                                    <div className="flex items-end gap-2">
-                                      <p className="whitespace-pre-wrap break-words text-[14px] leading-6">
-                                        {currentMessage.text}
+                                    {currentMessage.deleted ? (
+                                      <p className="text-sm italic text-[#6B7D70]">
+                                        This message was deleted
                                       </p>
+                                    ) : (
+                                      <>
+                                        <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed">
+                                          {currentMessage.text}
+                                        </p>
 
-                                      {isAdvisor && !deleteMode && (
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            setOpenMessageMenu((current) =>
-                                              current ===
-                                              currentMessage.message_id
-                                                ? null
-                                                : currentMessage.message_id
-                                            )
-                                          }
-                                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-lg leading-none text-[#f0e2d6]/70 opacity-0 transition hover:bg-[#f0e2d6]/20 group-hover:opacity-100"
-                                          aria-label="Message actions"
-                                        >
-                                          ⋮
-                                        </button>
-                                      )}
-                                    </div>
+                                        <div className="mt-1 flex items-center justify-end gap-1.5">
+                                          <span className="whitespace-nowrap text-[11px] leading-none text-[#6B7D70]">
+                                            {formatTime(
+                                              currentMessage.timestamp,
+                                            )}
+                                          </span>
 
-                                    {isAdvisor && (
-                                      <div className="mt-1 flex items-center justify-end">
-                                        <span
-                                          className={`text-[11px] font-semibold leading-none ${
-                                            currentMessage.seen_at
-                                              ? "text-[#a79093]"
-                                              : "text-[#f0e2d6]/60"
-                                          }`}
-                                          title={
-                                            currentMessage.seen_at
-                                              ? "Seen"
-                                              : "Sent"
-                                          }
-                                        >
-                                          {currentMessage.seen_at
-                                            ? "✓✓"
-                                            : "✓"}
-                                        </span>
-                                      </div>
+                                          {currentMessage.edited && (
+                                            <span className="text-[10px] leading-none text-slate-400">
+                                              edited
+                                            </span>
+                                          )}
+
+                                          {isAdvisor &&
+                                            (currentMessage.seen_at ? (
+                                              <CheckCheck
+                                                size={15}
+                                                strokeWidth={2.8}
+                                                className="text-sky-500"
+                                              />
+                                            ) : (
+                                              <Check
+                                                size={15}
+                                                strokeWidth={2.8}
+                                                className="text-slate-400"
+                                              />
+                                            ))}
+                                        </div>
+                                      </>
                                     )}
+                                  </div>
 
-                                    {openMessageMenu ===
-                                      currentMessage.message_id && (
-                                      <div className="absolute bottom-8 right-0 z-30 w-32 overflow-hidden rounded-xl border border-[#f0e2d6] bg-white shadow-xl">
+                                  {/* Per-message menu */}
+                                  {openMessageMenu ===
+                                    currentMessage.message_id && (
+                                    <>
+                                      <div
+                                        className="fixed inset-0 z-20"
+                                        onClick={() => setOpenMessageMenu(null)}
+                                      />
+
+                                      <div className="absolute right-0 top-full z-30 mt-1 w-32 overflow-hidden rounded-xl border border-[#DCE8DD] bg-white shadow-xl">
                                         <button
                                           type="button"
                                           onClick={() =>
                                             startEditing(currentMessage)
                                           }
-                                          className="w-full px-3 py-2.5 text-left text-xs text-[#3e1919] hover:bg-[#f0e2d6]"
+                                          className="w-full px-3 py-2.5 text-left text-sm text-[#173B28] hover:bg-[#F3F7F1]"
                                         >
                                           Edit
                                         </button>
@@ -1197,196 +1149,170 @@ export default function AdvisorPage() {
                                           onClick={() =>
                                             deleteOneMessage(currentMessage)
                                           }
-                                          className="w-full px-3 py-2.5 text-left text-xs text-[#3e1919] hover:bg-[#f0e2d6]"
+                                          className="w-full px-3 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
                                         >
                                           Delete
                                         </button>
                                       </div>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <div className="mt-1 flex flex-wrap items-center gap-1 px-1 text-[11px] text-[#a79093]">
-                                  <span>
-                                    {formatDate(currentMessage.timestamp)}
-                                  </span>
-                                  <span>·</span>
-                                  <span>
-                                    {formatTime(currentMessage.timestamp)}
-                                  </span>
-
-                                  {currentMessage.edited && (
-                                    <>
-                                      <span>·</span>
-                                      <span>edited</span>
-                                    </>
-                                  )}
-
-                                  {isAdvisor && !deleteMode && (
-                                    <>
-                                      <span>·</span>
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          startEditing(currentMessage)
-                                        }
-                                        className="hover:underline"
-                                      >
-                                        Edit
-                                      </button>
                                     </>
                                   )}
                                 </div>
+
+                                {isAdvisor &&
+                                  !deleteMode &&
+                                  !currentMessage.deleted && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setOpenMessageMenu((current) =>
+                                          current === currentMessage.message_id
+                                            ? null
+                                            : currentMessage.message_id,
+                                        )
+                                      }
+                                      className="mb-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#6B7D70] opacity-0 transition hover:bg-white group-hover:opacity-100"
+                                      aria-label="Message actions"
+                                    >
+                                      <MoreVertical size={15} />
+                                    </button>
+                                  )}
                               </div>
                             </div>
-                          );
-                        }
-                      )}
+                          </div>
+                        );
+                      },
+                    )}
 
-                      {selectedConversation.recommendation && (
-                        <div className="flex justify-end">
-                          <div className="max-w-[88%] rounded-2xl border border-[#a79093] bg-[#f0e2d6] p-4 shadow-sm sm:max-w-[70%]">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#3e1919]">
-                              ✓ Facility Recommended
+                    {/* Facility recommendation */}
+                    {selectedConversation.recommendation && (
+                      <div className="mt-2 flex justify-end">
+                        <div className="max-w-[88%] rounded-2xl border border-[#DCE8DD] bg-white p-4 shadow-sm sm:max-w-[70%]">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-[#176B3A]">
+                            ✓ Facility recommended
+                          </p>
+
+                          <div className="mt-2 space-y-1 text-[13px] text-[#173B28]">
+                            <p className="font-semibold">
+                              {
+                                selectedConversation.recommendation
+                                  .facility_name
+                              }
                             </p>
 
-                            <div className="mt-2 space-y-1 text-[13px] text-[#3e1919]">
-                              <p className="font-mono text-[10px] text-[#a79093]">
-                                For: {selectedConversation.session_id}
-                              </p>
+                            <p className="text-[#6B7D70]">
+                              {selectedConversation.recommendation.location}
+                            </p>
 
-                              <p className="font-semibold">
-                                {
-                                  selectedConversation
-                                    .recommendation
-                                    .facility_name
-                                }
-                              </p>
+                            <p className="text-[#6B7D70]">
+                              {selectedConversation.recommendation.contact}
+                            </p>
 
-                              <p className="text-[#a79093]">
-                                {
-                                  selectedConversation
-                                    .recommendation
-                                    .location
-                                }
-                              </p>
-
-                              <p className="text-[#a79093]">
-                                {
-                                  selectedConversation
-                                    .recommendation
-                                    .contact
-                                }
-                              </p>
-
-                              <p className="text-xs italic text-[#a79093]">
-                                {
-                                  selectedConversation
-                                    .recommendation
-                                    .notes
-                                }
-                              </p>
-
-                              <p className="pt-1 font-mono text-[10px] text-[#a79093]">
-                                From: {selectedConversation.advisor_id}
-                              </p>
-                            </div>
+                            <p className="text-xs italic text-[#6B7D70]">
+                              {selectedConversation.recommendation.notes}
+                            </p>
                           </div>
                         </div>
-                      )}
-
-                      <div ref={messagesEndRef} />
-                    </div>
-                  </div>
-
-                  {editingMessageId && (
-                    <div className="relative flex shrink-0 items-center justify-between border-t border-[#f0e2d6] bg-[#f0e2d6] px-4 py-2.5">
-                      <div className="min-w-0">
-                        <p className="text-xs font-semibold text-[#3e1919]">
-                          Editing message
-                        </p>
-
-                        <p className="truncate text-xs text-[#a79093]">
-                          {editingText}
-                        </p>
                       </div>
+                    )}
 
-                      <button
-                        type="button"
-                        onClick={cancelEditing}
-                        className="ml-4 rounded-full px-3 py-1.5 text-xs font-medium text-[#3e1919] hover:bg-white"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="relative shrink-0 border-t border-[#f0e2d6] bg-white px-3 py-3 sm:px-5">
-                    <div className="mx-auto flex max-w-4xl items-end gap-2">
-                      <textarea
-                        value={
-                          editingMessageId ? editingText : message
-                        }
-                        onChange={(event) =>
-                          editingMessageId
-                            ? setEditingText(event.target.value)
-                            : setMessage(event.target.value)
-                        }
-                        onKeyDown={(event) => {
-                          if (
-                            event.key === "Enter" &&
-                            !event.shiftKey
-                          ) {
-                            event.preventDefault();
-
-                            if (editingMessageId) {
-                              saveEditedMessage();
-                            } else {
-                              handleSendMessage();
-                            }
-                          }
-                        }}
-                        rows={1}
-                        placeholder={
-                          editingMessageId
-                            ? "Edit your message..."
-                            : "Type a message..."
-                        }
-                        className="max-h-32 min-h-[46px] flex-1 resize-none rounded-2xl border border-[#f0e2d6] bg-[#f7f5f6] px-4 py-3 text-sm text-[#3e1919] outline-none placeholder:text-[#a79093] focus:border-[#a79093] focus:ring-2 focus:ring-[#f0e2d6]"
-                      />
-
-                      {editingMessageId ? (
-                        <button
-                          type="button"
-                          onClick={saveEditedMessage}
-                          disabled={
-                            loading || !editingText.trim()
-                          }
-                          className="flex h-11 shrink-0 items-center justify-center rounded-full bg-[#3e1919] px-5 text-sm font-semibold text-[#f7f5f6] transition hover:bg-[#a79093] disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          Save
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={handleSendMessage}
-                          disabled={loading || !message.trim()}
-                          className="flex h-11 shrink-0 items-center justify-center rounded-2xl bg-[#3e1919] px-5 text-sm font-semibold text-[#f7f5f6] transition hover:bg-[#a79093] disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          {loading ? "..." : "Send"}
-                        </button>
-                      )}
-                    </div>
+                    <div ref={messagesEndRef} />
                   </div>
                 </div>
               </div>
+
+              {/* Edit bar */}
+              {editingMessageId && (
+                <div className="flex shrink-0 items-center gap-3 border-t border-[#DCE8DD] bg-white px-4 py-2.5 sm:px-6">
+                  <div className="h-9 w-1 shrink-0 rounded-full bg-[#2F8F4E]" />
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-[#2F8F4E]">
+                      Editing message
+                    </p>
+
+                    <p className="truncate text-sm text-[#6B7D70]">
+                      {editingText}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={cancelEditing}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-[#F3F7F1]"
+                    aria-label="Cancel editing"
+                  >
+                    <X size={17} />
+                  </button>
+                </div>
+              )}
+
+              {/* Composer */}
+              <footer className="shrink-0 border-t border-[#DCE8DD] bg-white px-4 py-4 sm:px-6">
+                <div className="mx-auto flex max-w-4xl items-end gap-3">
+                  <textarea
+                    ref={inputRef}
+                    value={editingMessageId ? editingText : message}
+                    onChange={(event) =>
+                      editingMessageId
+                        ? setEditingText(event.target.value)
+                        : setMessage(event.target.value)
+                    }
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && !event.shiftKey) {
+                        event.preventDefault();
+
+                        if (editingMessageId) {
+                          saveEditedMessage();
+                        } else {
+                          handleSendMessage();
+                        }
+                      }
+                    }}
+                    rows={1}
+                    placeholder={
+                      editingMessageId
+                        ? "Edit message..."
+                        : `Message ${sessionDisplay}...`
+                    }
+                    className="max-h-32 min-h-[48px] flex-1 resize-none rounded-3xl border border-[#DCE8DD] bg-[#FAFBF7] px-5 py-3 text-sm text-[#173B28] outline-none placeholder:text-[#8A968D] focus:border-[#2F8F4E]"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={
+                      editingMessageId ? saveEditedMessage : handleSendMessage
+                    }
+                    disabled={
+                      loading ||
+                      !(editingMessageId ? editingText.trim() : message.trim())
+                    }
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#2F8F4E] text-white transition hover:bg-[#176B3A] disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label={editingMessageId ? "Save edit" : "Send message"}
+                  >
+                    {editingMessageId ? (
+                      <Check size={19} />
+                    ) : (
+                      <Send size={19} className="-ml-0.5" />
+                    )}
+                  </button>
+                </div>
+
+                <p className="mx-auto mt-2 max-w-4xl text-[11px] text-[#6B7D70]">
+                  Enter to {editingMessageId ? "save" : "send"} • Shift + Enter
+                  for a new line
+                </p>
+              </footer>
             </>
           )}
         </main>
 
+        {/* ============================================================
+            FACILITY MODAL
+        ============================================================ */}
+
         {showFacilities && (
           <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-[#3e1919]/50 p-4"
+            className="fixed inset-0 z-[100] flex items-end justify-center bg-black/30 p-0 backdrop-blur-[1px] sm:items-center sm:p-4"
             onClick={() => {
               setShowFacilities(false);
               setShowCustomFacility(false);
@@ -1394,16 +1320,16 @@ export default function AdvisorPage() {
             }}
           >
             <div
-              className="max-h-[85vh] w-full max-w-xl overflow-hidden rounded-[2rem] bg-[#f7f5f6] shadow-2xl"
+              className="max-h-[85vh] w-full overflow-hidden rounded-t-2xl border border-[#DCE8DD] bg-white shadow-2xl sm:max-w-xl sm:rounded-2xl"
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="flex items-center justify-between border-b border-[#f0e2d6] px-5 py-4">
+              <div className="flex items-center justify-between border-b border-[#DCE8DD] px-5 py-4">
                 <div>
-                  <h3 className="font-semibold text-[#3e1919]">
+                  <h3 className="font-semibold text-[#173B28]">
                     Recommend a facility
                   </h3>
 
-                  <p className="text-xs text-[#a79093]">
+                  <p className="text-xs text-[#6B7D70]">
                     Choose a support facility for this user.
                   </p>
                 </div>
@@ -1415,26 +1341,31 @@ export default function AdvisorPage() {
                     setShowCustomFacility(false);
                     setFacilitySearch("");
                   }}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-xl text-[#a79093] hover:bg-[#f0e2d6] hover:text-[#3e1919]"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-[#173B28] hover:bg-[#F3F7F1]"
                   aria-label="Close facility panel"
                 >
-                  ×
+                  <X size={18} />
                 </button>
               </div>
 
               <div className="max-h-[65vh] overflow-y-auto p-5">
-                <input
-                  value={facilitySearch}
-                  onChange={(event) =>
-                    setFacilitySearch(event.target.value)
-                  }
-                  placeholder="Search facility..."
-                  className="mb-4 w-full rounded-xl border border-[#f0e2d6] bg-white px-4 py-3 text-sm text-[#3e1919] outline-none placeholder:text-[#a79093] focus:border-[#a79093] focus:ring-2 focus:ring-[#f0e2d6]"
-                />
+                <div className="relative mb-4">
+                  <Search
+                    size={16}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7D70]"
+                  />
+
+                  <input
+                    value={facilitySearch}
+                    onChange={(event) => setFacilitySearch(event.target.value)}
+                    placeholder="Search facility..."
+                    className="h-11 w-full rounded-xl border border-transparent bg-[#F3F7F1] pl-9 pr-4 text-sm text-[#173B28] outline-none placeholder:text-[#8A968D] focus:border-[#DCE8DD]"
+                  />
+                </div>
 
                 <div className="space-y-3">
                   {filteredFacilities.length === 0 ? (
-                    <div className="rounded-2xl bg-white p-5 text-center text-sm text-[#a79093]">
+                    <div className="rounded-xl bg-[#F3F7F1] p-5 text-center text-sm text-[#6B7D70]">
                       No facilities found.
                     </div>
                   ) : (
@@ -1452,25 +1383,25 @@ export default function AdvisorPage() {
                             notes: facility.notes || "",
                           })
                         }
-                        className="w-full rounded-2xl border border-[#f0e2d6] bg-white p-4 text-left transition hover:border-[#a79093] hover:bg-[#f0e2d6] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="w-full rounded-xl border border-[#DCE8DD] bg-white p-4 text-left transition hover:border-[#2F8F4E] hover:bg-[#F3F7F1] disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <p className="font-mono text-xs font-semibold text-[#3e1919]">
+                        <p className="font-mono text-xs font-semibold text-[#176B3A]">
                           {facility.facility_id}
                         </p>
 
-                        <p className="mt-1 font-semibold text-[#3e1919]">
+                        <p className="mt-1 font-semibold text-[#173B28]">
                           {facility.facility_name}
                         </p>
 
-                        <p className="mt-1 text-sm text-[#a79093]">
+                        <p className="mt-1 text-sm text-[#6B7D70]">
                           {facility.location}
                         </p>
 
-                        <p className="mt-1 text-xs text-[#a79093]">
+                        <p className="mt-1 text-xs text-[#6B7D70]">
                           {facility.contact}
                         </p>
 
-                        <p className="mt-2 text-xs text-[#a79093]">
+                        <p className="mt-2 text-xs text-[#6B7D70]">
                           {facility.notes}
                         </p>
                       </button>
@@ -1480,10 +1411,8 @@ export default function AdvisorPage() {
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowCustomFacility((current) => !current)
-                  }
-                  className="mt-4 w-full rounded-2xl border border-dashed border-[#a79093] bg-[#f0e2d6] px-4 py-3 text-sm font-semibold text-[#3e1919] hover:bg-[#a79093]/20"
+                  onClick={() => setShowCustomFacility((current) => !current)}
+                  className="mt-4 w-full rounded-xl border border-dashed border-[#2F8F4E] bg-[#E7F1E3] px-4 py-3 text-sm font-semibold text-[#176B3A] hover:bg-[#DCE8DD]"
                 >
                   {showCustomFacility
                     ? "− Hide manual facility"
@@ -1491,8 +1420,8 @@ export default function AdvisorPage() {
                 </button>
 
                 {showCustomFacility && (
-                  <div className="mt-4 rounded-2xl border border-[#f0e2d6] bg-white p-4">
-                    <p className="mb-3 font-semibold text-[#3e1919]">
+                  <div className="mt-4 rounded-xl border border-[#DCE8DD] bg-white p-4">
+                    <p className="mb-3 font-semibold text-[#173B28]">
                       New facility
                     </p>
 
@@ -1516,7 +1445,7 @@ export default function AdvisorPage() {
                             }))
                           }
                           placeholder={placeholder}
-                          className="w-full rounded-xl border border-[#f0e2d6] bg-[#f7f5f6] px-3 py-2.5 text-sm text-[#3e1919] outline-none placeholder:text-[#a79093] focus:border-[#a79093]"
+                          className="w-full rounded-xl border border-transparent bg-[#F3F7F1] px-3 py-2.5 text-sm text-[#173B28] outline-none placeholder:text-[#8A968D] focus:border-[#DCE8DD]"
                         />
                       ))}
                     </div>
@@ -1532,11 +1461,9 @@ export default function AdvisorPage() {
                         !customFacility.contact.trim() ||
                         !customFacility.notes.trim()
                       }
-                      className="mt-3 w-full rounded-xl bg-[#3e1919] px-4 py-3 text-sm font-semibold text-[#f7f5f6] hover:bg-[#a79093] disabled:cursor-not-allowed disabled:opacity-40"
+                      className="mt-3 w-full rounded-xl bg-[#2F8F4E] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#176B3A] disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      {loading
-                        ? "Recommending..."
-                        : "Recommend this facility"}
+                      {loading ? "Recommending..." : "Recommend this facility"}
                     </button>
                   </div>
                 )}
