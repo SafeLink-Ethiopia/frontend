@@ -114,3 +114,67 @@ export async function addFacility(
 
   return body.facility;
 }
+
+/**
+ * Update an existing facility. Advisor only.
+ * Only pass the fields you want to change.
+ */
+export async function updateFacility(
+  facilityId: string,
+  updates: Partial<{
+    facility_name: string;
+    location: string;
+    contact: string;
+    support_types: SupportType[];
+    description: string;
+  }>,
+  token: string,
+): Promise<Facility> {
+  const response = await fetch(
+    `${API_URL}/facilities/${facilityId}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(updates),
+    },
+  );
+
+  const data = await response.json();
+
+  if (!response.ok || !data.success) {
+    throw new Error(
+      data.message || "Failed to update facility",
+    );
+  }
+
+  return data.facility;
+}
+
+/**
+ * Delete a facility. Advisor only.
+ */
+export async function deleteFacility(
+  facilityId: string,
+  token: string,
+): Promise<void> {
+  const response = await fetch(
+    `${API_URL}/facilities/${facilityId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  const data = await response.json();
+
+  if (!response.ok || !data.success) {
+    throw new Error(
+      data.message || "Failed to delete facility",
+    );
+  }
+}

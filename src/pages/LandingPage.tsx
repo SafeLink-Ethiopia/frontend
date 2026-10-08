@@ -1219,17 +1219,8 @@ function LandingPage({
 
         <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl items-center px-6 pb-40 pt-32 lg:px-8">
           <div className="max-w-2xl">
-            <div className="mb-6 flex items-center gap-4">
-              <LogoMark className="h-16 w-16 sm:h-20 sm:w-20" />
-              <div>
-                <p className="text-4xl font-extrabold leading-none tracking-tight text-[#2F8F4E] sm:text-5xl">
-                  SafeLink
-                </p>
-                <p className="mt-2 text-sm font-medium text-[#173B28]/70 sm:text-base">
-                  A safer path to support.
-                </p>
-              </div>
-            </div>
+            
+            
 
             <h1 className="mt-10 text-4xl font-bold leading-[1.1] tracking-tight text-[#176B3A] sm:text-5xl lg:text-6xl">
               You are not alone.
@@ -1255,18 +1246,17 @@ function LandingPage({
             <div className="mt-9 grid max-w-xl gap-4 sm:grid-cols-2">
             {/* I Need Help */}
   <button
-    type="button"
-    onClick={onNeedHelp}
-    className="group flex w-full items-center justify-between gap-4 rounded-full border border-[#2F8F4E] bg-white/50 px-6 py-3.5 text-left text-[#2F8F4E] transition-all duration-200 hover:border-[#2F8F4E] hover:bg-white/80 sm:w-auto sm:justify-center"
-  >
+          type="button"
+          onClick={onNeedHelp}
+          className="group mt-7 inline-flex items-center gap-3 rounded-full bg-[#2F8F4E] px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#176B3A]"
+        >
     <span className="text-base font-medium sm:text-lg">
       {t.iNeedHelp}
     </span>
-
-    <span className="text-lg transition-transform duration-200 group-hover:translate-x-1">
-      →
-    </span>
-  </button>  
+          <span className="transition-transform duration-200 group-hover:translate-x-1">
+            →
+          </span>
+        </button>
 {/* 
               <button
                 type="button"
@@ -1669,10 +1659,8 @@ function LandingPage({
           className="group flex items-center gap-3"
         >
           {/* Logo */}
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAFBF7] shadow-md transition-colors group-hover:bg-[#2F8F4E]">
-            <span className="text-2xl text-[#2F8F4E]">
-              ♡
-            </span>
+          <div className="flex h-11 w-11 items-center justify-center">
+            <LogoMark className="h-10 w-10" />
           </div>
 
           {/* Brand Name */}

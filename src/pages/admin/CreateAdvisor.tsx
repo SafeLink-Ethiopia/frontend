@@ -1,5 +1,14 @@
+
 import { FormEvent, useState } from "react";
 import axios from "axios";
+import {
+  ArrowLeft,
+  Check,
+  Clock3,
+  MapPin,
+  Phone,
+  UserPlus,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const API_URL = "http://localhost:5000/api";
@@ -78,6 +87,11 @@ export default function CreateAdvisor() {
       return;
     }
 
+    if (formData.start >= formData.end) {
+      setError("End time must be later than start time.");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -106,7 +120,9 @@ export default function CreateAdvisor() {
         },
       );
 
-      setSuccess(response.data?.message || "Advisor created successfully.");
+      setSuccess(
+        response.data?.message || "Advisor created successfully.",
+      );
 
       setFormData({
         name: "",
@@ -121,7 +137,9 @@ export default function CreateAdvisor() {
       });
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        setError(error.response?.data?.message || "Failed to create advisor.");
+        setError(
+          error.response?.data?.message || "Failed to create advisor.",
+        );
       } else {
         setError("Something went wrong. Please try again.");
       }
@@ -130,174 +148,226 @@ export default function CreateAdvisor() {
     }
   };
 
+  const inputClass =
+    "w-full rounded-lg border border-[#C9DCCB] bg-[#FAFBF7] px-4 py-3 text-sm text-[#173B28] outline-none transition placeholder:text-[#8AA38F] hover:border-[#9DBFA4] focus:border-[#2F8F4E] focus:ring-2 focus:ring-[#2F8F4E]/10 disabled:cursor-not-allowed disabled:opacity-60";
+
+  const labelClass =
+    "mb-2 block text-sm font-semibold text-[#173B28]";
+
   return (
-    <main className="min-h-screen bg-[#f7f5f6] text-[#3e1919]">
-      <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
-        {/* Header */}
-        <header className="mb-10 border-b border-[#a79093]/30 pb-7">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#a79093]">
-                SafeLink Administration
-              </p>
+    <main className="min-h-screen bg-[#FAFBF7] text-[#173B28]">
+      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
 
-              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#3e1919] sm:text-4xl">
-                Create advisor
-              </h1>
+        {/* Top navigation */}
+        <div className="mb-8 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => navigate("/admin/dashboard")}
+            disabled={loading}
+            className="group flex items-center gap-2 text-sm font-medium text-[#176B3A] transition hover:text-[#2F8F4E] disabled:opacity-50"
+          >
+            <ArrowLeft
+              size={17}
+              className="transition-transform group-hover:-translate-x-1"
+            />
+            Back to dashboard
+          </button>
 
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#a79093]">
-                Add a trusted advisor to the SafeLink support network and
-                configure their availability.
-              </p>
+          <div className="hidden items-center gap-2 sm:flex">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2F8F4E]">
+              <UserPlus size={15} className="text-white" />
             </div>
 
-            <button
-              type="button"
-              onClick={() => navigate("/admin/dashboard")}
-              disabled={loading}
-              className="w-fit border-b border-[#3e1919] pb-1 text-sm font-semibold text-[#3e1919] transition hover:border-[#a79093] hover:text-[#a79093] disabled:opacity-50"
-            >
-              Back to dashboard
-            </button>
+            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#176B3A]">
+              SafeLink Administration
+            </span>
           </div>
+        </div>
+
+        {/* Header */}
+        <header className="mb-8">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#2F8F4E]">
+            Advisor management
+          </p>
+
+          <h1 className="text-3xl font-bold tracking-tight text-[#173B28] sm:text-4xl">
+            Create advisor
+          </h1>
+
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#5C7764]">
+            Add a trusted professional to the SafeLink support network.
+            Complete the information below to create their advisor account.
+          </p>
         </header>
 
         {/* Status messages */}
         {error && (
           <div
             role="alert"
-            className="mb-8 border-l-4 border-[#3e1919] bg-[#f0e2d6] px-5 py-4"
+            className="mb-6 flex items-start gap-3 rounded-lg border border-[#C7DCC9] bg-[#E7F1E3] px-4 py-3"
           >
-            <p className="text-sm font-medium text-[#3e1919]">{error}</p>
+            <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#176B3A]" />
+
+            <p className="text-sm font-medium text-[#173B28]">
+              {error}
+            </p>
           </div>
         )}
 
         {success && (
           <div
             role="status"
-            className="mb-8 border-l-4 border-[#a79093] bg-[#f0e2d6] px-5 py-4"
+            className="mb-6 flex items-start gap-3 rounded-lg border border-[#B8D4BC] bg-[#E7F1E3] px-4 py-3"
           >
-            <p className="text-sm font-medium text-[#3e1919]">{success}</p>
+            <Check
+              size={18}
+              className="mt-0.5 shrink-0 text-[#2F8F4E]"
+            />
+
+            <p className="text-sm font-medium text-[#173B28]">
+              {success}
+            </p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          {/* Personal information */}
-          <section className="border-y border-[#a79093]/30">
-            <div className="grid lg:grid-cols-[220px_1fr]">
-              <div className="border-b border-[#a79093]/30 py-6 lg:border-b-0 lg:border-r lg:pr-8">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+        {/* Main form */}
+        <form
+          onSubmit={handleSubmit}
+          className="overflow-hidden rounded-2xl border border-[#D7E5D9] bg-white shadow-[0_8px_30px_rgba(23,59,40,0.06)]"
+        >
+          {/* Personal information section */}
+          <section>
+            <div className="border-b border-[#D7E5D9] bg-[#E7F1E3]/60 px-5 py-5 sm:px-8">
+              <div className="flex items-start gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#2F8F4E] text-sm font-bold text-white">
                   01
-                </p>
+                </div>
 
-                <h2 className="mt-2 text-lg font-semibold text-[#3e1919]">
-                  Personal information
-                </h2>
+                <div>
+                  <h2 className="text-lg font-bold text-[#173B28]">
+                    Personal information
+                  </h2>
 
-                <p className="mt-2 text-sm leading-6 text-[#a79093]">
-                  Basic information used to identify and contact the advisor.
-                </p>
+                  <p className="mt-1 text-sm text-[#5C7764]">
+                    Provide the advisor's basic contact and professional
+                    information.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-x-8 gap-y-6 px-5 py-7 sm:px-8 lg:grid-cols-2">
+              {/* Full name */}
+              <div>
+                <label
+                  htmlFor="advisor-name"
+                  className={labelClass}
+                >
+                  Full name
+                  <span className="ml-1 text-[#2F8F4E]">*</span>
+                </label>
+
+                <input
+                  id="advisor-name"
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Enter advisor's full name"
+                  disabled={loading}
+                  className={inputClass}
+                />
               </div>
 
-              <div className="grid gap-x-8 gap-y-6 py-7 lg:grid-cols-2 lg:pl-8">
-                {/* Name */}
-                <div>
-                  <label
-                    htmlFor="advisor-name"
-                    className="mb-2 block text-sm font-semibold text-[#3e1919]"
-                  >
-                    Full name
-                  </label>
+              {/* Email */}
+              <div>
+                <label
+                  htmlFor="advisor-email"
+                  className={labelClass}
+                >
+                  Email address
+                  <span className="ml-1 text-[#2F8F4E]">*</span>
+                </label>
 
-                  <input
-                    id="advisor-name"
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="Enter full name"
-                    disabled={loading}
-                    className="w-full border-b border-[#a79093]/50 bg-transparent px-0 py-3 text-sm text-[#3e1919] outline-none transition placeholder:text-[#a79093]/70 focus:border-[#3e1919] disabled:cursor-not-allowed disabled:opacity-50"
+                <input
+                  id="advisor-email"
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="advisor@example.com"
+                  disabled={loading}
+                  className={inputClass}
+                />
+              </div>
+
+              {/* Gender */}
+              <div>
+                <label
+                  htmlFor="advisor-gender"
+                  className={labelClass}
+                >
+                  Gender
+                  <span className="ml-1 text-[#2F8F4E]">*</span>
+                </label>
+
+                <select
+                  id="advisor-gender"
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  disabled={loading}
+                  className={`${inputClass} cursor-pointer`}
+                >
+                  <option value="">Select gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+
+              {/* Advisor type */}
+              <div>
+                <label
+                  htmlFor="advisor-type"
+                  className={labelClass}
+                >
+                  Area of support
+                  <span className="ml-1 text-[#2F8F4E]">*</span>
+                </label>
+
+                <select
+                  id="advisor-type"
+                  name="type"
+                  value={formData.type}
+                  onChange={handleChange}
+                  disabled={loading}
+                  className={`${inputClass} cursor-pointer`}
+                >
+                  <option value="">Select area of support</option>
+                  <option value="medical">Medical</option>
+                  <option value="legal">Legal</option>
+                  <option value="psychological">
+                    Psychological
+                  </option>
+                  <option value="general">General</option>
+                </select>
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label
+                  htmlFor="advisor-phone"
+                  className={labelClass}
+                >
+                  Phone number
+                  <span className="ml-1 text-[#2F8F4E]">*</span>
+                </label>
+
+                <div className="relative">
+                  <Phone
+                    size={17}
+                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#719079]"
                   />
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label
-                    htmlFor="advisor-email"
-                    className="mb-2 block text-sm font-semibold text-[#3e1919]"
-                  >
-                    Email address
-                  </label>
-
-                  <input
-                    id="advisor-email"
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="advisor@example.com"
-                    disabled={loading}
-                    className="w-full border-b border-[#a79093]/50 bg-transparent px-0 py-3 text-sm text-[#3e1919] outline-none transition placeholder:text-[#a79093]/70 focus:border-[#3e1919] disabled:cursor-not-allowed disabled:opacity-50"
-                  />
-                </div>
-
-                {/* Gender */}
-                <div>
-                  <label
-                    htmlFor="advisor-gender"
-                    className="mb-2 block text-sm font-semibold text-[#3e1919]"
-                  >
-                    Gender
-                  </label>
-
-                  <select
-                    id="advisor-gender"
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleChange}
-                    disabled={loading}
-                    className="w-full border-b border-[#a79093]/50 bg-transparent px-0 py-3 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">Select gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                  </select>
-                </div>
-
-                {/* Advisor type */}
-                <div>
-                  <label
-                    htmlFor="advisor-type"
-                    className="mb-2 block text-sm font-semibold text-[#3e1919]"
-                  >
-                    Advisor type
-                  </label>
-
-                  <select
-                    id="advisor-type"
-                    name="type"
-                    value={formData.type}
-                    onChange={handleChange}
-                    disabled={loading}
-                    className="w-full border-b border-[#a79093]/50 bg-transparent px-0 py-3 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">Select type</option>
-                    <option value="medical">Medical</option>
-                    <option value="legal">Legal</option>
-                    <option value="psychological">Psychological</option>
-                    <option value="general">General</option>
-                  </select>
-                </div>
-
-                {/* Phone */}
-                <div>
-                  <label
-                    htmlFor="advisor-phone"
-                    className="mb-2 block text-sm font-semibold text-[#3e1919]"
-                  >
-                    Phone number
-                  </label>
 
                   <input
                     id="advisor-phone"
@@ -307,18 +377,26 @@ export default function CreateAdvisor() {
                     onChange={handleChange}
                     placeholder="Enter phone number"
                     disabled={loading}
-                    className="w-full border-b border-[#a79093]/50 bg-transparent px-0 py-3 text-sm text-[#3e1919] outline-none transition placeholder:text-[#a79093]/70 focus:border-[#3e1919] disabled:cursor-not-allowed disabled:opacity-50"
+                    className={`${inputClass} pl-11`}
                   />
                 </div>
+              </div>
 
-                {/* Location */}
-                <div>
-                  <label
-                    htmlFor="advisor-location"
-                    className="mb-2 block text-sm font-semibold text-[#3e1919]"
-                  >
-                    Location
-                  </label>
+              {/* Location */}
+              <div>
+                <label
+                  htmlFor="advisor-location"
+                  className={labelClass}
+                >
+                  Location
+                  <span className="ml-1 text-[#2F8F4E]">*</span>
+                </label>
+
+                <div className="relative">
+                  <MapPin
+                    size={17}
+                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#719079]"
+                  />
 
                   <input
                     id="advisor-location"
@@ -326,119 +404,148 @@ export default function CreateAdvisor() {
                     name="location"
                     value={formData.location}
                     onChange={handleChange}
-                    placeholder="Enter location"
+                    placeholder="e.g. Addis Ababa"
                     disabled={loading}
-                    className="w-full border-b border-[#a79093]/50 bg-transparent px-0 py-3 text-sm text-[#3e1919] outline-none transition placeholder:text-[#a79093]/70 focus:border-[#3e1919] disabled:cursor-not-allowed disabled:opacity-50"
+                    className={`${inputClass} pl-11`}
                   />
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Working hours */}
-          <section className="border-b border-[#a79093]/30">
-            <div className="grid lg:grid-cols-[220px_1fr]">
-              <div className="border-b border-[#a79093]/30 py-6 lg:border-b-0 lg:border-r lg:pr-8">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a79093]">
+          {/* Availability section */}
+          <section className="border-t border-[#D7E5D9]">
+            <div className="border-b border-[#D7E5D9] bg-[#E7F1E3]/60 px-5 py-5 sm:px-8">
+              <div className="flex items-start gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#176B3A] text-sm font-bold text-white">
                   02
-                </p>
+                </div>
 
-                <h2 className="mt-2 text-lg font-semibold text-[#3e1919]">
-                  Working hours
-                </h2>
+                <div>
+                  <h2 className="text-lg font-bold text-[#173B28]">
+                    Availability
+                  </h2>
 
-                <p className="mt-2 text-sm leading-6 text-[#a79093]">
-                  Set the regular hours during which this advisor is available.
-                </p>
+                  <p className="mt-1 text-sm text-[#5C7764]">
+                    Set the advisor's regular working hours and account
+                    availability.
+                  </p>
+                </div>
               </div>
+            </div>
 
-              <div className="grid gap-x-8 gap-y-6 py-7 lg:grid-cols-2 lg:pl-8">
+            <div className="px-5 py-7 sm:px-8">
+
+              <div className="grid gap-6 sm:grid-cols-2">
+                {/* Start */}
                 <div>
                   <label
                     htmlFor="advisor-start"
-                    className="mb-2 block text-sm font-semibold text-[#3e1919]"
+                    className={labelClass}
                   >
-                    Start time
+                    Available from
+                    <span className="ml-1 text-[#2F8F4E]">*</span>
                   </label>
 
-                  <input
-                    id="advisor-start"
-                    type="time"
-                    name="start"
-                    value={formData.start}
-                    onChange={handleChange}
-                    disabled={loading}
-                    className="w-full border-b border-[#a79093]/50 bg-transparent px-0 py-3 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919] disabled:cursor-not-allowed disabled:opacity-50"
-                  />
+                  <div className="relative">
+                    <Clock3
+                      size={17}
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#719079]"
+                    />
+
+                    <input
+                      id="advisor-start"
+                      type="time"
+                      name="start"
+                      value={formData.start}
+                      onChange={handleChange}
+                      disabled={loading}
+                      className={`${inputClass} pl-11`}
+                    />
+                  </div>
                 </div>
 
+                {/* End */}
                 <div>
                   <label
                     htmlFor="advisor-end"
-                    className="mb-2 block text-sm font-semibold text-[#3e1919]"
+                    className={labelClass}
                   >
-                    End time
+                    Available until
+                    <span className="ml-1 text-[#2F8F4E]">*</span>
                   </label>
 
-                  <input
-                    id="advisor-end"
-                    type="time"
-                    name="end"
-                    value={formData.end}
-                    onChange={handleChange}
-                    disabled={loading}
-                    className="w-full border-b border-[#a79093]/50 bg-transparent px-0 py-3 text-sm text-[#3e1919] outline-none transition focus:border-[#3e1919] disabled:cursor-not-allowed disabled:opacity-50"
-                  />
-                </div>
+                  <div className="relative">
+                    <Clock3
+                      size={17}
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#719079]"
+                    />
 
-                <div className="lg:col-span-2">
-                  <div className="flex items-center justify-between border-t border-[#a79093]/20 pt-6">
-                    <div>
-                      <p className="text-sm font-semibold text-[#3e1919]">
-                        Account status
-                      </p>
-
-                      <p className="mt-1 text-xs leading-5 text-[#a79093]">
-                        Allow this advisor to log in immediately after creation.
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={formData.active}
-                      aria-label="Toggle advisor account status"
-                      onClick={() =>
-                        setFormData((previous) => ({
-                          ...previous,
-                          active: !previous.active,
-                        }))
-                      }
+                    <input
+                      id="advisor-end"
+                      type="time"
+                      name="end"
+                      value={formData.end}
+                      onChange={handleChange}
                       disabled={loading}
-                      className={`relative h-6 w-11 shrink-0 rounded-full transition ${
-                        formData.active
-                          ? "bg-[#3e1919]"
-                          : "bg-[#a79093]/50"
-                      } disabled:cursor-not-allowed disabled:opacity-50`}
-                    >
-                      <span
-                        className={`absolute top-1 h-4 w-4 rounded-full bg-white transition ${
-                          formData.active ? "left-6" : "left-1"
-                        }`}
-                      />
-                    </button>
+                      className={`${inputClass} pl-11`}
+                    />
                   </div>
                 </div>
               </div>
+
+              {/* Status */}
+              <div className="mt-7 flex items-center justify-between gap-6 rounded-xl border border-[#D7E5D9] bg-[#FAFBF7] px-5 py-4">
+                <div>
+                  <p className="text-sm font-semibold text-[#173B28]">
+                    Account status
+                  </p>
+
+                  <p className="mt-1 text-xs leading-5 text-[#5C7764]">
+                    Active advisors can sign in and receive support requests
+                    immediately after creation.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={formData.active}
+                  aria-label="Toggle advisor account status"
+                  onClick={() =>
+                    setFormData((previous) => ({
+                      ...previous,
+                      active: !previous.active,
+                    }))
+                  }
+                  disabled={loading}
+                  className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
+                    formData.active
+                      ? "bg-[#2F8F4E]"
+                      : "bg-[#AFC8B3]"
+                  } disabled:cursor-not-allowed disabled:opacity-50`}
+                >
+                  <span
+                    className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-all ${
+                      formData.active ? "left-6" : "left-1"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <p className="mt-3 text-xs font-medium text-[#2F8F4E]">
+                {formData.active
+                  ? "Advisor account will be active."
+                  : "Advisor account will be inactive."}
+              </p>
             </div>
           </section>
 
-          {/* Form actions */}
-          <section className="flex flex-col-reverse gap-4 border-b border-[#a79093]/30 py-7 sm:flex-row sm:items-center sm:justify-between">
+          {/* Form footer */}
+          <div className="flex flex-col-reverse gap-4 border-t border-[#D7E5D9] bg-[#FAFBF7] px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
             <div>
-              <p className="text-xs leading-5 text-[#a79093]">
-                All required advisor information must be completed before
-                submission.
+              <p className="text-xs text-[#719079]">
+                <span className="text-[#2F8F4E]">*</span> Required fields
               </p>
             </div>
 
@@ -447,7 +554,7 @@ export default function CreateAdvisor() {
                 type="button"
                 onClick={() => navigate("/admin/dashboard")}
                 disabled={loading}
-                className="border border-[#a79093]/50 px-6 py-3 text-sm font-semibold text-[#3e1919] transition hover:bg-[#f0e2d6] disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg px-6 py-3 text-sm font-semibold text-[#176B3A] transition hover:bg-[#E7F1E3] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -455,23 +562,31 @@ export default function CreateAdvisor() {
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-[#3e1919] px-6 py-3 text-sm font-semibold text-[#f7f5f6] transition hover:bg-[#3e1919]/90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex items-center justify-center gap-2 rounded-lg bg-[#2F8F4E] px-7 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#176B3A] focus:outline-none focus:ring-2 focus:ring-[#2F8F4E]/30 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Creating advisor..." : "Create advisor"}
+                {loading ? (
+                  "Creating advisor..."
+                ) : (
+                  <>
+                    <UserPlus size={16} />
+                    Create advisor
+                  </>
+                )}
               </button>
             </div>
-          </section>
+          </div>
         </form>
 
         {/* Footer note */}
-        <footer className="pt-6">
-          <p className="text-xs leading-5 text-[#a79093]">
-            SafeLink advisor accounts are managed by authorized administrators.
-            Make sure the information provided is accurate before creating the
-            account.
+        <footer className="mt-6 text-center">
+          <p className="text-xs leading-5 text-[#719079]">
+            SafeLink advisor accounts are managed by authorized
+            administrators. Please verify the information before creating
+            the account.
           </p>
         </footer>
       </div>
     </main>
   );
 }
+

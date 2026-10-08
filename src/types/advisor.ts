@@ -1,18 +1,16 @@
-// The full set — matches advisor_type / suggested_advisor_types in the
-// shared database design doc. A General Advisor can suggest ANY of these,
-// including "medical", even though this frontend module doesn't render
-// a medical chat page itself (that's your teammate's page).
 export type AdvisorType = "medical" | "legal" | "psychological" | "general";
 
-// The subset THIS module's AdvisorChat component actually renders as its
-// own page. Medical has its own separate page/flow, built separately.
 export type ChatAdvisorType = Exclude<AdvisorType, "medical">;
 
 export interface Message {
+  message_id?: string;
   sender: "user" | "advisor";
   text: string;
   timestamp: string;
   edited: boolean;
+  deleted?: boolean;
+  deleted_at?: string | null;
+  seen_at?: string | null;
 }
 
 export interface Conversation {

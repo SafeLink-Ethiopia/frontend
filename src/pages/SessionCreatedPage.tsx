@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { Check, Copy } from "lucide-react";
+
 interface SessionCreatedPageProps {
   safelinkId: string;
   onContinue: () => void;
@@ -7,106 +10,133 @@ function SessionCreatedPage({
   safelinkId,
   onContinue,
 }: SessionCreatedPageProps) {
+  const [copied, setCopied] = useState(false);
+
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(safelinkId);
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(safelinkId);
+      } else {
+        const textArea = document.createElement("textarea");
+
+        textArea.value = safelinkId;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "-9999px";
+
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+
+      setCopied(true);
+
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
     } catch (error) {
       console.error("Failed to copy SafeLink ID:", error);
     }
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f5f6] text-[#3e1919] flex items-center justify-center px-5 py-10">
-      <div className="w-full max-w-xl">
-        {/* Brand */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-11 h-11 bg-[#3e1919] flex items-center justify-center">
-            <span className="text-[#f0e2d6] text-2xl">♡</span>
-          </div>
-
-          <span className="text-lg font-semibold tracking-tight text-[#3e1919]">
-            SafeLink
-          </span>
+    <main
+      className="fixed inset-0 flex items-center justify-center overflow-hidden bg-[#FAFBF7] bg-cover bg-center bg-no-repeat px-4 py-5 sm:py-6"
+      style={{
+        backgroundImage: "url('/safelink-login-bg.png')",
+      }}
+    >
+      {/* Main card */}
+      <div className="w-full max-w-[430px] rounded-3xl border border-white/70 bg-white/95 px-6 py-5 shadow-xl backdrop-blur-sm sm:px-7 sm:py-6">
+        {/* Logo */}
+        <div className="flex h-[58px] items-center justify-center">
+          <img
+            src="/safelink-logo.png"
+            alt="SafeLink"
+            className="block h-auto max-h-[55px] w-[110px] object-contain"
+          />
         </div>
 
-        {/* Main content */}
-        <div className="bg-white border border-[#a79093]/25">
-          {/* Success header */}
-          <div className="px-7 py-8 md:px-10 md:py-9 border-b border-[#a79093]/20">
-            <div className="flex items-start gap-5">
-              <div className="w-12 h-12 shrink-0 bg-[#f0e2d6] flex items-center justify-center">
-                <span className="text-xl font-semibold text-[#3e1919]">
-                  ✓
-                </span>
-              </div>
-
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a79093]">
-                  Private session created
-                </p>
-
-                <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-[#3e1919] mt-2">
-                  Your SafeLink ID
-                </h1>
-
-                <p className="text-sm md:text-base text-[#a79093] mt-3 leading-6 max-w-md">
-                  Your private session is ready. Keep this ID safe because
-                  you'll need it to access your session again.
-                </p>
-              </div>
-            </div>
+        {/* Success */}
+        <div className="mt-2 text-center">
+          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[#E7F1E3]">
+            <Check size={21} strokeWidth={2.5} className="text-[#2F8F4E]" />
           </div>
 
-          {/* ID section */}
-          <div className="px-7 py-8 md:px-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#a79093]">
-              Your private ID
-            </p>
+          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#2F8F4E]">
+            Session created
+          </p>
 
-            <div className="mt-3 bg-[#f0e2d6] border border-[#a79093]/25 px-5 py-6 text-center">
-              <p className="text-2xl md:text-3xl font-mono font-semibold tracking-wider text-[#3e1919] break-all">
-                {safelinkId}
-              </p>
-            </div>
+          <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-[#173B28] sm:text-[26px]">
+            Your SafeLink ID
+          </h1>
 
-            {/* Copy */}
-            <button
-              onClick={handleCopy}
-              className="mt-4 text-sm font-semibold text-[#3e1919] hover:text-[#a79093] underline underline-offset-4 transition-colors"
-            >
-              Copy SafeLink ID
-            </button>
-
-            {/* Continue */}
-            <button
-              onClick={onContinue}
-              className="w-full mt-8 bg-[#3e1919] hover:bg-[#2d1111] text-white py-4 px-6 font-semibold transition-colors"
-            >
-              Continue to Private Support
-              <span className="ml-2">→</span>
-            </button>
-
-            {/* Privacy information */}
-            <div className="mt-7 pt-6 border-t border-[#a79093]/20">
-              <div className="flex items-start gap-3">
-                <span className="text-sm mt-0.5 text-[#3e1919]">🔒</span>
-
-                <p className="text-xs text-[#a79093] leading-5">
-                  No name, phone number, or email is attached to this
-                  session. Your SafeLink ID is what you use to return to
-                  your private session.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer note */}
-        <div className="mt-6 text-center">
-          <p className="text-xs text-[#a79093]">
-            Keep your SafeLink ID somewhere private and accessible to you.
+          <p className="mx-auto mt-2 max-w-[340px] text-sm leading-5 text-[#5B6F62]">
+            Your private session is ready. Keep your SafeLink ID safe because
+            you'll need it to return to your session.
           </p>
         </div>
+
+        {/* SafeLink ID */}
+        <div className="mt-5">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#5B6F62]">
+            Your private ID
+          </p>
+
+          <div className="flex items-center gap-3 rounded-xl border border-[#2F8F4E]/20 bg-[#E7F1E3] px-4 py-4">
+            <p className="min-w-0 flex-1 break-all text-center font-mono text-xl font-bold tracking-wider text-[#173B28] sm:text-2xl">
+              {safelinkId}
+            </p>
+
+            <button
+              type="button"
+              onClick={handleCopy}
+              title={copied ? "Copied" : "Copy SafeLink ID"}
+              aria-label={copied ? "SafeLink ID copied" : "Copy SafeLink ID"}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-[#176B3A] shadow-sm transition hover:bg-[#FAFBF7] active:scale-95"
+            >
+              {copied ? (
+                <Check size={19} strokeWidth={2.5} />
+              ) : (
+                <Copy size={19} />
+              )}
+            </button>
+          </div>
+
+          <div className="mt-2 h-4 text-center">
+            {copied && (
+              <p className="text-xs font-medium text-[#2F8F4E]">
+                SafeLink ID copied
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Privacy information */}
+        <div className="mt-4 rounded-xl border border-[#2F8F4E]/15 bg-[#FAFBF7] px-3.5 py-2.5">
+          <p className="text-xs leading-5 text-[#5B6F62]">
+            No name, phone number, or email is attached to this session. Your
+            SafeLink ID is what you use to return to your private session.
+          </p>
+        </div>
+
+        {/* Continue */}
+        <button
+          type="button"
+          onClick={onContinue}
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#2F8F4E] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#176B3A]"
+        >
+          Continue to SafeLink
+          <span aria-hidden="true">→</span>
+        </button>
+
+        {/* Reminder */}
+        <p className="mt-3 text-center text-[11px] leading-4 text-[#718277]">
+          Keep your SafeLink ID somewhere private and accessible to you.
+        </p>
       </div>
     </main>
   );

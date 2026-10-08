@@ -143,6 +143,10 @@ export default function UserAdvisorChat() {
           matchingConversation.conversation_id,
         );
 
+        /*
+         * The user has opened this conversation.
+         * Mark advisor messages as seen.
+         */
         try {
           const seenConversation = await markConversationSeen(
             matchingConversation.conversation_id,
@@ -174,13 +178,18 @@ export default function UserAdvisorChat() {
 
   /*
    * Poll ONLY the currently selected advisor's conversation.
+   *
+   * IMPORTANT:
+   * If the advisor sends a new message while the user
+   * is already inside this chat, the new advisor message
+   * is automatically marked as seen.
    */
   useEffect(() => {
     if (!conversation || !sessionId) return;
 
     const activeConversationId = conversation.conversation_id;
 
-    const interval = window.setInterval(async () => {
+    const refreshConversation = async () => {
       try {
         const conversations = await getUserConversations(sessionId);
 
@@ -191,13 +200,28 @@ export default function UserAdvisorChat() {
             !item.hidden_for_user,
         );
 
-        if (updatedConversation) {
-          setConversation(updatedConversation);
+            setConversation(seenConversation);
+          } catch (seenError) {
+            console.error(
+              "Unable to mark advisor messages as seen:",
+              seenError,
+            );
+          }
         }
       } catch (pollError) {
         console.error("Unable to refresh conversation:", pollError);
       }
-    }, 3000);
+    };
+
+    /*
+     * Check immediately.
+     */
+    refreshConversation();
+
+    /*
+     * Continue checking every 3 seconds.
+     */
+    const interval = window.setInterval(refreshConversation, 3000);
 
     return () => {
       window.clearInterval(interval);
@@ -267,6 +291,10 @@ export default function UserAdvisorChat() {
           existingConversation.conversation_id,
         );
 
+        /*
+         * User opened the conversation.
+         * Mark advisor messages as seen.
+         */
         try {
           const seenConversation = await markConversationSeen(
             existingConversation.conversation_id,
@@ -296,6 +324,9 @@ export default function UserAdvisorChat() {
         newConversation.conversation_id,
       );
 
+      /*
+       * Mark the newly opened conversation as seen.
+       */
       try {
         const seenConversation = await markConversationSeen(
           newConversation.conversation_id,
@@ -315,6 +346,9 @@ export default function UserAdvisorChat() {
     }
   };
 
+  /*
+   * Send message.
+   */
   const handleSendMessage = async () => {
     if (!conversation || !message.trim() || loading) {
       return;

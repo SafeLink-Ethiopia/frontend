@@ -1,6 +1,15 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { X } from "lucide-react";
 
-export default function AdminSidebar() {
+type AdminSidebarProps = {
+  mobileMenuOpen: boolean;
+  onClose: () => void;
+};
+
+export default function AdminSidebar({
+  mobileMenuOpen,
+  onClose,
+}: AdminSidebarProps) {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -48,9 +57,15 @@ export default function AdminSidebar() {
   ];
 
   return (
-    <aside className="flex min-h-screen w-64 shrink-0 flex-col bg-[#3e1919] text-[#f7f5f6]">
+    <aside
+      className={`${
+        mobileMenuOpen
+          ? "fixed inset-y-0 left-0 z-50 flex w-64 shadow-xl"
+          : "fixed inset-y-0 left-0 z-30 hidden w-64 lg:flex"
+      } h-screen shrink-0 flex-col overflow-y-auto bg-[#3e1919] text-[#f7f5f6]`}
+    >
       {/* Brand */}
-      <div className="border-b border-[#a79093]/30 px-6 py-7">
+      <div className="flex items-center justify-between border-b border-[#a79093]/30 px-6 py-7">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center border border-[#f0e2d6]/40 bg-[#f0e2d6] text-sm font-bold text-[#3e1919]">
             SL
@@ -63,6 +78,14 @@ export default function AdminSidebar() {
             </p>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close admin navigation"
+          className="rounded p-2 text-[#f0e2d6] hover:bg-[#f0e2d6]/10 lg:hidden"
+        >
+          <X size={20} />
+        </button>
       </div>
 
       {/* Navigation */}
@@ -76,6 +99,7 @@ export default function AdminSidebar() {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={onClose}
               className={({ isActive }) =>
                 `group relative block border-l-2 px-4 py-3 text-sm font-medium transition ${
                   isActive
