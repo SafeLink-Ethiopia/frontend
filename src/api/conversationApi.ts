@@ -1,15 +1,10 @@
-
 import axios from "axios";
 
 const API_URL = "http://localhost:5000/api/conversations";
 
 export type Sender = "user" | "advisor";
 
-export type AdvisorType =
-  | "medical"
-  | "legal"
-  | "psychological"
-  | "general";
+export type AdvisorType = "medical" | "legal" | "psychological" | "general";
 
 export interface Message {
   message_id: string;
@@ -20,6 +15,9 @@ export interface Message {
   deleted: boolean;
   deleted_at?: string | null;
   seen_at?: string | null;
+
+  // ID of the message this message is replying to
+  reply_to?: string | null;
 }
 
 export interface Recommendation {
@@ -64,14 +62,13 @@ export const requestAdvisor = async (
   session_id: string,
   advisor_type: AdvisorType,
 ): Promise<Conversation> => {
-  const response =
-    await axios.post<RequestConversationResponse>(
-      `${API_URL}/request`,
-      {
-        session_id,
-        advisor_type,
-      },
-    );
+  const response = await axios.post<RequestConversationResponse>(
+    `${API_URL}/request`,
+    {
+      session_id,
+      advisor_type,
+    },
+  );
 
   return response.data.conversation;
 };
@@ -84,17 +81,13 @@ export const getUserConversation = async (
   session_id: string,
 ): Promise<Conversation | null> => {
   try {
-    const response =
-      await axios.get<ConversationResponse>(
-        `${API_URL}/session/${session_id}`,
-      );
+    const response = await axios.get<ConversationResponse>(
+      `${API_URL}/session/${session_id}`,
+    );
 
     return response.data.conversation;
   } catch (error: unknown) {
-    if (
-      axios.isAxiosError(error) &&
-      error.response?.status === 404
-    ) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
       return null;
     }
 
@@ -109,10 +102,9 @@ export const getUserConversation = async (
 export const getUserConversations = async (
   session_id: string,
 ): Promise<Conversation[]> => {
-  const response =
-    await axios.get<ConversationsResponse>(
-      `${API_URL}/session/${session_id}/all`,
-    );
+  const response = await axios.get<ConversationsResponse>(
+    `${API_URL}/session/${session_id}/all`,
+  );
 
   return response.data.conversations;
 };
@@ -124,10 +116,9 @@ export const getUserConversations = async (
 export const getConversation = async (
   conversationId: string,
 ): Promise<Conversation> => {
-  const response =
-    await axios.get<ConversationResponse>(
-      `${API_URL}/${conversationId}`,
-    );
+  const response = await axios.get<ConversationResponse>(
+    `${API_URL}/${conversationId}`,
+  );
 
   return response.data.conversation;
 };
@@ -141,16 +132,17 @@ export const sendMessage = async (
   sender: Sender,
   text: string,
   urgent = false,
+  replyTo?: string | null,
 ): Promise<Conversation> => {
-  const response =
-    await axios.post<ConversationResponse>(
-      `${API_URL}/${conversationId}/message`,
-      {
-        sender,
-        text,
-        urgent,
-      },
-    );
+  const response = await axios.post<ConversationResponse>(
+    `${API_URL}/${conversationId}/message`,
+    {
+      sender,
+      text,
+      urgent,
+      reply_to: replyTo ?? null,
+    },
+  );
 
   return response.data.conversation;
 };
@@ -164,13 +156,12 @@ export const editMessage = async (
   messageId: string,
   text: string,
 ): Promise<Conversation> => {
-  const response =
-    await axios.patch<ConversationResponse>(
-      `${API_URL}/${conversationId}/message/${messageId}`,
-      {
-        text,
-      },
-    );
+  const response = await axios.patch<ConversationResponse>(
+    `${API_URL}/${conversationId}/message/${messageId}`,
+    {
+      text,
+    },
+  );
 
   return response.data.conversation;
 };
@@ -183,10 +174,9 @@ export const deleteMessage = async (
   conversationId: string,
   messageId: string,
 ): Promise<Conversation> => {
-  const response =
-    await axios.delete<ConversationResponse>(
-      `${API_URL}/${conversationId}/message/${messageId}`,
-    );
+  const response = await axios.delete<ConversationResponse>(
+    `${API_URL}/${conversationId}/message/${messageId}`,
+  );
 
   return response.data.conversation;
 };
@@ -199,13 +189,12 @@ export const markConversationSeen = async (
   conversationId: string,
   viewer: "user" | "advisor",
 ): Promise<Conversation> => {
-  const response =
-    await axios.patch<ConversationResponse>(
-      `${API_URL}/${conversationId}/seen`,
-      {
-        viewer,
-      },
-    );
+  const response = await axios.patch<ConversationResponse>(
+    `${API_URL}/${conversationId}/seen`,
+    {
+      viewer,
+    },
+  );
 
   return response.data.conversation;
 };

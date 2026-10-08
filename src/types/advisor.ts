@@ -11,6 +11,7 @@ export interface Message {
   deleted?: boolean;
   deleted_at?: string | null;
   seen_at?: string | null;
+  reply_to?: string | null;
 }
 
 export interface Conversation {
