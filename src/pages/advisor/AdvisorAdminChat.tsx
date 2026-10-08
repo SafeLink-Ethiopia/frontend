@@ -1,132 +1,190 @@
 
 import {
-  FormEvent,
   useEffect,
+  useMemo,
   useRef,
   useState,
+  type KeyboardEvent,
 } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Check,
   CheckCheck,
   Edit3,
+  MoreVertical,
   Send,
   Trash2,
+  WifiOff,
   X,
 } from "lucide-react";
-import axios from "axios";
+
 import socket from "../../services/socket";
+
+/* =========================================================
+   TYPES
+========================================================= */
 
 interface Message {
   message_id: string;
-  sender: "admin" | "advisor";
+  sender: "admin" | "advisor" | "user";
   text: string;
   timestamp: string;
-
   edited?: boolean;
   deleted?: boolean;
-
-  deletedForAdmin?: boolean;
-  deletedForAdvisor?: boolean;
-  deletedForEveryone?: boolean;
-
-  deliveredAt?: string;
-  readAt?: string;
+  deleted_at?: string | null;
+  delivered_at?: string | null;
+  seen_at?: string | null;
 }
 
 interface Conversation {
   conversation_id: string;
-  admin_id: string;
+  session_id: string;
   advisor_id: string;
+  advisor_type?: string;
+  urgent?: boolean;
+  hidden_for_advisor?: boolean;
+  hidden_for_user?: boolean;
+  created_at?: string;
   messages: Message[];
-  createdAt: string;
-  updatedAt: string;
 }
 
-interface ConversationResponse {
-  conversation: Conversation;
+/* =========================================================
+   CONSTANTS
+========================================================= */
+
+const API_URL = "http://localhost:5000";
+
+/* =========================================================
+   COMPONENT
+========================================================= */
+
+interface AdvisorAdminChatProps {
+  onBack?: () => void;
 }
 
-type DeleteType = "me" | "everyone";
+function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
+  /* =======================================================
+     GET CONVERSATION ID FROM URL
 
-export default function AdvisorAdminChat() {
-  const navigate = useNavigate();
+     Route:
+     /advisor/messages/:conversationId
+  ======================================================= */
 
   const { conversationId } = useParams<{
     conversationId: string;
   }>();
 
-  // ============================================================
-  // STATE
-  // ============================================================
+  /* =======================================================
+     STATE
+  ======================================================= */
 
   const [conversation, setConversation] =
     useState<Conversation | null>(null);
 
-  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [messageText, setMessageText] = useState("");
 
   const [editingMessageId, setEditingMessageId] =
     useState<string | null>(null);
 
   const [editingText, setEditingText] = useState("");
 
-  const [selectedMessageId, setSelectedMessageId] =
+  const [menuMessageId, setMenuMessageId] =
     useState<string | null>(null);
 
-  const [confirmDeleteMessageId, setConfirmDeleteMessageId] =
+  const [deleteMenuId, setDeleteMenuId] =
     useState<string | null>(null);
 
-  const [confirmDeleteConversation, setConfirmDeleteConversation] =
-    useState(false);
-
-  const [loading, setLoading] = useState(true);
-
-  const [sending, setSending] = useState(false);
-
-  const [error, setError] = useState("");
-
-  const [connected, setConnected] =
+  const [isConnected, setIsConnected] =
     useState(socket.connected);
 
-  const messagesEndRef =
-    useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const token =
-    localStorage.getItem("advisor_token") ?? "";
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // ============================================================
-  // LOAD CONVERSATION
-  // ============================================================
+  /* =======================================================
+     CURRENT CONVERSATION ID
+  ======================================================= */
+
+  const currentConversationId = useMemo(
+    () =>
+      conversation?.conversation_id ||
+      conversationId ||
+      "",
+    [conversation?.conversation_id, conversationId],
+  );
+
+  /* =========================================================
+     LOAD CONVERSATION
+  ========================================================= */
 
   useEffect(() => {
-    if (!token) {
-      navigate("/advisor/login");
-      return;
-    }
-
-    if (!conversationId) {
-      navigate("/advisor/messages");
-      return;
-    }
-
     const loadConversation = async () => {
       try {
         setLoading(true);
         setError("");
 
-        const response =
-          await axios.get<ConversationResponse>(
-            `http://localhost:5000/api/advisor/admin-conversations/${conversationId}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
+        /* -----------------------------------------------
+           Make sure URL contains conversation ID
+        ----------------------------------------------- */
+
+        if (!conversationId) {
+          throw new Error(
+            "Conversation ID is missing from the URL.",
+          );
+        }
+
+        /* -----------------------------------------------
+           Check advisor authentication
+        ----------------------------------------------- */
+
+        const token =
+          localStorage.getItem("advisor_token");
+
+        if (!token) {
+          window.location.href = "/advisor/login";
+          return;
+        }
+
+        /* -----------------------------------------------
+           Request conversation
+        ----------------------------------------------- */
+
+        const response = await fetch(
+          `${API_URL}/api/advisor/admin-conversations/${conversationId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
             },
+          },
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+
+          console.error(
+            "Conversation API error:",
+            response.status,
+            errorText,
           );
 
+          throw new Error(
+            `Failed to load conversation (${response.status})`,
+          );
+        }
+
+        const data = await response.json();
+
+        console.log(
+          "[AdvisorAdminChat] Conversation loaded:",
+          data,
+        );
+
         setConversation(
-          response.data.conversation,
+          data.conversation || data,
         );
       } catch (err) {
         console.error(
@@ -134,538 +192,353 @@ export default function AdvisorAdminChat() {
           err,
         );
 
-        if (axios.isAxiosError(err)) {
-          if (err.response?.status === 401) {
-            localStorage.removeItem(
-              "advisor_token",
-            );
-
-            localStorage.removeItem(
-              "advisor_profile",
-            );
-
-            navigate("/advisor/login");
-            return;
-          }
-
-          setError(
-            err.response?.data?.message ||
-              "Could not load the conversation.",
-          );
-        } else {
-          setError(
-            "Could not load the conversation.",
-          );
-        }
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Unable to load this conversation.",
+        );
       } finally {
         setLoading(false);
       }
     };
 
     loadConversation();
-  }, [token, conversationId, navigate]);
+  }, [conversationId]);
 
-  // ============================================================
-  // SOCKET CONNECTION
-  // ============================================================
+  /* =========================================================
+     SOCKET CONNECTION
+  ========================================================= */
 
   useEffect(() => {
     const handleConnect = () => {
       console.log(
-        "[Socket] Connected:",
+        "[AdvisorAdminChat] Socket connected:",
         socket.id,
       );
 
-      setConnected(true);
-      setError("");
+      setIsConnected(true);
+
+      if (currentConversationId) {
+        console.log(
+          "[AdvisorAdminChat] Joining conversation:",
+          currentConversationId,
+        );
+
+        socket.emit(
+          "join_conversation",
+          currentConversationId,
+        );
+      }
     };
 
     const handleDisconnect = () => {
-      console.log("[Socket] Disconnected");
+      console.log(
+        "[AdvisorAdminChat] Socket disconnected",
+      );
 
-      setConnected(false);
+      setIsConnected(false);
     };
 
-    const handleConnectError = (
-      socketError: Error,
-    ) => {
+    const handleConnectError = (err: Error) => {
       console.error(
-        "[Socket] Connection error:",
-        socketError,
+        "[AdvisorAdminChat] Socket connection error:",
+        err,
       );
 
-      setConnected(false);
-
-      setError(
-        "Could not connect to the messaging server.",
-      );
+      setIsConnected(false);
     };
 
     socket.on("connect", handleConnect);
-
-    socket.on(
-      "disconnect",
-      handleDisconnect,
-    );
-
+    socket.on("disconnect", handleDisconnect);
     socket.on(
       "connect_error",
       handleConnectError,
     );
 
-    if (!socket.connected) {
-      socket.connect();
+    /* -------------------------------------------------------
+       If socket is already connected
+    ------------------------------------------------------- */
+
+    if (
+      socket.connected &&
+      currentConversationId
+    ) {
+      socket.emit(
+        "join_conversation",
+        currentConversationId,
+      );
     }
 
     return () => {
-      socket.off(
-        "connect",
-        handleConnect,
-      );
-
+      socket.off("connect", handleConnect);
       socket.off(
         "disconnect",
         handleDisconnect,
       );
-
       socket.off(
         "connect_error",
         handleConnectError,
       );
     };
-  }, []);
+  }, [currentConversationId]);
 
-  // ============================================================
-  // JOIN CONVERSATION + SOCKET EVENTS
-  // ============================================================
+  /* =========================================================
+     SOCKET MESSAGE EVENTS
+  ========================================================= */
 
   useEffect(() => {
-    if (!conversation?.conversation_id) {
+    if (!currentConversationId) {
       return;
     }
 
-    const currentConversationId =
-      conversation.conversation_id;
+    /* -------------------------------------------------------
+       NEW MESSAGE
+    ------------------------------------------------------- */
 
-    const joinConversation = () => {
-      socket.emit(
-        "join_conversation",
-        currentConversationId,
-      );
-
+    const handleNewMessage = (
+      message: Message,
+    ) => {
       console.log(
-        "[Socket] Joined conversation:",
-        currentConversationId,
+        "[AdvisorAdminChat] New message:",
+        message,
       );
-    };
 
-    const handleConnect = () => {
-      joinConversation();
-    };
-
-    // ----------------------------------------------------------
-    // NEW MESSAGE
-    // ----------------------------------------------------------
-
-    const handleNewMessage = (data: {
-      conversation_id: string;
-      message: Message;
-    }) => {
-      if (
-        data.conversation_id !==
-        currentConversationId
-      ) {
-        return;
-      }
-
-      setConversation((current) => {
-        if (!current) {
-          return current;
+      setConversation((prev) => {
+        if (!prev) {
+          return prev;
         }
 
         const alreadyExists =
-          current.messages.some(
-            (msg) =>
-              msg.message_id ===
-              data.message.message_id,
+          prev.messages.some(
+            (existingMessage) =>
+              existingMessage.message_id ===
+              message.message_id,
           );
 
         if (alreadyExists) {
-          return current;
+          return prev;
         }
 
         return {
-          ...current,
-
+          ...prev,
           messages: [
-            ...current.messages,
-            data.message,
+            ...prev.messages,
+            message,
           ],
-
-          updatedAt:
-            data.message.timestamp,
         };
       });
 
-      // Admin sent a message.
-      // Tell server that advisor received it.
-      if (
-        data.message.sender === "admin"
-      ) {
-        socket.emit(
-          "mark_message_delivered",
-          {
-            conversation_id:
-              currentConversationId,
+      /* -----------------------------------------------------
+         Mark admin message delivered/read
+      ----------------------------------------------------- */
 
-            message_id:
-              data.message.message_id,
-          },
-        );
+      if (message.sender === "admin") {
+        socket.emit("message_delivered", {
+          conversation_id:
+            currentConversationId,
+          message_id: message.message_id,
+          sender: "advisor",
+        });
 
-        socket.emit(
-          "mark_message_read",
-          {
-            conversation_id:
-              currentConversationId,
-
-            message_id:
-              data.message.message_id,
-          },
-        );
-      }
-
-      // Our message was accepted by server.
-      if (
-        data.message.sender === "advisor"
-      ) {
-        setSending(false);
+        socket.emit("message_read", {
+          conversation_id:
+            currentConversationId,
+          message_id: message.message_id,
+          sender: "advisor",
+        });
       }
     };
 
-    // ----------------------------------------------------------
-    // MESSAGE EDITED
-    // ----------------------------------------------------------
+    /* -------------------------------------------------------
+       EDITED MESSAGE
+    ------------------------------------------------------- */
 
-    const handleMessageEdited = (data: {
-      conversation_id: string;
-      message: Message;
-    }) => {
-      if (
-        data.conversation_id !==
-        currentConversationId
-      ) {
-        return;
-      }
-
-      setConversation((current) => {
-        if (!current) {
-          return current;
+    const handleEditedMessage = (
+      message: Message,
+    ) => {
+      setConversation((prev) => {
+        if (!prev) {
+          return prev;
         }
 
         return {
-          ...current,
-
-          messages: current.messages.map(
-            (msg) =>
-              msg.message_id ===
-              data.message.message_id
-                ? data.message
-                : msg,
+          ...prev,
+          messages: prev.messages.map(
+            (item) =>
+              item.message_id ===
+              message.message_id
+                ? message
+                : item,
           ),
         };
       });
-
-      setEditingMessageId(null);
-      setEditingText("");
-      setSelectedMessageId(null);
     };
 
-    // ----------------------------------------------------------
-    // DELETE FOR ME
-    // ----------------------------------------------------------
+    /* -------------------------------------------------------
+       DELETE FOR ME
+    ------------------------------------------------------- */
 
-    const handleMessageDeletedForMe =
-      (data: {
-        conversation_id: string;
-        message_id: string;
-      }) => {
-        if (
-          data.conversation_id !==
-          currentConversationId
-        ) {
-          return;
-        }
-
-        setConversation((current) => {
-          if (!current) {
-            return current;
-          }
-
-          return {
-            ...current,
-
-            messages:
-              current.messages.filter(
-                (msg) =>
-                  msg.message_id !==
-                  data.message_id,
-              ),
-          };
-        });
-
-        setSelectedMessageId(null);
-        setConfirmDeleteMessageId(null);
-      };
-
-    // ----------------------------------------------------------
-    // DELETE FOR EVERYONE
-    // ----------------------------------------------------------
-
-    const handleMessageDeletedForEveryone =
-      (data: {
-        conversation_id: string;
-        message_id: string;
-      }) => {
-        if (
-          data.conversation_id !==
-          currentConversationId
-        ) {
-          return;
-        }
-
-        setConversation((current) => {
-          if (!current) {
-            return current;
-          }
-
-          return {
-            ...current,
-
-            messages:
-              current.messages.map(
-                (msg) =>
-                  msg.message_id ===
-                  data.message_id
-                    ? {
-                        ...msg,
-
-                        deleted: true,
-
-                        deletedForEveryone:
-                          true,
-
-                        edited: false,
-                      }
-                    : msg,
-              ),
-          };
-        });
-
-        setSelectedMessageId(null);
-
-        setConfirmDeleteMessageId(null);
-
-        setEditingMessageId(null);
-
-        setEditingText("");
-      };
-
-    // ----------------------------------------------------------
-    // BACKWARD COMPATIBILITY
-    // ----------------------------------------------------------
-
-    const handleMessageDeleted =
-      (data: {
-        conversation_id: string;
-        message_id: string;
-      }) => {
-        if (
-          data.conversation_id !==
-          currentConversationId
-        ) {
-          return;
-        }
-
-        setConversation((current) => {
-          if (!current) {
-            return current;
-          }
-
-          return {
-            ...current,
-
-            messages:
-              current.messages.map(
-                (msg) =>
-                  msg.message_id ===
-                  data.message_id
-                    ? {
-                        ...msg,
-
-                        deleted: true,
-
-                        deletedForEveryone:
-                          true,
-
-                        edited: false,
-                      }
-                    : msg,
-              ),
-          };
-        });
-
-        setSelectedMessageId(null);
-
-        setConfirmDeleteMessageId(null);
-      };
-
-    // ----------------------------------------------------------
-    // MESSAGE DELIVERED
-    // ----------------------------------------------------------
-
-    const handleMessageDelivered =
-      (data: {
-        conversation_id: string;
-        message_id: string;
-        deliveredAt: string;
-      }) => {
-        if (
-          data.conversation_id !==
-          currentConversationId
-        ) {
-          return;
-        }
-
-        setConversation((current) => {
-          if (!current) {
-            return current;
-          }
-
-          return {
-            ...current,
-
-            messages:
-              current.messages.map(
-                (msg) =>
-                  msg.message_id ===
-                  data.message_id
-                    ? {
-                        ...msg,
-
-                        deliveredAt:
-                          data.deliveredAt,
-                      }
-                    : msg,
-              ),
-          };
-        });
-      };
-
-    // ----------------------------------------------------------
-    // MESSAGE READ
-    // ----------------------------------------------------------
-
-    const handleMessageRead = (
-      data: {
-        conversation_id: string;
-        message_id: string;
-        readAt: string;
-      },
-    ) => {
-      if (
-        data.conversation_id !==
-        currentConversationId
-      ) {
-        return;
-      }
-
-      setConversation((current) => {
-        if (!current) {
-          return current;
+    const handleDeletedForMe = (data: {
+      message_id: string;
+    }) => {
+      setConversation((prev) => {
+        if (!prev) {
+          return prev;
         }
 
         return {
-          ...current,
-
-          messages:
-            current.messages.map(
-              (msg) =>
-                msg.message_id ===
-                data.message_id
-                  ? {
-                      ...msg,
-
-                      readAt: data.readAt,
-                    }
-                  : msg,
-            ),
+          ...prev,
+          messages: prev.messages.filter(
+            (message) =>
+              message.message_id !==
+              data.message_id,
+          ),
         };
       });
     };
 
-    // ----------------------------------------------------------
-    // CONVERSATION DELETED
-    // ----------------------------------------------------------
+    /* -------------------------------------------------------
+       DELETE FOR EVERYONE
+    ------------------------------------------------------- */
 
-    const handleConversationDeleted =
-      (data: {
-        conversation_id: string;
-        deletedFor:
-          | "admin"
-          | "advisor";
-      }) => {
-        if (
-          data.conversation_id !==
-          currentConversationId
-        ) {
-          return;
+    const handleDeletedForEveryone = (
+      message: Message,
+    ) => {
+      setConversation((prev) => {
+        if (!prev) {
+          return prev;
         }
 
-        if (
-          data.deletedFor ===
-          "advisor"
-        ) {
-          setConfirmDeleteConversation(
-            false,
-          );
+        return {
+          ...prev,
+          messages: prev.messages.map(
+            (item) =>
+              item.message_id ===
+              message.message_id
+                ? message
+                : item,
+          ),
+        };
+      });
+    };
 
-          navigate("/advisor/messages");
+    /* -------------------------------------------------------
+       GENERIC MESSAGE DELETE
+    ------------------------------------------------------- */
+
+    const handleDeletedMessage = (
+      message: Message,
+    ) => {
+      setConversation((prev) => {
+        if (!prev) {
+          return prev;
         }
-      };
 
-    // ----------------------------------------------------------
-    // MESSAGE ERROR
-    // ----------------------------------------------------------
+        return {
+          ...prev,
+          messages: prev.messages.map(
+            (item) =>
+              item.message_id ===
+              message.message_id
+                ? message
+                : item,
+          ),
+        };
+      });
+    };
+
+    /* -------------------------------------------------------
+       MESSAGE DELIVERED
+    ------------------------------------------------------- */
+
+    const handleMessageDelivered = (data: {
+      message_id: string;
+      delivered_at?: string;
+    }) => {
+      setConversation((prev) => {
+        if (!prev) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          messages: prev.messages.map(
+            (message) =>
+              message.message_id ===
+              data.message_id
+                ? {
+                    ...message,
+                    delivered_at:
+                      data.delivered_at ||
+                      new Date().toISOString(),
+                  }
+                : message,
+          ),
+        };
+      });
+    };
+
+    /* -------------------------------------------------------
+       MESSAGE READ
+    ------------------------------------------------------- */
+
+    const handleMessageRead = (data: {
+      message_id: string;
+      seen_at?: string;
+    }) => {
+      setConversation((prev) => {
+        if (!prev) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          messages: prev.messages.map(
+            (message) =>
+              message.message_id ===
+              data.message_id
+                ? {
+                    ...message,
+                    seen_at:
+                      data.seen_at ||
+                      new Date().toISOString(),
+                  }
+                : message,
+          ),
+        };
+      });
+    };
+
+    /* -------------------------------------------------------
+       CONVERSATION DELETED
+    ------------------------------------------------------- */
+
+    const handleConversationDeleted = () => {
+      if (onBack) {
+        onBack();
+      }
+    };
+
+    /* -------------------------------------------------------
+       SOCKET ERROR
+    ------------------------------------------------------- */
 
     const handleMessageError = (data: {
       message?: string;
     }) => {
       console.error(
-        "[Socket] Message error:",
-        data.message,
+        "[AdvisorAdminChat] Socket message error:",
+        data,
       );
 
-      setError(
-        data.message ||
-          "Message operation failed.",
-      );
-
-      setSending(false);
-
-      setConfirmDeleteMessageId(null);
-
-      setConfirmDeleteConversation(false);
+      if (data?.message) {
+        setError(data.message);
+      }
     };
 
-    // ----------------------------------------------------------
-    // REGISTER EVENTS
-    // ----------------------------------------------------------
-
-    socket.on(
-      "connect",
-      handleConnect,
-    );
+    /* -------------------------------------------------------
+       REGISTER LISTENERS
+    ------------------------------------------------------- */
 
     socket.on(
       "new_message",
@@ -674,22 +547,22 @@ export default function AdvisorAdminChat() {
 
     socket.on(
       "message_edited",
-      handleMessageEdited,
+      handleEditedMessage,
     );
 
     socket.on(
       "message_deleted_for_me",
-      handleMessageDeletedForMe,
+      handleDeletedForMe,
     );
 
     socket.on(
       "message_deleted_for_everyone",
-      handleMessageDeletedForEveryone,
+      handleDeletedForEveryone,
     );
 
     socket.on(
       "message_deleted",
-      handleMessageDeleted,
+      handleDeletedMessage,
     );
 
     socket.on(
@@ -712,18 +585,11 @@ export default function AdvisorAdminChat() {
       handleMessageError,
     );
 
-    if (socket.connected) {
-      joinConversation();
-    } else {
-      socket.connect();
-    }
+    /* -------------------------------------------------------
+       CLEANUP
+    ------------------------------------------------------- */
 
     return () => {
-      socket.off(
-        "connect",
-        handleConnect,
-      );
-
       socket.off(
         "new_message",
         handleNewMessage,
@@ -731,22 +597,22 @@ export default function AdvisorAdminChat() {
 
       socket.off(
         "message_edited",
-        handleMessageEdited,
+        handleEditedMessage,
       );
 
       socket.off(
         "message_deleted_for_me",
-        handleMessageDeletedForMe,
+        handleDeletedForMe,
       );
 
       socket.off(
         "message_deleted_for_everyone",
-        handleMessageDeletedForEveryone,
+        handleDeletedForEveryone,
       );
 
       socket.off(
         "message_deleted",
-        handleMessageDeleted,
+        handleDeletedMessage,
       );
 
       socket.off(
@@ -770,964 +636,636 @@ export default function AdvisorAdminChat() {
       );
     };
   }, [
-    conversation?.conversation_id,
-    navigate,
+    currentConversationId,
+    onBack,
   ]);
 
-  // ============================================================
-  // MARK ADMIN MESSAGES AS READ
-  // ============================================================
-
-  useEffect(() => {
-    if (!conversation) {
-      return;
-    }
-
-    const unreadAdminMessages =
-      conversation.messages.filter(
-        (msg) =>
-          msg.sender === "admin" &&
-          !msg.readAt &&
-          !msg.deletedForAdvisor,
-      );
-
-    unreadAdminMessages.forEach((msg) => {
-      socket.emit(
-        "mark_message_read",
-        {
-          conversation_id:
-            conversation.conversation_id,
-
-          message_id: msg.message_id,
-        },
-      );
-    });
-  }, [conversation?.messages.length]);
-
-  // ============================================================
-  // AUTO SCROLL
-  // ============================================================
+  /* =========================================================
+     AUTO SCROLL
+  ========================================================= */
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
     });
-  }, [conversation?.messages.length]);
+  }, [conversation?.messages]);
 
-  // ============================================================
-  // SEND MESSAGE
-  // ============================================================
+  /* =========================================================
+     SEND MESSAGE
+  ========================================================= */
 
-  const handleSend = (
-    event: FormEvent<HTMLFormElement>,
-  ) => {
-    event.preventDefault();
-
-    const text = message.trim();
+  const sendMessage = () => {
+    const text = messageText.trim();
 
     if (!text) {
       return;
     }
 
-    if (!conversation) {
-      setError(
-        "Conversation is not loaded.",
-      );
-
-      return;
-    }
-
-    if (sending) {
-      return;
-    }
-
-    if (!socket.connected) {
-      setError(
-        "You are not connected to the messaging server.",
-      );
-
-      return;
-    }
-
-    const conversation_id =
-      conversation.conversation_id ||
-      conversationId;
-
-    if (!conversation_id) {
+    if (!currentConversationId) {
       console.error(
-        "Missing conversation ID:",
-        {
-          conversation,
-          conversationId,
-        },
+        "Cannot send message: conversation ID missing.",
       );
-
-      setError(
-        "Conversation ID is missing.",
-      );
-
       return;
     }
 
-    const payload = {
-      conversation_id,
-
-      sender: "advisor" as const,
-
+    socket.emit("send_message", {
+      conversation_id:
+        currentConversationId,
+      sender: "advisor",
       text,
-    };
+    });
 
-    console.log(
-      "[Socket] Sending advisor message:",
-      payload,
-    );
-
-    setError("");
-
-    setSending(true);
-
-    socket.emit(
-      "send_message",
-      payload,
-    );
-
-    setMessage("");
+    setMessageText("");
   };
 
-  // ============================================================
-  // START EDIT
-  // ============================================================
+  /* =========================================================
+     KEYBOARD
+  ========================================================= */
 
-  const startEditing = (
-    msg: Message,
+  const handleKeyDown = (
+    event: KeyboardEvent<HTMLInputElement>,
   ) => {
     if (
-      msg.sender !== "advisor" ||
-      msg.deleted ||
-      msg.deletedForEveryone
+      event.key === "Enter" &&
+      !event.shiftKey
     ) {
-      return;
+      event.preventDefault();
+
+      sendMessage();
     }
-
-    setEditingMessageId(
-      msg.message_id,
-    );
-
-    setEditingText(msg.text);
-
-    setSelectedMessageId(null);
-
-    setConfirmDeleteMessageId(null);
   };
 
-  // ============================================================
-  // CANCEL EDIT
-  // ============================================================
+  /* =========================================================
+     START EDITING
+  ========================================================= */
+
+  const startEditing = (
+    message: Message,
+  ) => {
+    setEditingMessageId(
+      message.message_id,
+    );
+
+    setEditingText(message.text);
+
+    setMenuMessageId(null);
+
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
+  };
+
+  /* =========================================================
+     CANCEL EDITING
+  ========================================================= */
 
   const cancelEditing = () => {
     setEditingMessageId(null);
-
     setEditingText("");
   };
 
-  // ============================================================
-  // SAVE EDIT
-  // ============================================================
+  /* =========================================================
+     SAVE EDITED MESSAGE
+  ========================================================= */
 
-  const saveEdit = () => {
+  const saveEditedMessage = () => {
+    const text = editingText.trim();
+
     if (
-      !conversation ||
+      !text ||
       !editingMessageId ||
-      !editingText.trim()
+      !currentConversationId
     ) {
       return;
     }
 
-    if (!socket.connected) {
-      setError(
-        "Chat connection is not available.",
-      );
+    socket.emit("edit_message", {
+      conversation_id:
+        currentConversationId,
+      message_id: editingMessageId,
+      sender: "advisor",
+      text,
+    });
 
-      return;
-    }
-
-    socket.emit(
-      "edit_message",
-      {
-        conversation_id:
-          conversation.conversation_id,
-
-        message_id:
-          editingMessageId,
-
-        sender: "advisor",
-
-        text: editingText.trim(),
-      },
-    );
+    cancelEditing();
   };
 
-  // ============================================================
-  // REQUEST DELETE
-  // ============================================================
-
-  const requestDeleteMessage = (
-    messageId: string,
-  ) => {
-    setSelectedMessageId(null);
-
-    setConfirmDeleteMessageId(
-      messageId,
-    );
-  };
-
-  // ============================================================
-  // DELETE MESSAGE
-  // ============================================================
+  /* =========================================================
+     DELETE MESSAGE
+  ========================================================= */
 
   const deleteMessage = (
     messageId: string,
-    deleteType: DeleteType,
+    deleteType: "me" | "everyone",
   ) => {
-    if (!conversation) {
+    if (!currentConversationId) {
       return;
     }
 
-    if (!socket.connected) {
-      setError(
-        "Chat connection is not available.",
-      );
+    socket.emit("delete_message", {
+      conversation_id:
+        currentConversationId,
+      message_id: messageId,
+      sender: "advisor",
+      deleteType,
+    });
 
-      return;
-    }
-
-    socket.emit(
-      "delete_message",
-      {
-        conversation_id:
-          conversation.conversation_id,
-
-        message_id: messageId,
-
-        sender: "advisor",
-
-        deleteType,
-      },
-    );
-
-    setConfirmDeleteMessageId(null);
-
-    setSelectedMessageId(null);
+    setDeleteMenuId(null);
+    setMenuMessageId(null);
   };
 
-  // ============================================================
-  // HIDE CONVERSATION
-  // ============================================================
+  /* =========================================================
+     HIDE CONVERSATION
+  ========================================================= */
 
-  const deleteConversation = () => {
-    if (!conversation) {
+  const hideConversation = () => {
+    if (!currentConversationId) {
       return;
     }
 
-    if (!socket.connected) {
-      setError(
-        "Chat connection is not available.",
-      );
-
-      return;
-    }
-
-    socket.emit(
-      "delete_conversation",
-      {
-        conversation_id:
-          conversation.conversation_id,
-
-        sender: "advisor",
-      },
-    );
-
-    setConfirmDeleteConversation(false);
+    socket.emit("delete_conversation", {
+      conversation_id:
+        currentConversationId,
+      sender: "advisor",
+    });
   };
 
-  // ============================================================
-  // LOGOUT
-  // ============================================================
-
-  const handleLogout = () => {
-    socket.disconnect();
-
-    localStorage.removeItem(
-      "advisor_token",
-    );
-
-    localStorage.removeItem(
-      "advisor_profile",
-    );
-
-    navigate("/advisor/login");
-  };
-
-  // ============================================================
-  // MESSAGE STATUS
-  // ============================================================
+  /* =========================================================
+     MESSAGE STATUS
+  ========================================================= */
 
   const renderMessageStatus = (
-    msg: Message,
+    message: Message,
   ) => {
-    if (msg.sender !== "advisor") {
+    if (message.sender !== "advisor") {
       return null;
     }
 
-    if (msg.readAt) {
+    if (message.seen_at) {
       return (
         <CheckCheck
-          size={15}
-          strokeWidth={2.2}
-          className="text-[#f0e2d6]"
+          size={14}
+          className="text-[#2F8F4E]"
         />
       );
     }
 
-    if (msg.deliveredAt) {
+    if (message.delivered_at) {
       return (
         <CheckCheck
-          size={15}
-          strokeWidth={2.2}
-          className="text-[#f0e2d6]/65"
+          size={14}
+          className="text-[#6B7280]"
         />
       );
     }
 
     return (
       <Check
-        size={15}
-        strokeWidth={2.2}
-        className="text-[#f0e2d6]/65"
+        size={14}
+        className="text-[#6B7280]"
       />
     );
   };
 
-  // ============================================================
-  // LOADING
-  // ============================================================
+  /* =========================================================
+     LOADING
+  ========================================================= */
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f7f5f6] text-[#3e1919]">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-[#a79093]/30 border-t-[#3e1919]" />
-
-          <p className="text-sm text-[#a79093]">
-            Loading conversation...
-          </p>
+      <div className="flex h-full min-h-[500px] items-center justify-center bg-[#FAFBF7]">
+        <div className="text-sm text-[#173B28]">
+          Loading conversation...
         </div>
-      </main>
+      </div>
     );
   }
 
-  // ============================================================
-  // NO CONVERSATION
-  // ============================================================
+  /* =========================================================
+     ERROR
+  ========================================================= */
+
+  if (error && !conversation) {
+    return (
+      <div className="flex h-full min-h-[500px] flex-col items-center justify-center bg-[#FAFBF7] px-6">
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-center">
+          <p className="text-sm font-medium text-red-600">
+            {error}
+          </p>
+        </div>
+
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="rounded-xl bg-[#2F8F4E] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#176B3A]"
+          >
+            Go Back
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  /* =========================================================
+     NO CONVERSATION
+  ========================================================= */
 
   if (!conversation) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f7f5f6] px-5 text-[#3e1919]">
-        <div className="w-full max-w-md border-t-4 border-[#3e1919] bg-[#f0e2d6] px-6 py-8 text-center">
-          <p className="text-sm text-[#3e1919]">
-            {error ||
-              "Conversation not found."}
-          </p>
-
-          <button
-            type="button"
-            onClick={() =>
-              navigate(
-                "/advisor/messages",
-              )
-            }
-            className="mt-5 bg-[#3e1919] px-5 py-2.5 text-sm font-semibold text-[#f0e2d6] transition hover:opacity-90"
-          >
-            Back to messages
-          </button>
-        </div>
-      </main>
-    );
+    return null;
   }
 
-  // ============================================================
-  // MAIN UI
-  // ============================================================
+  /* =========================================================
+     MAIN UI
+  ========================================================= */
 
   return (
-    <main className="min-h-screen bg-[#f7f5f6] text-[#3e1919]">
-      <section className="mx-auto flex min-h-screen max-w-6xl flex-col px-0 sm:px-4 sm:py-4 lg:px-6 lg:py-6">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden border-y border-[#a79093]/25 bg-[#f7f5f6] shadow-sm sm:border">
-          {/* ====================================================
-              HEADER
-          ==================================================== */}
+    <div className="flex h-full min-h-[600px] flex-col bg-[#FAFBF7]">
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
 
-          <header className="shrink-0 border-b border-[#a79093]/25 bg-[#f0e2d6]">
-            <div className="flex min-h-[76px] items-center justify-between gap-3 px-4 py-3 sm:px-6">
-              <div className="flex min-w-0 items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate(
-                      "/advisor/messages",
-                    )
-                  }
-                  className="flex h-10 w-10 shrink-0 items-center justify-center text-[#3e1919] transition hover:bg-[#a79093]/10"
-                  aria-label="Back to messages"
-                >
-                  <ArrowLeft
-                    size={20}
-                  />
-                </button>
+      <div className="flex items-center justify-between border-b border-[#D7E7D3] bg-[#E7F1E3] px-4 py-3">
+        <div className="flex min-w-0 items-center gap-3">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#173B28] transition hover:bg-white"
+              title="Back"
+            >
+              <ArrowLeft size={19} />
+            </button>
+          )}
 
-                {/* ADMIN AVATAR */}
+          <div className="min-w-0">
+            <h2 className="truncate text-base font-semibold text-[#173B28]">
+              Admin Support
+            </h2>
 
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#3e1919] text-sm font-bold text-[#f0e2d6]">
-                  A
-                </div>
+            <div className="flex items-center gap-2 text-xs text-[#4B6654]">
+              <span>
+                Conversation #
+                {conversation.conversation_id}
+              </span>
 
-                <div className="min-w-0">
-                  <h1 className="truncate text-[16px] font-bold text-[#3e1919] sm:text-lg">
-                    Admin
-                  </h1>
-
-                  <div className="mt-0.5 flex items-center gap-1.5">
-                    <span
-                      className={`h-2 w-2 rounded-full ${
-                        connected
-                          ? "bg-[#3e1919]"
-                          : "bg-[#a79093]"
-                      }`}
-                    />
-
-                    <span className="text-xs text-[#a79093]">
-                      {connected
-                        ? "Online"
-                        : "Offline"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* HEADER ACTION */}
-
-              <button
-                type="button"
-                onClick={() =>
-                  setConfirmDeleteConversation(
-                    true,
-                  )
-                }
-                title="Hide conversation"
-                className="flex h-10 shrink-0 items-center justify-center gap-2 px-3 text-[#a79093] transition hover:bg-[#a79093]/10 hover:text-[#3e1919] sm:px-4"
-              >
-                <Trash2 size={17} />
-
-                <span className="hidden text-xs font-semibold sm:inline">
-                  Hide
+              {!isConnected && (
+                <span className="flex items-center gap-1 text-red-600">
+                  <WifiOff size={13} />
+                  Offline
                 </span>
-              </button>
+              )}
             </div>
-          </header>
+          </div>
+        </div>
 
-          {/* ====================================================
-              MESSAGES
-          ==================================================== */}
+        <button
+          onClick={hideConversation}
+          className="flex h-9 w-9 items-center justify-center rounded-full text-[#173B28] transition hover:bg-white"
+          title="Hide conversation"
+        >
+          <X size={19} />
+        </button>
+      </div>
 
-          <div
-            className="min-h-0 flex-1 overflow-y-auto bg-[#f7f5f6] px-3 py-5 sm:px-6 sm:py-6"
-            onClick={() => {
-              setSelectedMessageId(null);
-              setConfirmDeleteMessageId(null);
-            }}
-          >
-            {conversation.messages.length ===
-            0 ? (
-              <div className="flex min-h-[500px] items-center justify-center px-5">
-                <div className="text-center">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#f0e2d6] text-[#3e1919]">
-                    <Send size={22} />
-                  </div>
+      {/* =====================================================
+          ERROR BANNER
+      ===================================================== */}
 
-                  <h2 className="text-base font-bold text-[#3e1919]">
-                    No messages yet
-                  </h2>
+      {error && (
+        <div className="border-b border-red-200 bg-red-50 px-4 py-2 text-xs text-red-600">
+          {error}
+        </div>
+      )}
 
-                  <p className="mt-1 text-sm text-[#a79093]">
-                    Start a conversation with
-                    the administrator.
-                  </p>
+      {/* =====================================================
+          MESSAGES
+      ===================================================== */}
+
+      <div className="flex-1 overflow-y-auto px-4 py-5">
+        <div className="mx-auto flex max-w-4xl flex-col gap-3">
+          {conversation.messages.length === 0 ? (
+            <div className="flex min-h-[350px] items-center justify-center">
+              <div className="text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#E7F1E3] text-[#2F8F4E]">
+                  <Send size={20} />
                 </div>
+
+                <p className="text-sm font-medium text-[#173B28]">
+                  No messages yet
+                </p>
+
+                <p className="mt-1 text-xs text-[#6B7F70]">
+                  Start the conversation with the admin.
+                </p>
               </div>
-            ) : (
-              <div className="mx-auto max-w-4xl space-y-3">
-                {conversation.messages.map(
-                  (msg) => {
-                    const isAdvisor =
-                      msg.sender ===
-                      "advisor";
+            </div>
+          ) : (
+            conversation.messages.map(
+              (message) => {
+                const isAdvisor =
+                  message.sender ===
+                  "advisor";
 
-                    const isSelected =
-                      selectedMessageId ===
-                      msg.message_id;
+                const isDeleted =
+                  message.deleted;
 
-                    const isEditing =
-                      editingMessageId ===
-                      msg.message_id;
+                return (
+                  <div
+                    key={message.message_id}
+                    className={`flex w-full ${
+                      isAdvisor
+                        ? "justify-end"
+                        : "justify-start"
+                    }`}
+                  >
+                    <div
+                      className={`relative flex max-w-[75%] items-end gap-2 ${
+                        isAdvisor
+                          ? "flex-row-reverse"
+                          : "flex-row"
+                      }`}
+                    >
+                      {/* =================================================
+                          MESSAGE BUBBLE
 
-                    const isConfirmingDelete =
-                      confirmDeleteMessageId ===
-                      msg.message_id;
+                          ADMIN / LEFT
+                          → WHITE
 
-                    const isDeleted =
-                      Boolean(
-                        msg.deleted ||
-                          msg.deletedForEveryone,
-                      );
+                          ADVISOR / RIGHT
+                          → MINT
+                      ================================================= */}
 
-                    return (
                       <div
-                        key={msg.message_id}
-                        className={`flex ${
+                        className={`rounded-2xl px-4 py-3 shadow-sm ${
                           isAdvisor
-                            ? "justify-end"
-                            : "justify-start"
+                            ? "rounded-br-md bg-[#E7F1E3] text-[#173B28]"
+                            : "rounded-bl-md border border-[#E7F1E3] bg-white text-[#173B28]"
                         }`}
-                        onClick={(event) =>
-                          event.stopPropagation()
-                        }
                       >
+                        {isDeleted ? (
+                          <p className="text-sm italic text-[#7A8B7F]">
+                            This message was
+                            deleted
+                          </p>
+                        ) : (
+                          <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+                            {message.text}
+                          </p>
+                        )}
+
                         <div
-                          className={`relative max-w-[86%] sm:max-w-[70%] ${
+                          className={`mt-1.5 flex items-center gap-1 ${
                             isAdvisor
-                              ? "items-end"
-                              : "items-start"
+                              ? "justify-end"
+                              : "justify-start"
                           }`}
                         >
-                          {/* ==================================================
-                              ACTION MENU
-                          ================================================== */}
+                          <span className="text-[10px] text-[#718277]">
+                            {new Date(
+                              message.timestamp,
+                            ).toLocaleTimeString(
+                              [],
+                              {
+                                hour: "2-digit",
+                                minute:
+                                  "2-digit",
+                              },
+                            )}
+                          </span>
 
-                          {isSelected &&
-                            isAdvisor &&
-                            !isDeleted &&
-                            !isEditing && (
-                              <div
-                                className={`absolute bottom-full z-30 mb-2 flex overflow-hidden border border-[#a79093]/25 bg-[#f7f5f6] shadow-lg ${
-                                  isAdvisor
-                                    ? "right-0"
-                                    : "left-0"
-                                }`}
-                              >
+                          {message.edited &&
+                            !isDeleted && (
+                              <span className="text-[10px] text-[#718277]">
+                                edited
+                              </span>
+                            )}
+
+                          {renderMessageStatus(
+                            message,
+                          )}
+                        </div>
+                      </div>
+
+                      {/* =================================================
+                          MESSAGE MENU
+                      ================================================= */}
+
+                      {isAdvisor &&
+                        !isDeleted && (
+                          <div className="relative">
+                            <button
+                              onClick={() =>
+                                setMenuMessageId(
+                                  menuMessageId ===
+                                    message.message_id
+                                    ? null
+                                    : message.message_id,
+                                )
+                              }
+                              className="flex h-7 w-7 items-center justify-center rounded-full text-[#6B7F70] transition hover:bg-[#E7F1E3] hover:text-[#173B28]"
+                              title="Message options"
+                            >
+                              <MoreVertical
+                                size={16}
+                              />
+                            </button>
+
+                            {menuMessageId ===
+                              message.message_id && (
+                              <div className="absolute right-0 top-8 z-20 w-36 overflow-hidden rounded-xl border border-[#D7E7D3] bg-white shadow-lg">
                                 <button
-                                  type="button"
                                   onClick={() =>
                                     startEditing(
-                                      msg,
+                                      message,
                                     )
                                   }
-                                  className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-[#3e1919] transition hover:bg-[#f0e2d6]"
+                                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs text-[#173B28] transition hover:bg-[#E7F1E3]"
                                 >
                                   <Edit3
                                     size={14}
                                   />
-
                                   Edit
                                 </button>
 
                                 <button
-                                  type="button"
-                                  onClick={() =>
-                                    requestDeleteMessage(
-                                      msg.message_id,
-                                    )
-                                  }
-                                  className="flex items-center gap-2 border-l border-[#a79093]/25 px-4 py-2.5 text-xs font-semibold text-[#3e1919] transition hover:bg-[#f0e2d6]"
+                                  onClick={() => {
+                                    setDeleteMenuId(
+                                      message.message_id,
+                                    );
+
+                                    setMenuMessageId(
+                                      null,
+                                    );
+                                  }}
+                                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs text-red-600 transition hover:bg-red-50"
                                 >
                                   <Trash2
                                     size={14}
                                   />
-
                                   Delete
                                 </button>
                               </div>
                             )}
 
-                          {/* ==================================================
-                              DELETE CONFIRMATION
-                          ================================================== */}
+                            {/* =================================================
+                                DELETE OPTIONS
+                            ================================================= */}
 
-                          {isConfirmingDelete && (
-                            <div
-                              className={`absolute bottom-full z-40 mb-2 w-72 max-w-[calc(100vw-32px)] border border-[#a79093]/25 bg-[#f7f5f6] p-4 shadow-xl ${
-                                isAdvisor
-                                  ? "right-0"
-                                  : "left-0"
-                              }`}
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <p className="text-sm font-bold text-[#3e1919]">
-                                    Delete message?
-                                  </p>
-
-                                  <p className="mt-1 text-xs leading-5 text-[#a79093]">
-                                    Choose how you
-                                    want to remove
-                                    this message.
-                                  </p>
-                                </div>
-
+                            {deleteMenuId ===
+                              message.message_id && (
+                              <div className="absolute right-0 top-8 z-30 w-44 overflow-hidden rounded-xl border border-[#D7E7D3] bg-white shadow-lg">
                                 <button
-                                  type="button"
-                                  onClick={() =>
-                                    setConfirmDeleteMessageId(
-                                      null,
-                                    )
-                                  }
-                                  className="text-[#a79093] transition hover:text-[#3e1919]"
-                                >
-                                  <X size={16} />
-                                </button>
-                              </div>
-
-                              <div className="mt-4 space-y-2">
-                                <button
-                                  type="button"
                                   onClick={() =>
                                     deleteMessage(
-                                      msg.message_id,
+                                      message.message_id,
                                       "me",
                                     )
                                   }
-                                  className="w-full border border-[#a79093]/25 px-3 py-3 text-left transition hover:bg-[#f0e2d6]"
+                                  className="w-full px-3 py-2.5 text-left text-xs text-[#173B28] transition hover:bg-[#E7F1E3]"
                                 >
-                                  <span className="block text-xs font-semibold text-[#3e1919]">
-                                    Delete for me
-                                  </span>
-
-                                  <span className="mt-1 block text-[11px] text-[#a79093]">
-                                    Remove this
-                                    message only
-                                    from your
-                                    account.
-                                  </span>
+                                  Delete for me
                                 </button>
 
                                 <button
-                                  type="button"
                                   onClick={() =>
                                     deleteMessage(
-                                      msg.message_id,
+                                      message.message_id,
                                       "everyone",
                                     )
                                   }
-                                  className="w-full border border-[#3e1919]/20 px-3 py-3 text-left transition hover:bg-[#f0e2d6]"
+                                  className="w-full px-3 py-2.5 text-left text-xs text-red-600 transition hover:bg-red-50"
                                 >
-                                  <span className="block text-xs font-semibold text-[#3e1919]">
-                                    Delete for
-                                    everyone
-                                  </span>
-
-                                  <span className="mt-1 block text-[11px] text-[#a79093]">
-                                    Remove it for
-                                    both you and
-                                    the admin.
-                                  </span>
+                                  Delete for
+                                  everyone
                                 </button>
 
                                 <button
-                                  type="button"
                                   onClick={() =>
-                                    setConfirmDeleteMessageId(
+                                    setDeleteMenuId(
                                       null,
                                     )
                                   }
-                                  className="w-full px-3 py-2 text-xs font-semibold text-[#a79093] transition hover:text-[#3e1919]"
+                                  className="w-full border-t border-[#E7F1E3] px-3 py-2.5 text-left text-xs text-[#6B7F70] transition hover:bg-gray-50"
                                 >
                                   Cancel
                                 </button>
                               </div>
-                            </div>
-                          )}
-
-                          {/* ==================================================
-                              EDIT MESSAGE
-                          ================================================== */}
-
-                          {isEditing ? (
-                            <div className="w-[380px] max-w-[82vw] bg-[#3e1919] p-3">
-                              <textarea
-                                value={
-                                  editingText
-                                }
-                                onChange={(
-                                  event,
-                                ) =>
-                                  setEditingText(
-                                    event
-                                      .target
-                                      .value,
-                                  )
-                                }
-                                autoFocus
-                                rows={3}
-                                className="w-full resize-none border border-[#a79093]/30 bg-[#f7f5f6] px-3 py-2 text-sm text-[#3e1919] outline-none focus:border-[#f0e2d6]"
-                              />
-
-                              <div className="mt-2 flex justify-end gap-2">
-                                <button
-                                  type="button"
-                                  onClick={
-                                    cancelEditing
-                                  }
-                                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[#f0e2d6] transition hover:bg-[#f0e2d6]/10"
-                                >
-                                  <X
-                                    size={13}
-                                  />
-
-                                  Cancel
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={
-                                    saveEdit
-                                  }
-                                  disabled={
-                                    !editingText.trim()
-                                  }
-                                  className="bg-[#f0e2d6] px-4 py-1.5 text-xs font-semibold text-[#3e1919] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                  Save
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            /* ==================================================
-                               MESSAGE BUBBLE
-                            ================================================== */
-
-                            <div
-                              className={`group relative cursor-pointer px-4 py-2.5 shadow-sm ${
-                                isAdvisor
-                                  ? "bg-[#3e1919] text-[#f0e2d6]"
-                                  : "bg-[#f0e2d6] text-[#3e1919]"
-                              }`}
-                              onClick={() => {
-                                if (
-                                  isAdvisor &&
-                                  !isDeleted
-                                ) {
-                                  setSelectedMessageId(
-                                    isSelected
-                                      ? null
-                                      : msg.message_id,
-                                  );
-
-                                  setConfirmDeleteMessageId(
-                                    null,
-                                  );
-                                }
-                              }}
-                            >
-                              {/* MESSAGE */}
-
-                              {isDeleted ? (
-                                <p className="pr-2 text-sm italic leading-6 opacity-60">
-                                  This message
-                                  was deleted
-                                </p>
-                              ) : (
-                                <p className="whitespace-pre-wrap break-words pr-2 text-sm leading-6">
-                                  {msg.text}
-                                </p>
-                              )}
-
-                              {/* TIME + STATUS */}
-
-                              <div className="mt-1.5 flex items-center justify-end gap-1.5">
-                                {msg.edited &&
-                                  !isDeleted && (
-                                    <span
-                                      className={`text-[10px] ${
-                                        isAdvisor
-                                          ? "text-[#f0e2d6]/55"
-                                          : "text-[#a79093]"
-                                      }`}
-                                    >
-                                      edited
-                                    </span>
-                                  )}
-
-                                <span
-                                  className={`text-[10px] ${
-                                    isAdvisor
-                                      ? "text-[#f0e2d6]/55"
-                                      : "text-[#a79093]"
-                                  }`}
-                                >
-                                  {new Date(
-                                    msg.timestamp,
-                                  ).toLocaleTimeString(
-                                    [],
-                                    {
-                                      hour: "2-digit",
-                                      minute:
-                                        "2-digit",
-                                    },
-                                  )}
-                                </span>
-
-                                {renderMessageStatus(
-                                  msg,
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  },
-                )}
-
-                <div
-                  ref={messagesEndRef}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* ====================================================
-              ERROR
-          ==================================================== */}
-
-          {error && (
-            <div className="shrink-0 border-t border-[#a79093]/25 bg-[#f0e2d6] px-4 py-2.5 text-center text-xs text-[#3e1919]">
-              {error}
-            </div>
+                            )}
+                          </div>
+                        )}
+                    </div>
+                  </div>
+                );
+              },
+            )
           )}
 
-          {/* ====================================================
-              MESSAGE INPUT
-          ==================================================== */}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
 
-          <form
-            onSubmit={handleSend}
-            className="shrink-0 border-t border-[#a79093]/25 bg-[#f0e2d6] p-3 sm:p-4"
-          >
-            <div className="mx-auto flex max-w-4xl items-end gap-2">
-              <input
-                type="text"
-                value={message}
-                onChange={(event) =>
-                  setMessage(
-                    event.target.value,
-                  )
-                }
-                onKeyDown={(event) => {
-                  if (
-                    event.key ===
-                      "Enter" &&
-                    !event.shiftKey
-                  ) {
-                    event.preventDefault();
+      {/* =====================================================
+          EDITING BAR
+      ===================================================== */}
 
-                    if (
-                      message.trim() &&
-                      !sending &&
-                      connected
-                    ) {
-                      event.currentTarget.form?.requestSubmit();
-                    }
-                  }
-                }}
-                placeholder="Write a message..."
-                disabled={sending}
-                className="min-w-0 flex-1 border border-[#a79093]/30 bg-[#f7f5f6] px-4 py-3 text-sm text-[#3e1919] outline-none placeholder:text-[#a79093] focus:border-[#3e1919] disabled:cursor-not-allowed disabled:opacity-60"
+      {editingMessageId && (
+        <div className="border-t border-[#D7E7D3] bg-white px-4 py-2.5">
+          <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <Edit3
+                size={15}
+                className="shrink-0 text-[#2F8F4E]"
               />
 
-              <button
-                type="submit"
-                disabled={
-                  !message.trim() ||
-                  sending ||
-                  !connected
-                }
-                className="flex h-11 shrink-0 items-center justify-center gap-2 bg-[#3e1919] px-4 text-[#f0e2d6] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 sm:px-5"
-              >
-                <Send size={17} />
-
-                <span className="hidden text-sm font-semibold sm:inline">
-                  {sending
-                    ? "Sending..."
-                    : "Send"}
-                </span>
-              </button>
+              <span className="truncate text-xs text-[#4B6654]">
+                Editing message
+              </span>
             </div>
 
-            <p className="mx-auto mt-2 max-w-4xl text-[10px] text-[#a79093]">
-              Press Enter to send · Click your
-              message to edit or delete
-            </p>
-          </form>
-        </div>
-      </section>
-
-      {/* ========================================================
-          HIDE CONVERSATION MODAL
-      ======================================================== */}
-
-      {confirmDeleteConversation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3e1919]/50 px-5 backdrop-blur-sm">
-          <div className="w-full max-w-sm border border-[#a79093]/25 bg-[#f7f5f6] p-6 shadow-2xl">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#f0e2d6] text-[#3e1919]">
-              <Trash2 size={20} />
-            </div>
-
-            <h2 className="mt-4 text-center text-lg font-bold text-[#3e1919]">
-              Hide conversation?
-            </h2>
-
-            <p className="mt-2 text-center text-sm leading-6 text-[#a79093]">
-              This conversation will disappear
-              from your messages. The
-              conversation and its messages will
-              remain stored safely.
-            </p>
-
-            <div className="mt-6 flex gap-3">
-              <button
-                type="button"
-                onClick={() =>
-                  setConfirmDeleteConversation(
-                    false,
-                  )
-                }
-                className="flex-1 border border-[#a79093]/30 px-4 py-2.5 text-sm font-semibold text-[#3e1919] transition hover:bg-[#f0e2d6]"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={
-                  deleteConversation
-                }
-                className="flex-1 bg-[#3e1919] px-4 py-2.5 text-sm font-semibold text-[#f0e2d6] transition hover:opacity-90"
-              >
-                Hide
-              </button>
-            </div>
+            <button
+              onClick={cancelEditing}
+              className="flex h-7 w-7 items-center justify-center rounded-full text-[#6B7F70] transition hover:bg-[#E7F1E3]"
+              title="Cancel editing"
+            >
+              <X size={15} />
+            </button>
           </div>
         </div>
       )}
-    </main>
+
+      {/* =====================================================
+          INPUT
+      ===================================================== */}
+
+      <div className="border-t border-[#D7E7D3] bg-[#E7F1E3] px-4 py-3">
+        <div className="mx-auto flex max-w-4xl items-center gap-2">
+          <input
+            ref={inputRef}
+            type="text"
+            value={
+              editingMessageId
+                ? editingText
+                : messageText
+            }
+            onChange={(event) => {
+              if (editingMessageId) {
+                setEditingText(
+                  event.target.value,
+                );
+              } else {
+                setMessageText(
+                  event.target.value,
+                );
+              }
+            }}
+            onKeyDown={(event) => {
+              if (editingMessageId) {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  saveEditedMessage();
+                }
+
+                if (event.key === "Escape") {
+                  cancelEditing();
+                }
+
+                return;
+              }
+
+              handleKeyDown(event);
+            }}
+            placeholder={
+              editingMessageId
+                ? "Edit your message..."
+                : "Type a message..."
+            }
+            className="min-w-0 flex-1 rounded-xl border border-[#C8DDC4] bg-white px-4 py-3 text-sm text-[#173B28] outline-none transition placeholder:text-[#8A9B90] focus:border-[#2F8F4E] focus:ring-2 focus:ring-[#2F8F4E]/20"
+          />
+
+          {editingMessageId ? (
+            <button
+              onClick={saveEditedMessage}
+              disabled={!editingText.trim()}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#2F8F4E] text-white transition hover:bg-[#176B3A] disabled:cursor-not-allowed disabled:opacity-50"
+              title="Save edited message"
+            >
+              <Check size={19} />
+            </button>
+          ) : (
+            <button
+              onClick={sendMessage}
+              disabled={!messageText.trim()}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#2F8F4E] text-white transition hover:bg-[#176B3A] disabled:cursor-not-allowed disabled:opacity-50"
+              title="Send message"
+            >
+              <Send size={18} />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
+
+export default AdvisorAdminChat;
+
+
