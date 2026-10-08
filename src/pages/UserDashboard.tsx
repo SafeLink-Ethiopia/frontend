@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -6,18 +6,10 @@ import {
   BookOpen,
   Heart,
   Info,
-  LayoutDashboard,
   Lock,
-  LogOut,
-  Menu,
   MessageCircle,
   Scale,
-  ShieldCheck,
-  User,
-  X,
 } from "lucide-react";
-
-import QuickExit from "../components/QuickExit";
 
 import {
   getUserConversations,
@@ -70,39 +62,11 @@ const advisorTypes: {
 export default function UserDashboard() {
   const navigate = useNavigate();
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const menuTriggerRef = useRef<HTMLButtonElement>(null);
-  const menuCloseRef = useRef<HTMLButtonElement>(null);
-  const wasMobileMenuOpen = useRef(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
   const [loadingConversation, setLoadingConversation] = useState(true);
 
   const [sessionId, setSessionId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!mobileMenuOpen) {
-      if (wasMobileMenuOpen.current) {
-        wasMobileMenuOpen.current = false;
-        menuTriggerRef.current?.focus();
-      }
-      return;
-    }
-
-    wasMobileMenuOpen.current = true;
-    menuCloseRef.current?.focus();
-
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setMobileMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [mobileMenuOpen]);
-
-  const closeMobileMenu = () => setMobileMenuOpen(false);
 
   /* ======================================================================== */
   /* LOAD SAVED SESSION                                                       */
@@ -162,8 +126,6 @@ export default function UserDashboard() {
   /* ======================================================================== */
 
   const openChat = (advisorType: AdvisorType = "general") => {
-    closeMobileMenu();
-
     if (sessionId) {
       localStorage.setItem(
         `safelink_selected_advisor_${sessionId}`,
@@ -174,30 +136,15 @@ export default function UserDashboard() {
     navigate("/user/dashboard/chat");
   };
 
-  const logout = () => {
-    localStorage.removeItem("safelink_session");
-
-    if (sessionId) {
-      localStorage.removeItem(`safelink_selected_advisor_${sessionId}`);
-    }
-
-    setSessionId(null);
-    setConversations([]);
-    closeMobileMenu();
-    navigate("/login", { replace: true });
-  };
-
   /* ======================================================================== */
   /* RESOURCES                                                                 */
   /* ======================================================================== */
 
   const openAwareness = () => {
-    closeMobileMenu();
     navigate("/awareness");
   };
 
   const openInformation = () => {
-    closeMobileMenu();
     navigate("/information");
   };
 
@@ -300,226 +247,7 @@ export default function UserDashboard() {
 
   return (
     <main className="min-h-screen bg-[#FAFBF7] text-[#173B28]">
-      <div className="flex min-h-screen">
-        {/* ================================================================== */}
-        {/* SIDEBAR                                                             */}
-        {/* ================================================================== */}
-
-        <aside
-          id="user-dashboard-sidebar"
-          aria-label="Dashboard navigation"
-          className={`${
-            mobileMenuOpen
-              ? "fixed inset-y-0 left-0 z-50 flex w-[min(85vw,280px)] shadow-xl lg:z-30 lg:w-[230px] lg:shadow-none"
-              : "fixed inset-y-0 left-0 z-30 hidden w-[230px] lg:flex"
-          } shrink-0 flex-col overflow-y-auto border-r border-[#DCE8D9] bg-white`}
-        >
-          {/* Logo */}
-          <div className="flex items-center justify-between px-5 pb-7 pt-7">
-            <button
-              type="button"
-              onClick={() => {
-                closeMobileMenu();
-                navigate("/user/dashboard");
-              }}
-              className="flex items-center gap-3"
-            >
-              <div className="flex items-center justify-center">
-                <img
-                  src="/safelink-logo.png"
-                  alt="SafeLink logo"
-                  className="w-10 h-auto object-contain"
-                />
-              </div>
-              {/* <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2F8F4E]">
-                <ShieldCheck
-                  size={21}
-                  strokeWidth={2}
-                  className="text-white"
-                />
-              </div> */}
-
-              <div className="text-left">
-                <p className="text-[19px] font-bold leading-none text-[#173B28]">
-                  SafeLink
-                </p>
-
-                <p className="mt-1 text-[8px] font-semibold tracking-[0.18em] text-[#7B8F82]">
-                  PRIVATE SUPPORT
-                </p>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              ref={menuCloseRef}
-              onClick={closeMobileMenu}
-              aria-label="Close navigation menu"
-              className="rounded-lg p-2 text-[#607568] transition hover:bg-[#F4F7F2] hover:text-[#173B28] lg:hidden"
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 px-3">
-            <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#8A9A90]">
-              Your space
-            </p>
-
-            <button
-              type="button"
-              onClick={() => {
-                closeMobileMenu();
-                navigate("/user/dashboard");
-              }}
-              className="flex w-full items-center gap-3 rounded-xl bg-[#E7F1E3] px-3 py-3 text-sm font-semibold text-[#176B3A]"
-            >
-              <LayoutDashboard size={18} />
-              <span>Dashboard</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                closeMobileMenu();
-                navigate("/user/profile");
-              }}
-              className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#607568] transition hover:bg-[#F4F7F2] hover:text-[#173B28]"
-            >
-              <User size={18} />
-              <span>Profile</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => openChat("general")}
-              className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#607568] transition hover:bg-[#F4F7F2] hover:text-[#173B28]"
-            >
-              <MessageCircle size={18} />
-
-              <span className="flex-1 text-left">Advisor Chat</span>
-
-              {totalUnreadMessages > 0 && (
-                <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#2F8F4E] px-1.5 text-[9px] font-bold text-white">
-                  {totalUnreadMessages > 9 ? "9+" : totalUnreadMessages}
-                </span>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={openAwareness}
-              className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#607568] transition hover:bg-[#F4F7F2] hover:text-[#173B28]"
-            >
-              <BookOpen size={18} />
-              <span>Awareness</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={openInformation}
-              className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#607568] transition hover:bg-[#F4F7F2] hover:text-[#173B28]"
-            >
-              <Info size={18} />
-              <span>Information</span>
-            </button>
-          </nav>
-
-          {/* Sidebar bottom */}
-          <div className="px-4 pb-6">
-            {/* <div className="rounded-xl border border-[#D5E5D0] bg-[#E7F1E3] p-4">
-
-              <div className="flex items-center gap-2">
-
-                <span className="h-2 w-2 rounded-full bg-[#2F8F4E]" />
-
-                <span className="text-xs font-semibold text-[#176B3A]">
-                  Private session active
-                </span>
-
-              </div>
-
-              <p className="mt-2 text-[11px] leading-5 text-[#607568]">
-                Your support space is private.
-              </p>
-
-            </div> */}
-
-            <div className="mt-4">
-              <QuickExit />
-            </div>
-
-            <button
-              type="button"
-              onClick={logout}
-              className="mt-4 flex w-full items-center gap-3 rounded-xl border border-[#DCE8D9] px-3 py-3 text-sm font-semibold text-[#607568] transition hover:border-[#AFCDAF] hover:bg-[#F4F7F2] hover:text-[#173B28] focus:outline-none focus:ring-2 focus:ring-[#2F8F4E] focus:ring-offset-2"
-            >
-              <LogOut size={18} />
-              <span>Log out</span>
-            </button>
-          </div>
-        </aside>
-
-        {/* ================================================================== */}
-        {/* MAIN AREA                                                           */}
-        {/* ================================================================== */}
-
-        {mobileMenuOpen && (
-          <button
-            type="button"
-            aria-label="Close navigation menu"
-            onClick={closeMobileMenu}
-            className="fixed inset-0 z-40 bg-[#173B28]/35 lg:hidden"
-          />
-        )}
-
-        <div className="min-w-0 flex-1 lg:ml-[230px]">
-          {/* Mobile header */}
-          <header className="border-b border-[#DCE8D9] bg-white px-4 py-4 sm:px-5 lg:hidden">
-            <div className="flex items-center justify-between">
-              <div className="flex min-w-0 items-center gap-3">
-                <button
-                  type="button"
-                  ref={menuTriggerRef}
-                  aria-label="Open navigation menu"
-                  aria-expanded={mobileMenuOpen}
-                  aria-controls="user-dashboard-sidebar"
-                  onClick={() => setMobileMenuOpen(true)}
-                  className="rounded-lg p-2 text-[#176B3A] transition hover:bg-[#F4F7F2]"
-                >
-                  <Menu size={22} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => navigate("/user/dashboard")}
-                  className="flex min-w-0 items-center gap-3"
-                >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#2F8F4E]">
-                    <ShieldCheck size={19} className="text-white" />
-                  </div>
-
-                  <div className="text-left">
-                    <p className="font-bold text-[#173B28]">SafeLink</p>
-
-                    <p className="text-[7px] font-semibold tracking-[0.18em] text-[#7B8F82]">
-                      PRIVATE SUPPORT
-                    </p>
-                  </div>
-                </button>
-              </div>
-
-              <div className="shrink-0">
-                <QuickExit />
-              </div>
-            </div>
-          </header>
-
-          {/* ================================================================ */}
-          {/* CONTENT                                                           */}
-          {/* ================================================================ */}
-
+      <div className="min-w-0">
           <div className="mx-auto max-w-[1180px] px-4 py-6 sm:px-7 sm:py-7 lg:px-9 lg:py-9">
             {/* ============================================================= */}
             {/* DASHBOARD HEADER                                                */}
@@ -870,7 +598,6 @@ export default function UserDashboard() {
               </p>
             </footer>
           </div>
-        </div>
       </div>
     </main>
   );
