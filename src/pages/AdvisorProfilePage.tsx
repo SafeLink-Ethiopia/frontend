@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   BriefcaseBusiness,
@@ -23,6 +24,7 @@ import type { AdvisorProfile } from "../types/advisorAuth";
 
 export default function AdvisorProfilePage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const token = localStorage.getItem("advisor_token") ?? "";
 
   const [profile, setProfile] = useState<AdvisorProfile | null>(null);
@@ -64,10 +66,10 @@ export default function AdvisorProfilePage() {
       })
       .catch((err) =>
         setError(
-          err instanceof Error ? err.message : "Could not load profile.",
+          err instanceof Error ? err.message : t("advisorWorkspace.profileLoadFailed"),
         ),
       );
-  }, [token, navigate]);
+  }, [token, navigate, t]);
 
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
@@ -88,10 +90,10 @@ export default function AdvisorProfilePage() {
       });
 
       setProfile(advisor);
-      setProfileMessage("Profile updated successfully.");
+      setProfileMessage(t("advisorWorkspace.profileUpdated"));
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Could not update profile.",
+        err instanceof Error ? err.message : t("advisorWorkspace.profileUpdateFailed"),
       );
     } finally {
       setSavingProfile(false);
@@ -113,7 +115,9 @@ export default function AdvisorProfilePage() {
       setConfirmPassword("");
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Could not change password.",
+        err instanceof Error
+          ? err.message
+          : t("advisorWorkspace.profilePasswordChangeFailed"),
       );
     } finally {
       setSavingPassword(false);
@@ -129,7 +133,7 @@ export default function AdvisorProfilePage() {
           </div>
 
           <p className="text-sm font-medium text-[#173B28]">
-            Loading profile...
+            {t("advisorWorkspace.loadingProfile")}
           </p>
         </div>
       </main>
@@ -149,7 +153,7 @@ export default function AdvisorProfilePage() {
             size={17}
             className="transition-transform group-hover:-translate-x-1"
           />
-          Back to dashboard
+          {t("advisorWorkspace.backToDashboard")}
         </button>
 
         {/* Header */}
@@ -161,17 +165,17 @@ export default function AdvisorProfilePage() {
               <div>
                 <div className="flex flex-wrap items-center gap-3">
                   <h1 className="text-3xl font-bold tracking-tight text-[#173B28]">
-                    {profile.name || "Advisor Profile"}
+                    {profile.name || t("advisorWorkspace.advisorProfile")}
                   </h1>
 
                   <span className="flex items-center gap-1.5 text-xs font-semibold text-[#2F8F4E]">
                     <span className="h-2 w-2 rounded-full bg-[#2F8F4E]" />
-                    Active
+                    {t("advisorWorkspace.active")}
                   </span>
                 </div>
 
                 <p className="mt-1 text-sm text-[#6B8173]">
-                  Manage your professional information and account settings.
+                  {t("advisorWorkspace.manageProfileDescription")}
                 </p>
               </div>
             </div>
@@ -181,27 +185,27 @@ export default function AdvisorProfilePage() {
           <div className="mt-7 flex flex-wrap gap-x-8 gap-y-4">
             <ProfileDetail
               icon={<Mail size={15} />}
-              label="Email"
+              label={t("advisorWorkspace.email")}
               value={profile.email}
             />
 
             <ProfileDetail
               icon={<BriefcaseBusiness size={15} />}
-              label="Advisor type"
+              label={t("advisorWorkspace.advisorType")}
               value={profile.type}
               capitalize
             />
 
             <ProfileDetail
               icon={<Phone size={15} />}
-              label="Phone"
-              value={profile.phone_number || "Not provided"}
+              label={t("advisorWorkspace.phone")}
+              value={profile.phone_number || t("advisorWorkspace.notProvided")}
             />
 
             <ProfileDetail
               icon={<MapPin size={15} />}
-              label="Location"
-              value={profile.location || "Not provided"}
+              label={t("advisorWorkspace.location")}
+              value={profile.location || t("advisorWorkspace.notProvided")}
             />
           </div>
         </header>
@@ -219,11 +223,11 @@ export default function AdvisorProfilePage() {
         <section className="border-b border-[#DCE8D9] py-10">
           <div className="mb-7">
             <h2 className="text-xl font-bold text-[#173B28]">
-              Personal information
+              {t("advisorWorkspace.personalInformation")}
             </h2>
 
             <p className="mt-1 text-sm text-[#6B8173]">
-              Keep your advisor information up to date.
+              {t("advisorWorkspace.keepAdvisorInfoUpdated")}
             </p>
           </div>
 
@@ -231,7 +235,7 @@ export default function AdvisorProfilePage() {
             {/* Name */}
             <div>
               <label className="mb-2 block text-sm font-semibold text-[#173B28]">
-                Full name
+                {t("advisorWorkspace.fullName")}
               </label>
 
               <div className="relative">
@@ -243,7 +247,7 @@ export default function AdvisorProfilePage() {
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter your full name"
+                  placeholder={t("advisorWorkspace.enterFullName")}
                   className="w-full rounded-xl border border-[#DCE8D9] bg-white py-3.5 pl-11 pr-4 text-sm text-[#173B28] outline-none transition placeholder:text-[#9AAC9E] focus:border-[#2F8F4E] focus:ring-4 focus:ring-[#E7F1E3]"
                 />
               </div>
@@ -253,7 +257,7 @@ export default function AdvisorProfilePage() {
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#173B28]">
-                  Phone number
+                  {t("advisorWorkspace.phoneNumber")}
                 </label>
 
                 <div className="relative">
@@ -265,7 +269,7 @@ export default function AdvisorProfilePage() {
                   <input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Phone number"
+                    placeholder={t("advisorWorkspace.phoneNumber")}
                     className="w-full rounded-xl border border-[#DCE8D9] bg-white py-3.5 pl-11 pr-4 text-sm text-[#173B28] outline-none transition placeholder:text-[#9AAC9E] focus:border-[#2F8F4E] focus:ring-4 focus:ring-[#E7F1E3]"
                   />
                 </div>
@@ -273,7 +277,7 @@ export default function AdvisorProfilePage() {
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#173B28]">
-                  Location
+                  {t("advisorWorkspace.location")}
                 </label>
 
                 <div className="relative">
@@ -285,7 +289,7 @@ export default function AdvisorProfilePage() {
                   <input
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    placeholder="Your location"
+                    placeholder={t("advisorWorkspace.yourLocation")}
                     className="w-full rounded-xl border border-[#DCE8D9] bg-white py-3.5 pl-11 pr-4 text-sm text-[#173B28] outline-none transition placeholder:text-[#9AAC9E] focus:border-[#2F8F4E] focus:ring-4 focus:ring-[#E7F1E3]"
                   />
                 </div>
@@ -298,14 +302,14 @@ export default function AdvisorProfilePage() {
                 <Clock3 size={16} className="text-[#2F8F4E]" />
 
                 <label className="text-sm font-semibold text-[#173B28]">
-                  Working hours
+                  {t("advisorWorkspace.workingHours")}
                 </label>
               </div>
 
               <div className="grid max-w-xl gap-6 sm:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-xs text-[#7D9585]">
-                    Start time
+                    {t("advisorWorkspace.startTime")}
                   </label>
 
                   <input
@@ -318,7 +322,7 @@ export default function AdvisorProfilePage() {
 
                 <div>
                   <label className="mb-2 block text-xs text-[#7D9585]">
-                    End time
+                    {t("advisorWorkspace.endTime")}
                   </label>
 
                   <input
@@ -347,7 +351,9 @@ export default function AdvisorProfilePage() {
             >
               <Save size={17} />
 
-              {savingProfile ? "Saving changes..." : "Save changes"}
+              {savingProfile
+                ? t("advisorWorkspace.savingChanges")
+                : t("advisorWorkspace.saveChanges")}
             </button>
           </form>
         </section>
@@ -359,12 +365,12 @@ export default function AdvisorProfilePage() {
               <LockKeyhole size={20} className="text-[#176B3A]" />
 
               <h2 className="text-xl font-bold text-[#173B28]">
-                Account security
+                {t("advisorWorkspace.accountSecurity")}
               </h2>
             </div>
 
             <p className="mt-1 text-sm text-[#6B8173]">
-              Update your password to keep your account secure.
+              {t("advisorWorkspace.updatePasswordDescription")}
             </p>
           </div>
 
@@ -373,7 +379,7 @@ export default function AdvisorProfilePage() {
               {/* New password */}
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#173B28]">
-                  New password
+                  {t("advisorWorkspace.profileNewPassword")}
                 </label>
 
                 <div className="relative">
@@ -384,7 +390,7 @@ export default function AdvisorProfilePage() {
 
                   <input
                     type="password"
-                    placeholder="Enter new password"
+                    placeholder={t("advisorWorkspace.profileEnterNewPassword")}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     className="w-full rounded-xl border border-[#DCE8D9] bg-white py-3.5 pl-11 pr-4 text-sm text-[#173B28] outline-none transition placeholder:text-[#9AAC9E] focus:border-[#2F8F4E] focus:ring-4 focus:ring-[#E7F1E3]"
@@ -395,7 +401,7 @@ export default function AdvisorProfilePage() {
               {/* Confirm password */}
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#173B28]">
-                  Confirm password
+                  {t("advisorWorkspace.confirmPassword")}
                 </label>
 
                 <div className="relative">
@@ -406,7 +412,7 @@ export default function AdvisorProfilePage() {
 
                   <input
                     type="password"
-                    placeholder="Confirm new password"
+                    placeholder={t("advisorWorkspace.profileConfirmNewPassword")}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="w-full rounded-xl border border-[#DCE8D9] bg-white py-3.5 pl-11 pr-4 text-sm text-[#173B28] outline-none transition placeholder:text-[#9AAC9E] focus:border-[#2F8F4E] focus:ring-4 focus:ring-[#E7F1E3]"
@@ -431,7 +437,9 @@ export default function AdvisorProfilePage() {
             >
               <LockKeyhole size={17} />
 
-              {savingPassword ? "Updating password..." : "Update password"}
+              {savingPassword
+                ? t("advisorWorkspace.updatingPassword")
+                : t("advisorWorkspace.updatePassword")}
             </button>
           </form>
         </section>
@@ -440,7 +448,7 @@ export default function AdvisorProfilePage() {
         <div className="border-t border-[#DCE8D9] py-6 text-center">
           <div className="flex items-center justify-center gap-2 text-xs text-[#7D9585]">
             <ShieldCheck size={14} />
-            <span>Your advisor account is protected by SafeLink</span>
+            <span>{t("advisorWorkspace.accountProtected")}</span>
           </div>
         </div>
       </div>

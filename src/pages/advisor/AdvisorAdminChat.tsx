@@ -7,6 +7,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   Check,
@@ -64,6 +65,7 @@ interface AdvisorAdminChatProps {
 }
 
 function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
+  const { t } = useTranslation();
   /* =======================================================
      GET CONVERSATION ID FROM URL
 
@@ -133,7 +135,7 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
 
         if (!conversationId) {
           throw new Error(
-            "Conversation ID is missing from the URL.",
+            t("advisorWorkspace.conversationIdMissing"),
           );
         }
 
@@ -172,7 +174,9 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
           );
 
           throw new Error(
-            `Failed to load conversation (${response.status})`,
+            t("advisorWorkspace.loadConversationStatusFailed", {
+              status: response.status,
+            }),
           );
         }
 
@@ -195,7 +199,7 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
         setError(
           err instanceof Error
             ? err.message
-            : "Unable to load this conversation.",
+            : t("advisorWorkspace.loadConversationFailed"),
         );
       } finally {
         setLoading(false);
@@ -203,7 +207,7 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
     };
 
     loadConversation();
-  }, [conversationId]);
+  }, [conversationId, t]);
 
   /* =========================================================
      SOCKET CONNECTION
@@ -835,7 +839,7 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
     return (
       <div className="flex h-full min-h-[500px] items-center justify-center bg-[#FAFBF7]">
         <div className="text-sm text-[#173B28]">
-          Loading conversation...
+          {t("advisorWorkspace.loadingConversation")}
         </div>
       </div>
     );
@@ -859,7 +863,7 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
             onClick={onBack}
             className="rounded-xl bg-[#2F8F4E] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#176B3A]"
           >
-            Go Back
+            {t("advisorWorkspace.goBack")}
           </button>
         )}
       </div>
@@ -890,7 +894,7 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
             <button
               onClick={onBack}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#173B28] transition hover:bg-white"
-              title="Back"
+              title={t("advisorWorkspace.back")}
             >
               <ArrowLeft size={19} />
             </button>
@@ -898,19 +902,19 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
 
           <div className="min-w-0">
             <h2 className="truncate text-base font-semibold text-[#173B28]">
-              Admin Support
+              {t("advisorWorkspace.adminSupport")}
             </h2>
 
             <div className="flex items-center gap-2 text-xs text-[#4B6654]">
               <span>
-                Conversation #
+                {t("advisorWorkspace.conversationNumber")}
                 {conversation.conversation_id}
               </span>
 
               {!isConnected && (
                 <span className="flex items-center gap-1 text-red-600">
                   <WifiOff size={13} />
-                  Offline
+                  {t("advisorWorkspace.offline")}
                 </span>
               )}
             </div>
@@ -920,7 +924,7 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
         <button
           onClick={hideConversation}
           className="flex h-9 w-9 items-center justify-center rounded-full text-[#173B28] transition hover:bg-white"
-          title="Hide conversation"
+          title={t("advisorWorkspace.hideConversation")}
         >
           <X size={19} />
         </button>
@@ -950,11 +954,11 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
                 </div>
 
                 <p className="text-sm font-medium text-[#173B28]">
-                  No messages yet
+                  {t("advisorWorkspace.noMessagesYet")}
                 </p>
 
                 <p className="mt-1 text-xs text-[#6B7F70]">
-                  Start the conversation with the admin.
+                  {t("advisorWorkspace.startConversationWithAdmin")}
                 </p>
               </div>
             </div>
@@ -1003,8 +1007,7 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
                       >
                         {isDeleted ? (
                           <p className="text-sm italic text-[#7A8B7F]">
-                            This message was
-                            deleted
+                            {t("advisorWorkspace.messageWasDeleted")}
                           </p>
                         ) : (
                           <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
@@ -1035,7 +1038,7 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
                           {message.edited &&
                             !isDeleted && (
                               <span className="text-[10px] text-[#718277]">
-                                edited
+                                {t("advisorWorkspace.edited")}
                               </span>
                             )}
 
@@ -1062,7 +1065,7 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
                                 )
                               }
                               className="flex h-7 w-7 items-center justify-center rounded-full text-[#6B7F70] transition hover:bg-[#E7F1E3] hover:text-[#173B28]"
-                              title="Message options"
+                              title={t("advisorWorkspace.messageOptions")}
                             >
                               <MoreVertical
                                 size={16}
@@ -1083,7 +1086,7 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
                                   <Edit3
                                     size={14}
                                   />
-                                  Edit
+                                  {t("advisorWorkspace.edit")}
                                 </button>
 
                                 <button
@@ -1101,7 +1104,7 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
                                   <Trash2
                                     size={14}
                                   />
-                                  Delete
+                                  {t("advisorWorkspace.delete")}
                                 </button>
                               </div>
                             )}
@@ -1122,7 +1125,7 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
                                   }
                                   className="w-full px-3 py-2.5 text-left text-xs text-[#173B28] transition hover:bg-[#E7F1E3]"
                                 >
-                                  Delete for me
+                                  {t("advisorWorkspace.deleteForMe")}
                                 </button>
 
                                 <button
@@ -1134,8 +1137,7 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
                                   }
                                   className="w-full px-3 py-2.5 text-left text-xs text-red-600 transition hover:bg-red-50"
                                 >
-                                  Delete for
-                                  everyone
+                                  {t("advisorWorkspace.deleteForEveryone")}
                                 </button>
 
                                 <button
@@ -1146,7 +1148,7 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
                                   }
                                   className="w-full border-t border-[#E7F1E3] px-3 py-2.5 text-left text-xs text-[#6B7F70] transition hover:bg-gray-50"
                                 >
-                                  Cancel
+                                  {t("advisorWorkspace.cancel")}
                                 </button>
                               </div>
                             )}
@@ -1177,14 +1179,14 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
               />
 
               <span className="truncate text-xs text-[#4B6654]">
-                Editing message
+                {t("advisorWorkspace.editingMessage")}
               </span>
             </div>
 
             <button
               onClick={cancelEditing}
               className="flex h-7 w-7 items-center justify-center rounded-full text-[#6B7F70] transition hover:bg-[#E7F1E3]"
-              title="Cancel editing"
+              title={t("advisorWorkspace.cancelEditing")}
             >
               <X size={15} />
             </button>
@@ -1235,8 +1237,8 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
             }}
             placeholder={
               editingMessageId
-                ? "Edit your message..."
-                : "Type a message..."
+                ? t("advisorWorkspace.editYourMessage")
+                : t("advisorWorkspace.typeMessage")
             }
             className="min-w-0 flex-1 rounded-xl border border-[#C8DDC4] bg-white px-4 py-3 text-sm text-[#173B28] outline-none transition placeholder:text-[#8A9B90] focus:border-[#2F8F4E] focus:ring-2 focus:ring-[#2F8F4E]/20"
           />
@@ -1246,7 +1248,7 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
               onClick={saveEditedMessage}
               disabled={!editingText.trim()}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#2F8F4E] text-white transition hover:bg-[#176B3A] disabled:cursor-not-allowed disabled:opacity-50"
-              title="Save edited message"
+              title={t("advisorWorkspace.saveEditedMessage")}
             >
               <Check size={19} />
             </button>
@@ -1255,7 +1257,7 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
               onClick={sendMessage}
               disabled={!messageText.trim()}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#2F8F4E] text-white transition hover:bg-[#176B3A] disabled:cursor-not-allowed disabled:opacity-50"
-              title="Send message"
+              title={t("advisorWorkspace.sendMessage")}
             >
               <Send size={18} />
             </button>
@@ -1267,5 +1269,4 @@ function AdvisorAdminChat({ onBack }: AdvisorAdminChatProps) {
 }
 
 export default AdvisorAdminChat;
-
 

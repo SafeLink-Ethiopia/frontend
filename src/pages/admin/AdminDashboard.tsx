@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Activity,
   AlertCircle,
@@ -104,6 +105,7 @@ function MetricCard({
   icon,
   detail,
 }: MetricCardProps) {
+  const { t } = useTranslation();
   return (
     <article className="rounded-2xl border border-[#DCE9D8] bg-white p-5 shadow-[0_4px_18px_rgba(23,59,40,0.04)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(23,59,40,0.08)] sm:p-6">
       <div className="flex items-start justify-between gap-4">
@@ -128,7 +130,7 @@ function MetricCard({
         <div
           className="mt-2 h-2 overflow-hidden rounded-full bg-[#E7F1E3]"
           role="progressbar"
-          aria-label={`${label} progress`}
+          aria-label={t("admin.dashboard.progress", { label })}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={progress}
@@ -233,6 +235,7 @@ function InsightRow({
 }
 
 export default function AdminDashboard() {
+  const { t } = useTranslation();
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -251,7 +254,7 @@ export default function AdminDashboard() {
       const token = localStorage.getItem("adminToken");
 
       if (!token) {
-        throw new Error("Your admin session could not be found. Please sign in again.");
+        throw new Error(t("admin.dashboard.errors.session"));
       }
 
       const response = await fetch(API_URL, {
@@ -266,12 +269,12 @@ export default function AdminDashboard() {
 
       if (!response.ok) {
         throw new Error(
-          data.message || "We couldn't load the dashboard statistics.",
+          data.message || t("admin.dashboard.errors.load"),
         );
       }
 
       if (!data.statistics) {
-        throw new Error("The dashboard response is missing its statistics.");
+        throw new Error(t("admin.dashboard.errors.missingStatistics"));
       }
 
       setDashboard({
@@ -290,13 +293,13 @@ export default function AdminDashboard() {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Something went wrong while loading the dashboard.",
+          : t("admin.dashboard.errors.unexpected"),
       );
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void fetchDashboard();
@@ -310,9 +313,9 @@ export default function AdminDashboard() {
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E7F1E3] text-[#176B3A]">
               <Leaf className="h-7 w-7 animate-pulse" aria-hidden="true" />
             </div>
-            <h1 className="mt-5 text-lg font-semibold">Preparing your dashboard</h1>
+            <h1 className="mt-5 text-lg font-semibold">{t("admin.dashboard.loadingTitle")}</h1>
             <p className="mt-2 text-sm text-[#718575]">
-              Gathering the latest SafeLink activity.
+              {t("admin.dashboard.loadingDescription")}
             </p>
           </div>
         </div>
@@ -329,7 +332,7 @@ export default function AdminDashboard() {
               <AlertCircle className="h-6 w-6" aria-hidden="true" />
             </div>
             <h1 className="mt-4 text-xl font-semibold text-[#173B28]">
-              Dashboard unavailable
+              {t("admin.dashboard.unavailable")}
             </h1>
             <p className="mt-2 text-sm leading-6 text-[#718575]">{error}</p>
             <button
@@ -338,7 +341,7 @@ export default function AdminDashboard() {
               className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-[#2F8F4E] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#176B3A] focus:outline-none focus:ring-2 focus:ring-[#2F8F4E] focus:ring-offset-2"
             >
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
-              Try again
+              {t("admin.common.tryAgain")}
             </button>
           </div>
         </div>
@@ -365,15 +368,15 @@ export default function AdminDashboard() {
   );
 
   const statisticsChartData: StatisticsChartData[] = [
-    { name: "Advisors", total: statistics.advisors.total },
-    { name: "Sessions", total: statistics.sessions.total },
-    { name: "Conversations", total: statistics.conversations.total },
+    { name: t("admin.dashboard.metrics.advisors"), total: statistics.advisors.total },
+    { name: t("admin.dashboard.metrics.sessions"), total: statistics.sessions.total },
+    { name: t("admin.dashboard.metrics.conversations"), total: statistics.conversations.total },
   ];
 
   const languageName = (language: string) => {
-    if (language === "en") return "English";
-    if (language === "am") return "Amharic";
-    if (language === "om") return "Afaan Oromoo";
+    if (language === "en") return t("admin.languages.english");
+    if (language === "am") return t("admin.languages.amharic");
+    if (language === "om") return t("admin.languages.afaanOromo");
     return language;
   };
 
@@ -407,24 +410,23 @@ export default function AdminDashboard() {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E7F1E3] px-3 py-1 text-xs font-semibold text-[#176B3A]">
                     <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                    SafeLink Administration
+                    {t("admin.brand.administration")}
                   </span>
                   {lastUpdated && (
                     <span className="inline-flex items-center gap-1.5 text-xs text-[#718575]">
                       <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-                      Updated {lastUpdated.toLocaleTimeString([], {
+                      {t("admin.dashboard.updated", { time: lastUpdated.toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",
-                      })}
+                      }) })}
                     </span>
                   )}
                 </div>
                 <h1 className="mt-3 text-2xl font-semibold tracking-tight text-[#173B28] sm:text-3xl lg:text-4xl">
-                  Admin dashboard
+                  {t("admin.dashboard.title")}
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[#718575] sm:text-base">
-                  A clear overview of advisor availability, session security,
-                  conversations, and the people SafeLink supports.
+                  {t("admin.dashboard.description")}
                 </p>
               </div>
             </div>
@@ -439,7 +441,7 @@ export default function AdminDashboard() {
                 className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
                 aria-hidden="true"
               />
-              {refreshing ? "Refreshing…" : "Refresh data"}
+              {refreshing ? t("admin.dashboard.refreshing") : t("admin.dashboard.refresh")}
             </button>
           </div>
         </header>
@@ -451,15 +453,15 @@ export default function AdminDashboard() {
           >
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
             <div className="flex-1">
-              <p className="font-semibold">The latest refresh did not complete.</p>
-              <p className="mt-1 leading-5">{error} The figures shown below may be from the previous successful load.</p>
+              <p className="font-semibold">{t("admin.dashboard.refreshFailed")}</p>
+              <p className="mt-1 leading-5">{t("admin.dashboard.refreshWarning", { error })}</p>
             </div>
             <button
               type="button"
               onClick={() => void fetchDashboard(true)}
               className="shrink-0 font-semibold underline underline-offset-4 hover:no-underline"
             >
-              Retry
+              {t("admin.common.retry")}
             </button>
           </div>
         )}
@@ -468,43 +470,43 @@ export default function AdminDashboard() {
           <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#2F8F4E]">
-                At a glance
+                {t("admin.dashboard.atAGlance")}
               </p>
               <h2
                 id="overview-heading"
                 className="mt-1 text-xl font-semibold text-[#173B28] sm:text-2xl"
               >
-                System overview
+                {t("admin.dashboard.systemOverview")}
               </h2>
             </div>
             <p className="text-sm text-[#718575]">
-              Current totals from your SafeLink system
+              {t("admin.dashboard.currentTotals")}
             </p>
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             <MetricCard
-              label="Advisors"
+              label={t("admin.dashboard.metrics.advisors")}
               value={statistics.advisors.total}
-              supportingText={`${formatNumber(statistics.advisors.active)} active`}
+              supportingText={t("admin.dashboard.metrics.activeCount", { count: formatNumber(statistics.advisors.active) })}
               progress={advisorActivePercentage}
-              detail={`${formatNumber(statistics.advisors.inactive)} currently inactive`}
+              detail={t("admin.dashboard.metrics.inactiveCount", { count: formatNumber(statistics.advisors.inactive) })}
               icon={<Users className="h-5 w-5" aria-hidden="true" />}
             />
             <MetricCard
-              label="Sessions"
+              label={t("admin.dashboard.metrics.sessions")}
               value={statistics.sessions.total}
-              supportingText={`${formatNumber(statistics.sessions.withPassword)} password-protected`}
+              supportingText={t("admin.dashboard.metrics.passwordProtected", { count: formatNumber(statistics.sessions.withPassword) })}
               progress={sessionPasswordPercentage}
-              detail={`${formatNumber(statistics.sessions.withoutPassword)} without a password`}
+              detail={t("admin.dashboard.metrics.withoutPassword", { count: formatNumber(statistics.sessions.withoutPassword) })}
               icon={<ShieldCheck className="h-5 w-5" aria-hidden="true" />}
             />
             <MetricCard
-              label="Conversations"
+              label={t("admin.dashboard.metrics.conversations")}
               value={statistics.conversations.total}
-              supportingText={`${formatNumber(statistics.conversations.withMessages)} with messages`}
+              supportingText={t("admin.dashboard.metrics.withMessages", { count: formatNumber(statistics.conversations.withMessages) })}
               progress={conversationMessagePercentage}
-              detail={`${formatNumber(statistics.conversations.totalMessages)} messages across all conversations`}
+              detail={t("admin.dashboard.metrics.totalMessages", { count: formatNumber(statistics.conversations.totalMessages) })}
               icon={<MessagesSquare className="h-5 w-5" aria-hidden="true" />}
             />
           </div>
@@ -513,23 +515,23 @@ export default function AdminDashboard() {
         <section className="mt-8 sm:mt-10" aria-labelledby="activity-heading">
           <div className="mb-5">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#2F8F4E]">
-              Activity
+              {t("admin.dashboard.activity")}
             </p>
             <h2
               id="activity-heading"
               className="mt-1 text-xl font-semibold text-[#173B28] sm:text-2xl"
             >
-              System statistics
+              {t("admin.dashboard.systemStatistics")}
             </h2>
             <p className="mt-1 text-sm leading-6 text-[#718575]">
-              Compare the total number of advisors, sessions, and conversations.
+              {t("admin.dashboard.statisticsDescription")}
             </p>
           </div>
 
           <div className="rounded-2xl border border-[#DCE9D8] bg-white p-3 shadow-[0_4px_18px_rgba(23,59,40,0.035)] sm:p-6">
             <div className="mb-3 flex items-center gap-2 px-2 pt-1 text-sm text-[#55705D]">
               <Activity className="h-4 w-4 text-[#2F8F4E]" aria-hidden="true" />
-              <span>Current counts</span>
+              <span>{t("admin.dashboard.currentCounts")}</span>
             </div>
             <div className="h-[280px] w-full sm:h-[330px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -568,13 +570,13 @@ export default function AdminDashboard() {
                     }}
                     labelStyle={{ color: "#E7F1E3", marginBottom: "4px" }}
                     itemStyle={{ color: "#FFFFFF" }}
-                    formatter={(value) => [value ?? 0, "Total"]}
+                    formatter={(value) => [value ?? 0, t("admin.dashboard.total")]}
                     labelFormatter={(label) => String(label)}
                   />
                   <Line
                     type="monotone"
                     dataKey="total"
-                    name="Total"
+                    name={t("admin.dashboard.total")}
                     stroke="#2F8F4E"
                     strokeWidth={3}
                     activeDot={{
@@ -599,33 +601,33 @@ export default function AdminDashboard() {
         <section className="mt-8 sm:mt-10" aria-labelledby="distribution-heading">
           <div className="mb-5">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#2F8F4E]">
-              Service overview
+              {t("admin.dashboard.serviceOverview")}
             </p>
             <h2
               id="distribution-heading"
               className="mt-1 text-xl font-semibold text-[#173B28] sm:text-2xl"
             >
-              Who and how SafeLink serves
+              {t("admin.dashboard.serviceTitle")}
             </h2>
             <p className="mt-1 text-sm leading-6 text-[#718575]">
-              Explore the mix of advisor services and the languages used in sessions.
+              {t("admin.dashboard.serviceDescription")}
             </p>
           </div>
 
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
             <DistributionSection
-              title="Advisors by type"
-              description="How advisor services are distributed."
-              totalLabel={`${formatNumber(statistics.advisors.total)} advisors`}
+              title={t("admin.dashboard.advisorsByType")}
+              description={t("admin.dashboard.advisorsByTypeDescription")}
+              totalLabel={t("admin.dashboard.advisorsTotal", { count: formatNumber(statistics.advisors.total) })}
               items={advisorItems}
-              emptyMessage="No advisor type data is available yet."
+              emptyMessage={t("admin.dashboard.noAdvisorTypeData")}
             />
             <DistributionSection
-              title="Sessions by language"
-              description="The languages selected for SafeLink sessions."
-              totalLabel={`${formatNumber(statistics.sessions.total)} sessions`}
+              title={t("admin.dashboard.sessionsByLanguage")}
+              description={t("admin.dashboard.sessionsByLanguageDescription")}
+              totalLabel={t("admin.dashboard.sessionsTotal", { count: formatNumber(statistics.sessions.total) })}
               items={languageItems}
-              emptyMessage="No session language data is available yet."
+              emptyMessage={t("admin.dashboard.noSessionLanguageData")}
             />
           </div>
         </section>
@@ -633,44 +635,44 @@ export default function AdminDashboard() {
         <section className="mt-8 sm:mt-10" aria-labelledby="health-heading">
           <div className="mb-5">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#2F8F4E]">
-              Quick checks
+              {t("admin.dashboard.quickChecks")}
             </p>
             <h2
               id="health-heading"
               className="mt-1 text-xl font-semibold text-[#173B28] sm:text-2xl"
             >
-              Service health
+              {t("admin.dashboard.serviceHealth")}
             </h2>
             <p className="mt-1 text-sm leading-6 text-[#718575]">
-              A quick look at message activity, recommendations, and session security.
+              {t("admin.dashboard.serviceHealthDescription")}
             </p>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <InsightRow
               icon={<MessageCircle className="h-5 w-5" aria-hidden="true" />}
-              title="Conversations with messages"
+              title={t("admin.dashboard.conversationsWithMessages")}
               value={statistics.conversations.withMessages}
-              description={`${formatNumber(statistics.conversations.withoutMessages)} conversations have no messages yet.`}
+              description={t("admin.dashboard.noMessagesConversations", { count: formatNumber(statistics.conversations.withoutMessages) })}
             />
             <InsightRow
               icon={<Sparkles className="h-5 w-5" aria-hidden="true" />}
-              title="Recommendations available"
+              title={t("admin.dashboard.recommendationsAvailable")}
               value={statistics.conversations.withRecommendations}
-              description={`${formatNumber(statistics.conversations.withoutRecommendations)} conversations have no recommendations.`}
+              description={t("admin.dashboard.noRecommendationsConversations", { count: formatNumber(statistics.conversations.withoutRecommendations) })}
             />
             <InsightRow
               icon={<Languages className="h-5 w-5" aria-hidden="true" />}
-              title="Password-protected sessions"
+              title={t("admin.dashboard.passwordProtectedSessions")}
               value={statistics.sessions.withPassword}
-              description={`${formatNumber(statistics.sessions.withoutPassword)} sessions are not password-protected.`}
+              description={t("admin.dashboard.unprotectedSessions", { count: formatNumber(statistics.sessions.withoutPassword) })}
             />
           </div>
         </section>
 
         <footer className="mt-10 border-t border-[#DCE9D8] pt-5">
           <p className="text-xs leading-5 text-[#718575]">
-            SafeLink administration · Figures reflect the latest successful dashboard response.
+            {t("admin.dashboard.footer")}
           </p>
         </footer>
       </div>

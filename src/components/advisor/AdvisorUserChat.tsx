@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, MessageCircle, Send, User } from "lucide-react";
 import axios from "axios";
 import socket from "../../services/socket";
@@ -37,6 +38,7 @@ export default function AdvisorUserChat({
   advisorId,
   onBack,
 }: Props) {
+  const { t } = useTranslation();
   const [conversation, setConversation] =
     useState<Conversation | null>(null);
 
@@ -77,7 +79,7 @@ export default function AdvisorUserChat({
 
       setError(
         error.response?.data?.message ||
-          "Failed to load conversation.",
+          t("conversation.loadError"),
       );
     } finally {
       setLoading(false);
@@ -198,7 +200,7 @@ export default function AdvisorUserChat({
     return (
       <div className="flex h-full items-center justify-center bg-[#f7f5f6]">
         <p className="text-sm text-[#a79093]">
-          Loading conversation...
+          {t("conversation.loading")}
         </p>
       </div>
     );
@@ -274,15 +276,19 @@ export default function AdvisorUserChat({
 
         <div>
           <h2 className="font-semibold text-[#3e1919]">
-            User
+            {t("conversation.user")}
           </h2>
 
           <p className="text-xs text-[#a79093]">
-            Session: {conversation.session_id}
+            {t("conversation.sessionLabel", {
+              session: conversation.session_id,
+            })}
           </p>
 
           <p className="text-xs capitalize text-[#a79093]">
-            {conversation.advisor_type} Advisor
+            {t(`conversation.advisor.${conversation.advisor_type}`, {
+              defaultValue: conversation.advisor_type,
+            })}
           </p>
         </div>
       </div>
@@ -303,7 +309,7 @@ export default function AdvisorUserChat({
               <MessageCircle className="mx-auto mb-2 h-8 w-8 text-[#a79093]" />
 
               <p className="text-sm text-[#a79093]">
-                No messages yet.
+                {t("conversation.noMessages")}
               </p>
             </div>
           </div>
@@ -341,7 +347,7 @@ export default function AdvisorUserChat({
                   }`}
                 >
                   {isDeleted
-                    ? "Message deleted"
+                    ? t("conversation.messageDeleted")
                     : message.text}
                 </p>
 
@@ -380,7 +386,7 @@ export default function AdvisorUserChat({
                   sendMessage();
                 }
               }}
-              placeholder="Type your message..."
+              placeholder={t("conversation.writeMessage")}
               rows={1}
               className="
                 max-h-32
@@ -430,12 +436,12 @@ export default function AdvisorUserChat({
           </div>
 
           <p className="mt-1 text-[11px] text-[#a79093]">
-            Enter to send · Shift + Enter for a new line
+            {t("conversation.sendKeyboardHint")}
           </p>
         </div>
       ) : (
         <div className="border-t border-[#f0e2d6] bg-[#f0e2d6] p-4 text-center text-sm text-[#a79093]">
-          This conversation is closed.
+          {t("conversation.status.closed")}
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import {
   ArrowRight,
@@ -35,32 +36,33 @@ const advisorTypes: {
 }[] = [
   {
     type: "medical",
-    title: "Medical",
-    description: "Health and medical support",
+    title: "dashboard.medical",
+    description: "dashboard.medicalDescription",
     icon: Heart,
   },
   {
     type: "legal",
-    title: "Legal",
-    description: "Rights and legal guidance",
+    title: "dashboard.legal",
+    description: "dashboard.legalDescription",
     icon: Scale,
   },
   {
     type: "psychological",
-    title: "Emotional",
-    description: "Emotional and psychological support",
+    title: "dashboard.emotional",
+    description: "dashboard.emotionalDescription",
     icon: MessageCircle,
   },
   {
     type: "general",
-    title: "General",
-    description: "Talk about your situation",
+    title: "dashboard.general",
+    description: "dashboard.generalDescription",
     icon: MessageCircle,
   },
 ];
 
 export default function UserDashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
@@ -213,12 +215,11 @@ export default function UserDashboard() {
           </div>
 
           <h1 className="mt-6 text-3xl font-bold tracking-tight text-[#176B3A]">
-            Your private space
+            {t("dashboard.privateSpace")}
           </h1>
 
           <p className="mt-3 leading-7 text-[#173B28]/60">
-            We couldn't find your SafeLink session. Start a private session to
-            access your support space.
+            {t("dashboard.sessionMissing")}
           </p>
 
           <button
@@ -226,7 +227,7 @@ export default function UserDashboard() {
             onClick={() => navigate("/create")}
             className="mt-7 w-full rounded-xl bg-[#2F8F4E] px-6 py-3.5 font-semibold text-white transition hover:bg-[#176B3A]"
           >
-            Start a Private Session
+            {t("dashboard.startSession")}
           </button>
 
           <button
@@ -234,7 +235,7 @@ export default function UserDashboard() {
             onClick={() => navigate("/")}
             className="mt-3 w-full rounded-xl border border-[#D9E6D5] bg-white px-6 py-3.5 font-semibold text-[#173B28] transition hover:bg-[#E7F1E3]"
           >
-            Back to Home
+            {t("dashboard.backHome")}
           </button>
         </div>
       </main>
@@ -270,11 +271,11 @@ export default function UserDashboard() {
                     </p> */}
 
                     <h1 className="mt-1 text-[28px] font-bold tracking-tight text-[#173B28] sm:text-[36px]">
-                      Welcome back
+                      {t("dashboard.welcome")}
                     </h1>
 
                     <p className="mt-2 text-[#607568]">
-                      What would you like help with today?
+                      {t("dashboard.prompt")}
                     </p>
                   </div>
                 </div>
@@ -283,16 +284,13 @@ export default function UserDashboard() {
                   {totalUnreadMessages > 0 && (
                     <span className="inline-flex items-center gap-2 rounded-full border border-[#CFE0CB] bg-white px-3 py-1.5 text-xs font-semibold text-[#176B3A]">
                       <span className="h-2 w-2 rounded-full bg-[#2F8F4E]" />
-                      {totalUnreadMessages}{" "}
-                      {totalUnreadMessages === 1
-                        ? "new message"
-                        : "new messages"}
+                      {t("dashboard.newMessage", { count: totalUnreadMessages })}
                     </span>
                   )}
 
                   <div className="inline-flex items-center gap-2 rounded-full border border-[#DCE8D9] bg-white px-3 py-1.5 text-xs text-[#7B8F82]">
                     <Lock size={14} />
-                    <span>Private session</span>
+                    <span>{t("dashboard.privateSession")}</span>
                   </div>
                 </div>
               </div>
@@ -310,18 +308,16 @@ export default function UserDashboard() {
                       <MessageCircle size={18} strokeWidth={1.8} />
                     </div>
                     <span className="text-xs font-bold uppercase tracking-[0.16em]">
-                      A safe place to start
+                      {t("dashboard.safeStart")}
                     </span>
                   </div>
 
                   <h2 className="mt-4 text-[26px] font-bold leading-tight tracking-tight text-[#173B28] sm:text-[34px]">
-                    You don't have to figure it out alone.
+                    {t("dashboard.reassurance")}
                   </h2>
 
                   <p className="mt-3 max-w-xl text-sm leading-7 text-[#607568] sm:text-base">
-                    Start a private conversation and choose the kind of support
-                    that feels right for you. You can take things at your own
-                    pace.
+                    {t("dashboard.conversationIntro")}
                   </p>
 
                   <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -330,7 +326,7 @@ export default function UserDashboard() {
                       onClick={() => openChat("general")}
                       className="group inline-flex items-center justify-center gap-3 rounded-full bg-[#176B3A] px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#2F8F4E] hover:shadow-md"
                     >
-                      <span>Start a private conversation</span>
+                      <span>{t("dashboard.startConversation")}</span>
                       <ArrowRight
                         size={17}
                         className="transition-transform duration-200 group-hover:translate-x-1"
@@ -339,7 +335,7 @@ export default function UserDashboard() {
 
                     <div className="flex items-center gap-2 text-xs text-[#607568]">
                       <Lock size={14} className="text-[#2F8F4E]" />
-                      <span>Private and at your pace</span>
+                      <span>{t("dashboard.privateAtPace")}</span>
                     </div>
                   </div>
                 </div>
@@ -366,10 +362,10 @@ export default function UserDashboard() {
               <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <h2 className="text-[23px] font-bold tracking-tight text-[#173B28]">
-                    Choose your support
+                    {t("dashboard.chooseSupport")}
                   </h2>
                   <p className="mt-1 text-sm text-[#7B8F82]">
-                    You can switch advisors whenever you need.
+                    {t("dashboard.switchAdvisors")}
                   </p>
                 </div>
               </div>
@@ -398,18 +394,18 @@ export default function UserDashboard() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold text-[#173B28]">
-                            {advisor.title}
+                            {t(advisor.title)}
                           </h3>
 
                           {unread && (
                             <span className="rounded-full bg-[#E7F1E3] px-2 py-0.5 text-[10px] font-bold text-[#176B3A]">
-                              New message
+                              {t("dashboard.newMessageLabel")}
                             </span>
                           )}
                         </div>
 
                         <p className="mt-1 text-sm text-[#7B8F82]">
-                          {advisor.description}
+                          {t(advisor.description)}
                         </p>
                       </div>
 
@@ -431,10 +427,10 @@ export default function UserDashboard() {
               <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <h2 className="text-[23px] font-bold tracking-tight text-[#173B28]">
-                    Recent conversations
+                    {t("dashboard.recent")}
                   </h2>
                   <p className="mt-1 text-sm text-[#7B8F82]">
-                    Continue where you left off.
+                    {t("dashboard.continue")}
                   </p>
                 </div>
               </div>
@@ -443,7 +439,7 @@ export default function UserDashboard() {
                 <div className="rounded-2xl border border-[#DCE8D9] bg-white p-6">
                   <div className="flex items-center gap-3 text-sm text-[#7B8F82]">
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#DCE8D9] border-t-[#2F8F4E]" />
-                    Loading your conversations...
+                    {t("dashboard.loadingConversations")}
                   </div>
                 </div>
               ) : recentConversations.length > 0 ? (
@@ -463,9 +459,8 @@ export default function UserDashboard() {
 
                     const advisorName =
                       conversation.advisor_type === "psychological"
-                        ? "Emotional"
-                        : conversation.advisor_type.charAt(0).toUpperCase() +
-                          conversation.advisor_type.slice(1);
+                        ? t("dashboard.emotional")
+                        : t(`dashboard.${conversation.advisor_type}`);
 
                     return (
                       <button
@@ -485,12 +480,12 @@ export default function UserDashboard() {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-3">
                             <h3 className="font-semibold text-[#173B28]">
-                              {advisorName} Advisor
+                              {t("dashboard.advisorTitle", { advisorType: advisorName })}
                             </h3>
 
                             {unread && (
                               <span className="rounded-full bg-[#E7F1E3] px-2 py-0.5 text-[10px] font-bold text-[#176B3A]">
-                                New
+                                {t("dashboard.new")}
                               </span>
                             )}
 
@@ -509,10 +504,10 @@ export default function UserDashboard() {
                             }`}
                           >
                             {unread
-                              ? "Your advisor sent you a new message."
+                              ? t("dashboard.advisorNewMessage")
                               : lastMessage
                                 ? lastMessage.text
-                                : "Start chatting with your advisor."}
+                                : t("dashboard.startChatting")}
                           </p>
                         </div>
 
@@ -533,10 +528,10 @@ export default function UserDashboard() {
 
                     <div>
                       <h3 className="font-semibold text-[#173B28]">
-                        No conversations yet
+                        {t("dashboard.noneYet")}
                       </h3>
                       <p className="mt-1 text-sm text-[#7B8F82]">
-                        Choose an advisor above whenever you're ready.
+                        {t("dashboard.chooseAdvisor")}
                       </p>
                     </div>
                   </div>
@@ -552,10 +547,10 @@ export default function UserDashboard() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-[#173B28]">
-                    Need more information?
+                    {t("dashboard.moreInfo")}
                   </p>
                   <p className="mt-1 text-xs text-[#7B8F82]">
-                    Explore SafeLink resources whenever you need them.
+                    {t("dashboard.exploreResources")}
                   </p>
                 </div>
 
@@ -566,7 +561,7 @@ export default function UserDashboard() {
                     className="inline-flex items-center gap-2 rounded-full border border-[#DCE8D9] bg-white px-4 py-2.5 text-xs font-semibold text-[#173B28] transition hover:border-[#AFCDAF] hover:bg-[#F5F8F3]"
                   >
                     <BookOpen size={15} className="text-[#2F8F4E]" />
-                    Awareness
+                    {t("common.awareness")}
                   </button>
 
                   <button
@@ -575,7 +570,7 @@ export default function UserDashboard() {
                     className="inline-flex items-center gap-2 rounded-full border border-[#DCE8D9] bg-white px-4 py-2.5 text-xs font-semibold text-[#173B28] transition hover:border-[#AFCDAF] hover:bg-[#F5F8F3]"
                   >
                     <Info size={15} className="text-[#2F8F4E]" />
-                    About SafeLink
+                    {t("dashboard.about")}
                   </button>
                 </div>
               </div>
@@ -589,12 +584,11 @@ export default function UserDashboard() {
               <div className="flex gap-2">
                 <span>SafeLink</span>
                 <span>•</span>
-                <span>Private Support</span>
+                <span>{t("dashboard.privateFooter")}</span>
               </div>
 
               <p>
-                SafeLink does not replace emergency services or qualified
-                professionals.
+                {t("dashboard.disclaimer")}
               </p>
             </footer>
           </div>

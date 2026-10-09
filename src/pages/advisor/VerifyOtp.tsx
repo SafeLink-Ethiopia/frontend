@@ -1,10 +1,12 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { verifyAdvisorResetOtp } from "../../services/advisorApi";
 
 export default function VerifyOtp() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -32,17 +34,17 @@ export default function VerifyOtp() {
     setSuccess("");
 
     if (!email) {
-      setError("Email is missing. Please request a new OTP.");
+      setError(t("advisorPortal.verifyOtp.emailMissing"));
       return;
     }
 
     if (!otp) {
-      setError("Please enter the verification code.");
+      setError(t("advisorPortal.verifyOtp.codeRequired"));
       return;
     }
 
     if (!/^\d{6}$/.test(otp)) {
-      setError("OTP must be exactly 6 digits.");
+      setError(t("advisorPortal.verifyOtp.invalidFormat"));
       return;
     }
 
@@ -53,7 +55,7 @@ export default function VerifyOtp() {
 
       sessionStorage.setItem("advisorResetToken", data.resetToken);
 
-      setSuccess(data.message || "OTP verified successfully.");
+      setSuccess(data.message || t("advisorPortal.verifyOtp.success"));
 
       setTimeout(() => {
         navigate("/advisor/reset-password", {
@@ -64,10 +66,10 @@ export default function VerifyOtp() {
       if (axios.isAxiosError(error)) {
         setError(
           error.response?.data?.message ||
-            "Invalid or expired verification code.",
+            t("advisorPortal.verifyOtp.invalidOrExpired"),
         );
       } else {
-        setError("Something went wrong. Please try again.");
+        setError(t("advisorPortal.common.unexpectedError"));
       }
     } finally {
       setLoading(false);
@@ -95,16 +97,15 @@ export default function VerifyOtp() {
             </div>
 
             <p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-[#a79093]">
-              Advisor Portal
+              {t("advisorPortal.common.portal")}
             </p>
 
             <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#3e1919] sm:text-3xl">
-              Verify your email
+              {t("advisorPortal.verifyOtp.title")}
             </h1>
 
             <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#a79093]">
-              Enter the 6-digit verification code sent to your
-              advisor account email.
+              {t("advisorPortal.verifyOtp.description")}
             </p>
 
             {email && (
@@ -140,7 +141,7 @@ export default function VerifyOtp() {
                   htmlFor="otp"
                   className="mb-2 block text-sm font-semibold text-[#3e1919]"
                 >
-                  Verification Code
+                  {t("advisorPortal.verifyOtp.code")}
                 </label>
 
                 <input
@@ -149,7 +150,7 @@ export default function VerifyOtp() {
                   inputMode="numeric"
                   value={otp}
                   onChange={handleOtpChange}
-                  placeholder="Enter 6-digit code"
+                  placeholder={t("advisorPortal.verifyOtp.codePlaceholder")}
                   autoComplete="one-time-code"
                   disabled={loading}
                   maxLength={6}
@@ -158,11 +159,11 @@ export default function VerifyOtp() {
 
                 <div className="mt-3 flex items-center justify-between">
                   <p className="text-xs text-[#a79093]">
-                    Enter all 6 digits.
+                    {t("advisorPortal.verifyOtp.digitsHint")}
                   </p>
 
                   <p className="text-xs font-medium text-[#a79093]">
-                    Expires in 10 minutes
+                    {t("advisorPortal.verifyOtp.expires")}
                   </p>
                 </div>
               </div>
@@ -172,7 +173,7 @@ export default function VerifyOtp() {
                 disabled={loading || otp.length !== 6}
                 className="w-full bg-[#3e1919] px-4 py-3 text-sm font-semibold text-[#f0e2d6] transition hover:bg-[#3e1919]/90 focus:outline-none focus:ring-2 focus:ring-[#3e1919]/30 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {loading ? "Verifying..." : "Verify Code"}
+                {loading ? t("advisorPortal.verifyOtp.verifying") : t("advisorPortal.verifyOtp.verify")}
               </button>
             </form>
 
@@ -182,7 +183,7 @@ export default function VerifyOtp() {
                 to="/advisor/forgot-password"
                 className="text-sm font-semibold text-[#3e1919] transition hover:text-[#a79093] hover:underline"
               >
-                ← Use a different email
+                {t("advisorPortal.verifyOtp.differentEmail")}
               </Link>
             </div>
           </div>
@@ -192,14 +193,12 @@ export default function VerifyOtp() {
             <span className="text-sm">🔒</span>
 
             <p className="text-xs leading-5 text-[#a79093]">
-              Never share your verification code with anyone. SafeLink
-              will only use this code to confirm your password reset
-              request.
+              {t("advisorPortal.verifyOtp.securityNote")}
             </p>
           </div>
 
           <p className="mt-6 text-center text-xs text-[#a79093]">
-            SafeLink Advisor Portal
+            {t("advisorPortal.common.brandFooter")}
           </p>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   ArrowRight,
   MessageCircle,
@@ -18,44 +19,25 @@ type RecentMessageItem = {
 
 const motivationalMessages = [
   {
-    label: "A little encouragement for today",
-    headline:
-      "You don’t have to solve everything at once. Being present is a meaningful place to start.",
-    body:
-      "Listen without rushing, respond with care, and help each person find a next step that feels manageable.",
+    key: "encouragement",
   },
   {
-    label: "A reminder to pause",
-    headline:
-      "Sometimes, feeling heard is the first step toward feeling hopeful.",
-    body:
-      "Give people room to share their story. A thoughtful response can make a difficult moment feel less lonely.",
+    key: "pause",
   },
   {
-    label: "Care in every conversation",
-    headline:
-      "Small acts of understanding can make a lasting difference.",
-    body:
-      "Be patient with every question, respect each person’s pace, and meet uncertainty with kindness.",
+    key: "care",
   },
   {
-    label: "One conversation at a time",
-    headline:
-      "You don’t need every answer to offer someone a little clarity.",
-    body:
-      "Stay curious, keep your guidance practical, and work together toward the next helpful step.",
+    key: "oneAtATime",
   },
   {
-    label: "Thank you for showing up",
-    headline:
-      "Your patience and attention are part of the support you provide.",
-    body:
-      "Take each conversation as it comes. Listen carefully and treat every person with dignity.",
+    key: "thankYou",
   },
 ] as const;
 
 export default function AdvisorDashboardPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,7 +81,7 @@ export default function AdvisorDashboardPage() {
         setError(
           err instanceof Error
             ? err.message
-            : "Could not load conversations. Please try again.",
+            : t("advisorPortal.dashboard.loadError"),
         );
       } finally {
         if (!cancelled) setLoading(false);
@@ -116,7 +98,7 @@ export default function AdvisorDashboardPage() {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [token, navigate]);
+  }, [token, navigate, t]);
 
   /*
    * Show the most recent non-deleted message from each requested sender.
@@ -158,14 +140,13 @@ export default function AdvisorDashboardPage() {
         {/* Main page heading */}
         <header className="mb-6 sm:mb-7">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2F8F4E]">
-            Your support workspace
+            {t("advisorPortal.dashboard.workspace")}
           </p>
           <h1 className="mt-2 max-w-4xl text-2xl font-bold leading-tight tracking-tight text-[#173B28] sm:text-3xl lg:text-[2.15rem]">
-            Welcome back — someone may be waiting to be heard.
+            {t("advisorPortal.dashboard.welcome")}
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#607568] sm:text-base sm:leading-7">
-            Every conversation is a chance to help someone take their next step.
-            Start with listening, and take each conversation one at a time.
+            {t("advisorPortal.dashboard.intro")}
           </p>
         </header>
 
@@ -181,18 +162,18 @@ export default function AdvisorDashboardPage() {
           />
 
           <div
-            key={currentMotivation.headline}
+            key={currentMotivation.key}
             aria-live="polite"
             className="relative max-w-3xl"
           >
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#176B3A]">
-              {currentMotivation.label}
+              {t(`advisorPortal.dashboard.motivation.${currentMotivation.key}.label`)}
             </p>
             <h2 className="mt-4 max-w-3xl font-serif text-2xl italic leading-snug tracking-tight text-[#173B28] sm:text-3xl sm:leading-snug lg:text-[2.2rem]">
-              {currentMotivation.headline}
+              {t(`advisorPortal.dashboard.motivation.${currentMotivation.key}.headline`)}
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-[#607568] sm:text-base sm:leading-7">
-              {currentMotivation.body}
+              {t(`advisorPortal.dashboard.motivation.${currentMotivation.key}.body`)}
             </p>
             <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <button
@@ -200,14 +181,14 @@ export default function AdvisorDashboardPage() {
                 onClick={openUserConversations}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#176B3A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#2F8F4E] focus:outline-none focus:ring-2 focus:ring-[#2F8F4E] focus:ring-offset-2 focus:ring-offset-[#E7F1E3] sm:w-auto"
               >
-                Go to conversations
+                {t("advisorPortal.dashboard.goToConversations")}
                 <ArrowRight size={16} />
               </button>
 
-              <div className="flex items-center gap-2" aria-label={`Message ${motivationIndex + 1} of ${motivationalMessages.length}`}>
+              <div className="flex items-center gap-2" aria-label={t("advisorPortal.dashboard.messagePosition", { current: motivationIndex + 1, total: motivationalMessages.length })}>
                 {motivationalMessages.map((message, index) => (
                   <span
-                    key={message.label}
+                    key={message.key}
                     aria-hidden="true"
                     className={`h-1.5 rounded-full transition-all duration-300 ${
                       index === motivationIndex
@@ -217,7 +198,7 @@ export default function AdvisorDashboardPage() {
                   />
                 ))}
                 <span className="ml-1 text-[11px] text-[#607568]">
-                  A new thought every minute
+                  {t("advisorPortal.dashboard.newThought")}
                 </span>
               </div>
             </div>
@@ -233,13 +214,10 @@ export default function AdvisorDashboardPage() {
           />
           <div>
             <h2 className="font-semibold text-[#173B28]">
-              A reminder about the people behind each conversation
+              {t("advisorPortal.dashboard.privacyTitle")}
             </h2>
             <p className="mt-1.5 text-sm leading-6 text-[#607568]">
-              Conversations are identified with private session IDs rather than
-              names. Messages may still include sensitive details, so handle
-              them carefully, protect each person’s privacy, and offer the same
-              care you would give in person.
+              {t("advisorPortal.dashboard.privacyDescription")}
             </p>
           </div>
         </aside>
@@ -258,10 +236,10 @@ export default function AdvisorDashboardPage() {
         <section>
           <div className="mb-5">
             <h2 className="text-xl font-bold tracking-tight text-[#173B28] sm:text-2xl">
-              Recent messages
+              {t("advisorPortal.dashboard.recentMessages")}
             </h2>
             <p className="mt-1 text-sm leading-6 text-[#607568]">
-              The latest user and administrator messages, shown separately.
+              {t("advisorPortal.dashboard.recentMessagesDescription")}
             </p>
           </div>
 
@@ -269,24 +247,24 @@ export default function AdvisorDashboardPage() {
             <div className="rounded-2xl border border-[#DCE8D9] bg-white px-5 py-8">
               <div className="flex items-center justify-center gap-3 text-sm text-[#607568]">
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#DCE8D9] border-t-[#2F8F4E]" />
-                Loading conversations...
+                {t("advisorPortal.dashboard.loading")}
               </div>
             </div>
           ) : (
             <div className="grid min-w-0 gap-6 lg:grid-cols-2">
               <RecentMessageSection
-                title="Recent user messages"
-                description="Messages from people reaching out for support."
+                title={t("advisorPortal.dashboard.recentUserMessages")}
+                description={t("advisorPortal.dashboard.userMessagesDescription")}
                 items={recentUserMessages}
-                emptyMessage="There are no user messages to show yet."
+                emptyMessage={t("advisorPortal.dashboard.noUserMessages")}
                 onOpenMessages={openUserConversations}
               />
 
               <RecentMessageSection
-                title="Recent admin messages"
-                description="Messages sent by an administrator in a conversation."
+                title={t("advisorPortal.dashboard.recentAdminMessages")}
+                description={t("advisorPortal.dashboard.adminMessagesDescription")}
                 items={recentAdminMessages}
-                emptyMessage="There are no admin messages to show yet."
+                emptyMessage={t("advisorPortal.dashboard.noAdminMessages")}
                 onOpenMessages={openAdminChat}
               />
             </div>
@@ -294,7 +272,7 @@ export default function AdvisorDashboardPage() {
         </section>
 
         <footer className="mt-8 border-t border-[#DCE8D9] pt-4 text-xs leading-5 text-[#7B8F82]">
-          SafeLink · Private Support
+          {t("advisorPortal.dashboard.footer")}
         </footer>
       </div>
     </main>
@@ -316,6 +294,8 @@ function RecentMessageSection({
   emptyMessage,
   onOpenMessages,
 }: RecentMessageSectionProps) {
+  const { t } = useTranslation();
+
   return (
     <section className="min-w-0">
       <div className="mb-3">
@@ -335,7 +315,7 @@ function RecentMessageSection({
               key={`${conversation.conversation_id}-${String(message.sender)}-${index}`}
               type="button"
               onClick={onOpenMessages}
-              aria-label={`Open messages for session ${conversation.session_id}`}
+              aria-label={t("advisorPortal.dashboard.openMessages", { session: conversation.session_id })}
               className={`group flex w-full min-w-0 items-start gap-3 px-4 py-4 text-left transition hover:bg-[#F7FAF5] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#2F8F4E] sm:px-5 ${
                 index < items.length - 1 ? "border-b border-[#E4ECE2]" : ""
               }`}
@@ -346,10 +326,10 @@ function RecentMessageSection({
 
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold text-[#173B28]">
-                  Session {conversation.session_id.slice(0, 8)}...
+                  {t("advisorPortal.dashboard.session", { session: conversation.session_id.slice(0, 8) })}
                 </span>
                 <span className="mt-1 block break-words text-sm leading-5 text-[#607568]">
-                  {message.text || "Message has no text."}
+                  {message.text || t("advisorPortal.dashboard.messageNoText")}
                 </span>
               </span>
 

@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   BookOpen,
   Info,
@@ -10,10 +11,10 @@ import {
 import QuickExit from "../QuickExit";
 
 const navItems = [
-  { label: "Dashboard", path: "/user/dashboard", icon: LayoutDashboard },
-  { label: "Profile", path: "/user/profile", icon: User },
-  { label: "Advisor Chat", path: "/user/dashboard/chat", icon: MessageCircle },
-  { label: "Awareness", path: "/awareness", icon: BookOpen },
+  { label: "common.dashboard", path: "/user/dashboard", icon: LayoutDashboard },
+  { label: "common.profile", path: "/user/profile", icon: User },
+  { label: "common.advisorChat", path: "/user/dashboard/chat", icon: MessageCircle },
+  { label: "common.awareness", path: "/awareness", icon: BookOpen },
   
 ];
 
@@ -30,10 +31,11 @@ export default function UserSidebar({
   onClose,
   onLogout,
 }: UserSidebarProps) {
+  const { t } = useTranslation();
   return (
     <aside
       id="user-dashboard-sidebar"
-      aria-label="Dashboard navigation"
+      aria-label={t("common.dashboardNavigation")}
       className={`${
         mobileMenuOpen
           ? "fixed inset-y-0 left-0 z-50 flex w-[min(85vw,280px)] shadow-xl lg:z-30 lg:w-[230px] lg:shadow-none"
@@ -48,7 +50,7 @@ export default function UserSidebar({
         >
           <img
             src="/safelink-logo.png"
-            alt="SafeLink logo"
+            alt={t("common.logoAlt")}
             className="h-auto w-10 object-contain"
           />
           <span className="text-left">
@@ -56,14 +58,14 @@ export default function UserSidebar({
               SafeLink
             </span>
             <span className="mt-1 block text-[8px] font-semibold tracking-[0.18em] text-[#7B8F82]">
-              PRIVATE SUPPORT
+              {t("common.privateSupport")}
             </span>
           </span>
         </NavLink>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close navigation menu"
+          aria-label={t("common.closeNavigation")}
           className="rounded-lg p-2 text-[#607568] transition hover:bg-[#F4F7F2] hover:text-[#173B28] lg:hidden"
         >
           <X size={20} />
@@ -72,7 +74,7 @@ export default function UserSidebar({
 
       <nav className="flex-1 px-3">
         <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#8A9A90]">
-          Your space
+          {t("dashboard.privateSpace")}
         </p>
         {navItems.map(({ label, path, icon: Icon }) => (
           <NavLink
@@ -89,8 +91,8 @@ export default function UserSidebar({
             }
           >
             <Icon size={18} />
-            <span className="flex-1 text-left">{label}</span>
-            {label === "Advisor Chat" && unreadMessages > 0 && (
+            <span className="flex-1 text-left">{t(label)}</span>
+            {label === "common.advisorChat" && unreadMessages > 0 && (
               <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#2F8F4E] px-1.5 text-[9px] font-bold text-white">
                 {unreadMessages > 9 ? "9+" : unreadMessages}
               </span>
@@ -108,7 +110,7 @@ export default function UserSidebar({
           onClick={onLogout}
           className="mt-4 flex w-full items-center gap-3 rounded-xl border border-[#DCE8D9] px-3 py-3 text-sm font-semibold text-[#607568] transition hover:border-[#AFCDAF] hover:bg-[#F4F7F2] hover:text-[#173B28] focus:outline-none focus:ring-2 focus:ring-[#2F8F4E] focus:ring-offset-2"
         >
-          <span>Log out</span>
+          <span>{t("common.logOut")}</span>
         </button>
       </div>
     </aside>

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { MoreVertical, X, MessageCircle, Eye, Pencil, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface Advisor {
   _id?: string;
@@ -25,6 +26,7 @@ interface AdvisorsResponse {
 }
 
 export default function Advisors() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
@@ -50,7 +52,7 @@ export default function Advisors() {
       const token = localStorage.getItem("adminToken");
 
       if (!token) {
-        setError("Admin authentication required.");
+        setError(t("admin.common.errors.authRequired"));
         return;
       }
 
@@ -69,10 +71,10 @@ export default function Advisors() {
 
       if (axios.isAxiosError(error)) {
         setError(
-          error.response?.data?.message || "Failed to load advisors.",
+          error.response?.data?.message || t("admin.advisors.errors.load"),
         );
       } else {
-        setError("Something went wrong while loading advisors.");
+        setError(t("admin.advisors.errors.loadUnexpected"));
       }
     } finally {
       setLoading(false);
@@ -85,7 +87,7 @@ export default function Advisors() {
 
   const handleToggleActive = async (advisor: Advisor) => {
     if (!advisor.advisor_id) {
-      setError("Advisor ID is missing.");
+      setError(t("admin.advisors.errors.missingId"));
       return;
     }
 
@@ -97,7 +99,7 @@ export default function Advisors() {
       const token = localStorage.getItem("adminToken");
 
       if (!token) {
-        setError("Admin authentication required.");
+        setError(t("admin.common.errors.authRequired"));
         return;
       }
 
@@ -131,10 +133,10 @@ export default function Advisors() {
       if (axios.isAxiosError(error)) {
         setError(
           error.response?.data?.message ||
-            "Failed to update advisor status.",
+            t("admin.advisors.errors.updateStatus"),
         );
       } else {
-        setError("Something went wrong.");
+        setError(t("admin.common.errors.unexpected"));
       }
     } finally {
       setIsUpdating(false);
@@ -143,7 +145,7 @@ export default function Advisors() {
 
   const handleDeleteAdvisor = async () => {
     if (!advisorToDelete?.advisor_id) {
-      setError("Advisor ID is missing.");
+      setError(t("admin.advisors.errors.missingId"));
       return;
     }
 
@@ -154,7 +156,7 @@ export default function Advisors() {
       const token = localStorage.getItem("adminToken");
 
       if (!token) {
-        setError("Admin authentication required.");
+        setError(t("admin.common.errors.authRequired"));
         return;
       }
 
@@ -181,10 +183,10 @@ export default function Advisors() {
       if (axios.isAxiosError(error)) {
         setError(
           error.response?.data?.message ||
-            "Failed to delete advisor.",
+            t("admin.advisors.errors.delete"),
         );
       } else {
-        setError("Something went wrong while deleting advisor.");
+        setError(t("admin.advisors.errors.deleteUnexpected"));
       }
     } finally {
       setIsDeleting(false);
@@ -193,7 +195,7 @@ export default function Advisors() {
 
   const handleUpdateAdvisor = async () => {
     if (!editingAdvisor?.advisor_id) {
-      setError("Advisor ID is missing.");
+      setError(t("admin.advisors.errors.missingId"));
       return;
     }
 
@@ -204,7 +206,7 @@ export default function Advisors() {
       const token = localStorage.getItem("adminToken");
 
       if (!token) {
-        setError("Admin authentication required.");
+        setError(t("admin.common.errors.authRequired"));
         return;
       }
 
@@ -247,10 +249,10 @@ export default function Advisors() {
       if (axios.isAxiosError(error)) {
         setError(
           error.response?.data?.message ||
-            "Failed to update advisor.",
+            t("admin.advisors.errors.update"),
         );
       } else {
-        setError("Something went wrong while updating advisor.");
+        setError(t("admin.advisors.errors.updateUnexpected"));
       }
     } finally {
       setIsUpdating(false);
@@ -259,7 +261,7 @@ export default function Advisors() {
 
   const handleOpenChat = (advisor: Advisor) => {
     if (!advisor.advisor_id) {
-      setError("This advisor does not have an advisor ID.");
+      setError(t("admin.advisors.errors.noId"));
       return;
     }
 
@@ -284,6 +286,19 @@ export default function Advisors() {
     setAdvisorToDelete(advisor);
   };
 
+  const translateGender = (gender: string) => {
+    const key = gender.toLowerCase();
+    return ["male", "female", "other"].includes(key)
+      ? t(`admin.createAdvisor.options.${key}`)
+      : gender;
+  };
+  const translateType = (type: string) => {
+    const key = type.toLowerCase();
+    return ["medical", "legal", "psychological", "general"].includes(key)
+      ? t(`admin.createAdvisor.options.${key}`)
+      : type;
+  };
+
   return (
     <main className="min-h-screen bg-[#FAFBF7] text-[#173B28]">
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
@@ -293,28 +308,26 @@ export default function Advisors() {
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#2F8F4E]">
-                SafeLink Administration
+                {t("admin.brand.administration")}
               </p>
 
               <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#173B28] sm:text-4xl">
-                Advisors
+                {t("admin.advisors.title")}
               </h1>
 
               <p className="mt-3 max-w-2xl text-sm leading-6 text-[#176B3A]/70">
-                Manage advisor accounts, availability, information, and
-                communication from one place.
+                {t("admin.advisors.description")}
               </p>
             </div>
 
             <div className="flex items-center gap-3 border-l-2 border-[#2F8F4E] pl-4">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#176B3A]/60">
-                  Directory
+                  {t("admin.advisors.directory")}
                 </p>
 
                 <p className="mt-1 text-sm font-semibold text-[#173B28]">
-                  {advisors.length}{" "}
-                  {advisors.length === 1 ? "advisor" : "advisors"}
+                  {t("admin.advisors.advisorCount", { count: advisors.length })}
                 </p>
               </div>
             </div>
@@ -326,7 +339,7 @@ export default function Advisors() {
           <div className="mt-6 flex items-start justify-between gap-4 border-l-4 border-[#176B3A] bg-[#E7F1E3] px-4 py-4 sm:px-5">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#2F8F4E]">
-                Notice
+                {t("admin.common.notice")}
               </p>
 
               <p className="mt-1 text-sm leading-6 text-[#173B28]">
@@ -338,7 +351,7 @@ export default function Advisors() {
               type="button"
               onClick={() => setError("")}
               className="shrink-0 text-xl leading-none text-[#176B3A]/60 transition hover:text-[#173B28]"
-              aria-label="Close error"
+              aria-label={t("admin.common.closeError")}
             >
               <X size={18} />
             </button>
@@ -352,21 +365,21 @@ export default function Advisors() {
               <div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-[#2F8F4E]/20 border-t-[#2F8F4E]" />
 
               <p className="mt-4 text-sm text-[#176B3A]/65">
-                Loading advisor directory...
+                {t("admin.advisors.loading")}
               </p>
             </div>
           ) : advisors.length === 0 ? (
             <div className="border-y border-[#2F8F4E]/15 py-16">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
-                Directory
+                {t("admin.advisors.directory")}
               </p>
 
               <h2 className="mt-2 text-2xl font-semibold text-[#173B28]">
-                No advisors found
+                {t("admin.advisors.emptyTitle")}
               </h2>
 
               <p className="mt-3 max-w-xl text-sm leading-6 text-[#176B3A]/70">
-                There are currently no advisors available in the system.
+                {t("admin.advisors.emptyDescription")}
               </p>
             </div>
           ) : (
@@ -375,16 +388,16 @@ export default function Advisors() {
               <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
-                    Directory
+                    {t("admin.advisors.directory")}
                   </p>
 
                   <h2 className="mt-1 text-xl font-semibold text-[#173B28]">
-                    Advisor accounts
+                    {t("admin.advisors.accounts")}
                   </h2>
                 </div>
 
                 <p className="text-xs text-[#176B3A]/60">
-                  Select an advisor to view available actions.
+                  {t("admin.advisors.selectForActions")}
                 </p>
               </div>
 
@@ -445,7 +458,7 @@ export default function Advisors() {
                         {/* Type */}
                         <div>
                           <span className="inline-flex rounded-full bg-[#E7F1E3] px-3 py-1 text-[11px] font-semibold capitalize text-[#176B3A]">
-                            {advisor.type}
+                            {translateType(advisor.type)}
                           </span>
                         </div>
 
@@ -479,8 +492,8 @@ export default function Advisors() {
                               }`}
                             >
                               {advisor.active
-                                ? "Active"
-                                : "Inactive"}
+                                ? t("admin.common.active")
+                                : t("admin.common.inactive")}
                             </span>
                           </button>
 
@@ -504,7 +517,7 @@ export default function Advisors() {
                             }
                             className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#2F8F4E]/20 bg-[#FAFBF7] px-3 text-xs font-semibold text-[#173B28] transition hover:border-[#2F8F4E]/40 hover:bg-[#E7F1E3]"
                           >
-                            <span>Actions</span>
+                            <span>{t("admin.common.actions")}</span>
                             <MoreVertical size={16} />
                           </button>
 
@@ -512,7 +525,7 @@ export default function Advisors() {
                             <>
                               <button
                                 type="button"
-                                aria-label="Close actions"
+                                aria-label={t("admin.common.closeActions")}
                                 className="fixed inset-0 z-30 cursor-default"
                                 onClick={() => setOpenMenu(null)}
                               />
@@ -528,7 +541,7 @@ export default function Advisors() {
                                   className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#E7F1E3]"
                                 >
                                   <Eye size={16} />
-                                  View
+                                  {t("admin.common.view")}
                                 </button>
 
                                 <button
@@ -540,7 +553,7 @@ export default function Advisors() {
                                   className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#E7F1E3] disabled:opacity-40"
                                 >
                                   <MessageCircle size={16} />
-                                  Chat
+                                  {t("admin.common.chat")}
                                 </button>
 
                                 <button
@@ -552,7 +565,7 @@ export default function Advisors() {
                                   className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#E7F1E3] disabled:opacity-40"
                                 >
                                   <Pencil size={16} />
-                                  Edit
+                                  {t("admin.common.edit")}
                                 </button>
 
                                 <div className="border-t border-[#2F8F4E]/10" />
@@ -566,7 +579,7 @@ export default function Advisors() {
                                   className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[#176B3A] transition hover:bg-[#E7F1E3] disabled:opacity-40"
                                 >
                                   <Trash2 size={16} />
-                                  Delete
+                                  {t("admin.common.delete")}
                                 </button>
                               </div>
                             </>
@@ -589,11 +602,11 @@ export default function Advisors() {
               <div className="flex items-start justify-between border-b border-[#2F8F4E]/10 px-5 py-5 sm:px-6">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
-                    Advisor profile
+                    {t("admin.advisors.profile")}
                   </p>
 
                   <h2 className="mt-1 text-xl font-semibold text-[#173B28]">
-                    Advisor details
+                    {t("admin.advisors.details")}
                   </h2>
                 </div>
 
@@ -601,7 +614,7 @@ export default function Advisors() {
                   type="button"
                   onClick={() => setSelectedAdvisor(null)}
                   className="rounded-lg p-2 text-[#176B3A]/50 transition hover:bg-[#E7F1E3] hover:text-[#173B28]"
-                  aria-label="Close"
+                  aria-label={t("admin.common.close")}
                 >
                   <X size={20} />
                 </button>
@@ -610,23 +623,23 @@ export default function Advisors() {
               <div className="divide-y divide-[#2F8F4E]/10 px-5 sm:px-6">
                 {[
                   [
-                    "Advisor ID",
+                    t("admin.advisors.fields.advisorId"),
                     selectedAdvisor.advisor_id || "—",
                   ],
-                  ["Name", selectedAdvisor.name],
-                  ["Email", selectedAdvisor.email],
-                  ["Gender", selectedAdvisor.gender],
-                  ["Type", selectedAdvisor.type],
+                  [t("admin.advisors.fields.name"), selectedAdvisor.name],
+                  [t("admin.advisors.fields.email"), selectedAdvisor.email],
+                  [t("admin.advisors.fields.gender"), translateGender(selectedAdvisor.gender)],
+                  [t("admin.advisors.fields.type"), translateType(selectedAdvisor.type)],
                   [
-                    "Phone",
+                    t("admin.advisors.fields.phone"),
                     selectedAdvisor.phone_number || "—",
                   ],
                   [
-                    "Location",
+                    t("admin.advisors.fields.location"),
                     selectedAdvisor.location || "—",
                   ],
                   [
-                    "Working hours",
+                    t("admin.advisors.fields.workingHours"),
                     `${selectedAdvisor.working_hours?.start || "—"} - ${
                       selectedAdvisor.working_hours?.end || "—"
                     }`,
@@ -648,7 +661,7 @@ export default function Advisors() {
 
                 <div className="flex items-center justify-between py-4">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#176B3A]/50">
-                    Status
+                    {t("admin.advisors.fields.status")}
                   </p>
 
                   <div className="flex items-center gap-2">
@@ -662,8 +675,8 @@ export default function Advisors() {
 
                     <p className="text-sm font-semibold text-[#173B28]">
                       {selectedAdvisor.active
-                        ? "Active"
-                        : "Inactive"}
+                        ? t("admin.common.active")
+                        : t("admin.common.inactive")}
                     </p>
                   </div>
                 </div>
@@ -675,7 +688,7 @@ export default function Advisors() {
                   onClick={() => setSelectedAdvisor(null)}
                   className="rounded-lg border border-[#2F8F4E]/20 px-5 py-2.5 text-sm font-semibold text-[#173B28] transition hover:bg-[#E7F1E3]"
                 >
-                  Close
+                  {t("admin.common.close")}
                 </button>
 
                 <button
@@ -685,7 +698,7 @@ export default function Advisors() {
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2F8F4E] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#176B3A] disabled:opacity-50"
                 >
                   <MessageCircle size={16} />
-                  Open chat
+                  {t("admin.advisors.openChat")}
                 </button>
               </div>
             </div>
@@ -700,11 +713,11 @@ export default function Advisors() {
               <div className="flex items-start justify-between border-b border-[#2F8F4E]/10 px-5 py-5 sm:px-6">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
-                    Advisor management
+                    {t("admin.advisors.management")}
                   </p>
 
                   <h2 className="mt-1 text-xl font-semibold text-[#173B28]">
-                    Edit advisor
+                    {t("admin.advisors.editTitle")}
                   </h2>
                 </div>
 
@@ -712,7 +725,7 @@ export default function Advisors() {
                   type="button"
                   onClick={() => setEditingAdvisor(null)}
                   className="rounded-lg p-2 text-[#176B3A]/50 transition hover:bg-[#E7F1E3] hover:text-[#173B28]"
-                  aria-label="Close"
+                  aria-label={t("admin.common.close")}
                 >
                   <X size={20} />
                 </button>
@@ -723,7 +736,7 @@ export default function Advisors() {
                 {/* Advisor ID */}
                 <div>
                   <label className="mb-2 block text-xs font-semibold text-[#173B28]">
-                    Advisor ID
+                    {t("admin.advisors.fields.advisorId")}
                   </label>
 
                   <input
@@ -737,7 +750,7 @@ export default function Advisors() {
                 {/* Name */}
                 <div>
                   <label className="mb-2 block text-xs font-semibold text-[#173B28]">
-                    Name
+                    {t("admin.advisors.fields.name")}
                   </label>
 
                   <input
@@ -756,7 +769,7 @@ export default function Advisors() {
                 {/* Email */}
                 <div>
                   <label className="mb-2 block text-xs font-semibold text-[#173B28]">
-                    Email
+                    {t("admin.advisors.fields.email")}
                   </label>
 
                   <input
@@ -775,7 +788,7 @@ export default function Advisors() {
                 {/* Gender */}
                 <div>
                   <label className="mb-2 block text-xs font-semibold text-[#173B28]">
-                    Gender
+                    {t("admin.advisors.fields.gender")}
                   </label>
 
                   <select
@@ -788,17 +801,17 @@ export default function Advisors() {
                     }
                     className="w-full rounded-lg border border-[#2F8F4E]/20 bg-white px-3 py-2.5 text-sm text-[#173B28] outline-none transition focus:border-[#2F8F4E]"
                   >
-                    <option value="">Select gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
+                    <option value="">{t("admin.createAdvisor.options.selectGender")}</option>
+                    <option value="male">{t("admin.createAdvisor.options.male")}</option>
+                    <option value="female">{t("admin.createAdvisor.options.female")}</option>
+                    <option value="other">{t("admin.createAdvisor.options.other")}</option>
                   </select>
                 </div>
 
                 {/* Type */}
                 <div>
                   <label className="mb-2 block text-xs font-semibold text-[#173B28]">
-                    Advisor type
+                    {t("admin.advisors.fields.type")}
                   </label>
 
                   <select
@@ -811,20 +824,20 @@ export default function Advisors() {
                     }
                     className="w-full rounded-lg border border-[#2F8F4E]/20 bg-white px-3 py-2.5 text-sm text-[#173B28] outline-none transition focus:border-[#2F8F4E]"
                   >
-                    <option value="">Select type</option>
-                    <option value="medical">Medical</option>
-                    <option value="legal">Legal</option>
+                    <option value="">{t("admin.createAdvisor.options.selectType")}</option>
+                    <option value="medical">{t("admin.createAdvisor.options.medical")}</option>
+                    <option value="legal">{t("admin.createAdvisor.options.legal")}</option>
                     <option value="psychological">
-                      Psychological
+                      {t("admin.createAdvisor.options.psychological")}
                     </option>
-                    <option value="general">General</option>
+                    <option value="general">{t("admin.createAdvisor.options.general")}</option>
                   </select>
                 </div>
 
                 {/* Phone */}
                 <div>
                   <label className="mb-2 block text-xs font-semibold text-[#173B28]">
-                    Phone number
+                    {t("admin.advisors.fields.phone")}
                   </label>
 
                   <input
@@ -843,7 +856,7 @@ export default function Advisors() {
                 {/* Location */}
                 <div>
                   <label className="mb-2 block text-xs font-semibold text-[#173B28]">
-                    Location
+                    {t("admin.advisors.fields.location")}
                   </label>
 
                   <input
@@ -862,7 +875,7 @@ export default function Advisors() {
                 {/* Start */}
                 <div>
                   <label className="mb-2 block text-xs font-semibold text-[#173B28]">
-                    Working hours start
+                    {t("admin.advisors.fields.workingHoursStart")}
                   </label>
 
                   <input
@@ -888,7 +901,7 @@ export default function Advisors() {
                 {/* End */}
                 <div>
                   <label className="mb-2 block text-xs font-semibold text-[#173B28]">
-                    Working hours end
+                    {t("admin.advisors.fields.workingHoursEnd")}
                   </label>
 
                   <input
@@ -929,12 +942,11 @@ export default function Advisors() {
 
                       <span>
                         <span className="block text-sm font-semibold text-[#173B28]">
-                          Advisor is active
+                          {t("admin.advisors.activeToggle")}
                         </span>
 
                         <span className="mt-1 block text-xs leading-5 text-[#176B3A]/65">
-                          Active advisors can receive and manage
-                          conversations.
+                          {t("admin.advisors.activeDescription")}
                         </span>
                       </span>
                     </label>
@@ -949,7 +961,7 @@ export default function Advisors() {
                   disabled={isUpdating}
                   className="rounded-lg border border-[#2F8F4E]/20 px-5 py-2.5 text-sm font-semibold text-[#173B28] transition hover:bg-[#E7F1E3] disabled:opacity-50"
                 >
-                  Cancel
+                  {t("admin.common.cancel")}
                 </button>
 
                 <button
@@ -958,7 +970,7 @@ export default function Advisors() {
                   disabled={isUpdating}
                   className="rounded-lg bg-[#2F8F4E] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#176B3A] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isUpdating ? "Saving..." : "Save changes"}
+                  {isUpdating ? t("admin.common.saving") : t("admin.common.saveChanges")}
                 </button>
               </div>
             </div>
@@ -973,11 +985,11 @@ export default function Advisors() {
               <div className="flex items-start justify-between border-b border-[#2F8F4E]/10 px-5 py-5 sm:px-6">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
-                    Confirmation required
+                    {t("admin.advisors.confirmationRequired")}
                   </p>
 
                   <h2 className="mt-2 text-xl font-semibold text-[#173B28]">
-                    Delete advisor
+                    {t("admin.advisors.deleteTitle")}
                   </h2>
                 </div>
 
@@ -985,7 +997,7 @@ export default function Advisors() {
                   type="button"
                   onClick={() => setAdvisorToDelete(null)}
                   className="rounded-lg p-2 text-[#176B3A]/50 transition hover:bg-[#E7F1E3] hover:text-[#173B28]"
-                  aria-label="Close"
+                  aria-label={t("admin.common.close")}
                 >
                   <X size={20} />
                 </button>
@@ -993,17 +1005,12 @@ export default function Advisors() {
 
               <div className="px-5 py-6 sm:px-6">
                 <p className="text-sm leading-6 text-[#176B3A]/70">
-                  Are you sure you want to delete{" "}
-                  <span className="font-semibold text-[#173B28]">
-                    {advisorToDelete.name}
-                  </span>
-                  ?
+                  {t("admin.advisors.deleteConfirm", { name: advisorToDelete.name })}
                 </p>
 
                 <div className="mt-5 rounded-xl border border-[#2F8F4E]/15 bg-[#E7F1E3] px-4 py-3">
                   <p className="text-xs leading-5 text-[#176B3A]">
-                    This action cannot be undone. The advisor will
-                    be removed from the administration directory.
+                    {t("admin.advisors.deleteWarning")}
                   </p>
                 </div>
               </div>
@@ -1015,7 +1022,7 @@ export default function Advisors() {
                   disabled={isDeleting}
                   className="rounded-lg border border-[#2F8F4E]/20 px-5 py-2.5 text-sm font-semibold text-[#173B28] transition hover:bg-[#E7F1E3] disabled:opacity-50"
                 >
-                  Cancel
+                  {t("admin.common.cancel")}
                 </button>
 
                 <button
@@ -1024,7 +1031,7 @@ export default function Advisors() {
                   disabled={isDeleting}
                   className="rounded-lg bg-[#176B3A] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#173B28] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isDeleting ? "Deleting..." : "Delete advisor"}
+                  {isDeleting ? t("admin.common.deleting") : t("admin.advisors.deleteTitle")}
                 </button>
               </div>
             </div>

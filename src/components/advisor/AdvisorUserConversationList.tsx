@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Clock, MessageCircle, User } from "lucide-react";
 import axios from "axios";
 import AdvisorUserChat from "./AdvisorUserChat";
@@ -32,6 +33,7 @@ interface Props {
 export default function AdvisorUserConversationList({
   advisorId,
 }: Props) {
+  const { t } = useTranslation();
   const [conversations, setConversations] = useState<Conversation[]>(
     [],
   );
@@ -66,7 +68,7 @@ export default function AdvisorUserConversationList({
 
       setError(
         error.response?.data?.message ||
-          "Failed to load conversations.",
+          t("conversation.loadError"),
       );
     } finally {
       setLoading(false);
@@ -105,7 +107,7 @@ export default function AdvisorUserConversationList({
       !conversation.messages ||
       conversation.messages.length === 0
     ) {
-      return "No messages yet";
+      return t("conversation.noMessages");
     }
 
     const lastMessage =
@@ -114,7 +116,7 @@ export default function AdvisorUserConversationList({
       ];
 
     if (lastMessage.deleted) {
-      return "Message deleted";
+      return t("conversation.messageDeleted");
     }
 
     return lastMessage.text;
@@ -147,7 +149,7 @@ export default function AdvisorUserConversationList({
     return (
       <div className="flex h-full items-center justify-center bg-[#f7f5f6]">
         <p className="text-sm text-[#a79093]">
-          Loading conversations...
+          {t("conversation.loadingConversations")}
         </p>
       </div>
     );
@@ -171,11 +173,11 @@ export default function AdvisorUserConversationList({
 
           <div>
             <h2 className="text-lg font-semibold text-[#3e1919]">
-              User Conversations
+              {t("conversation.userConversations")}
             </h2>
 
             <p className="text-sm text-[#a79093]">
-              Conversations assigned to you
+              {t("conversation.assignedConversations")}
             </p>
           </div>
 
@@ -191,7 +193,7 @@ export default function AdvisorUserConversationList({
             onClick={loadConversations}
             className="ml-3 font-medium text-[#3e1919] underline transition hover:text-[#a79093]"
           >
-            Try again
+            {t("conversation.tryAgain")}
           </button>
         </div>
       )}
@@ -203,11 +205,11 @@ export default function AdvisorUserConversationList({
           <MessageCircle className="mb-3 h-10 w-10 text-[#a79093]" />
 
           <h3 className="font-medium text-[#3e1919]">
-            No conversations yet
+            {t("conversation.noConversations")}
           </h3>
 
           <p className="mt-1 text-sm text-[#a79093]">
-            Users assigned to you will appear here.
+            {t("conversation.assignedUsersAppear")}
           </p>
 
         </div>
@@ -249,7 +251,9 @@ export default function AdvisorUserConversationList({
                 <div className="flex items-center justify-between gap-3">
 
                   <span className="font-medium text-[#3e1919]">
-                    User {conversation.session_id}
+                    {t("conversation.userSession", {
+                      session: conversation.session_id,
+                    })}
                   </span>
 
                   {conversation.updatedAt && (
@@ -285,7 +289,7 @@ export default function AdvisorUserConversationList({
                       }
                     `}
                   >
-                    {conversation.status}
+                    {t(`conversation.status.${conversation.status}`)}
                   </span>
 
                 </div>

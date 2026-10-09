@@ -10,6 +10,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:5000/api";
 
@@ -18,6 +19,7 @@ type AdvisorGender = "male" | "female";
 
 export default function CreateAdvisor() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -53,42 +55,42 @@ export default function CreateAdvisor() {
     setSuccess("");
 
     if (!formData.name.trim()) {
-      setError("Advisor name is required.");
+      setError(t("admin.createAdvisor.validation.name"));
       return;
     }
 
     if (!formData.email.trim()) {
-      setError("Advisor email is required.");
+      setError(t("admin.createAdvisor.validation.email"));
       return;
     }
 
     if (!formData.gender) {
-      setError("Please select the advisor's gender.");
+      setError(t("admin.createAdvisor.validation.gender"));
       return;
     }
 
     if (!formData.type) {
-      setError("Please select the advisor type.");
+      setError(t("admin.createAdvisor.validation.type"));
       return;
     }
 
     if (!formData.phone_number.trim()) {
-      setError("Phone number is required.");
+      setError(t("admin.createAdvisor.validation.phone"));
       return;
     }
 
     if (!formData.location.trim()) {
-      setError("Location is required.");
+      setError(t("admin.createAdvisor.validation.location"));
       return;
     }
 
     if (!formData.start || !formData.end) {
-      setError("Working hours are required.");
+      setError(t("admin.createAdvisor.validation.hours"));
       return;
     }
 
     if (formData.start >= formData.end) {
-      setError("End time must be later than start time.");
+      setError(t("admin.createAdvisor.validation.timeOrder"));
       return;
     }
 
@@ -121,7 +123,7 @@ export default function CreateAdvisor() {
       );
 
       setSuccess(
-        response.data?.message || "Advisor created successfully.",
+        response.data?.message || t("admin.createAdvisor.success"),
       );
 
       setFormData({
@@ -138,10 +140,10 @@ export default function CreateAdvisor() {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         setError(
-          error.response?.data?.message || "Failed to create advisor.",
+          error.response?.data?.message || t("admin.createAdvisor.errors.create"),
         );
       } else {
-        setError("Something went wrong. Please try again.");
+        setError(t("admin.common.errors.tryAgain"));
       }
     } finally {
       setLoading(false);
@@ -170,7 +172,7 @@ export default function CreateAdvisor() {
               size={17}
               className="transition-transform group-hover:-translate-x-1"
             />
-            Back to dashboard
+            {t("admin.createAdvisor.back")}
           </button>
 
           <div className="hidden items-center gap-2 sm:flex">
@@ -179,7 +181,7 @@ export default function CreateAdvisor() {
             </div>
 
             <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#176B3A]">
-              SafeLink Administration
+              {t("admin.brand.administration")}
             </span>
           </div>
         </div>
@@ -187,16 +189,15 @@ export default function CreateAdvisor() {
         {/* Header */}
         <header className="mb-8">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#2F8F4E]">
-            Advisor management
+            {t("admin.createAdvisor.eyebrow")}
           </p>
 
           <h1 className="text-3xl font-bold tracking-tight text-[#173B28] sm:text-4xl">
-            Create advisor
+            {t("admin.createAdvisor.title")}
           </h1>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#5C7764]">
-            Add a trusted professional to the SafeLink support network.
-            Complete the information below to create their advisor account.
+            {t("admin.createAdvisor.description")}
           </p>
         </header>
 
@@ -245,12 +246,11 @@ export default function CreateAdvisor() {
 
                 <div>
                   <h2 className="text-lg font-bold text-[#173B28]">
-                    Personal information
+                    {t("admin.createAdvisor.personalInformation")}
                   </h2>
 
                   <p className="mt-1 text-sm text-[#5C7764]">
-                    Provide the advisor's basic contact and professional
-                    information.
+                    {t("admin.createAdvisor.personalDescription")}
                   </p>
                 </div>
               </div>
@@ -263,7 +263,7 @@ export default function CreateAdvisor() {
                   htmlFor="advisor-name"
                   className={labelClass}
                 >
-                  Full name
+                  {t("admin.createAdvisor.fields.fullName")}
                   <span className="ml-1 text-[#2F8F4E]">*</span>
                 </label>
 
@@ -273,7 +273,7 @@ export default function CreateAdvisor() {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="Enter advisor's full name"
+                  placeholder={t("admin.createAdvisor.placeholders.fullName")}
                   disabled={loading}
                   className={inputClass}
                 />
@@ -285,7 +285,7 @@ export default function CreateAdvisor() {
                   htmlFor="advisor-email"
                   className={labelClass}
                 >
-                  Email address
+                  {t("admin.createAdvisor.fields.email")}
                   <span className="ml-1 text-[#2F8F4E]">*</span>
                 </label>
 
@@ -295,7 +295,7 @@ export default function CreateAdvisor() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="advisor@example.com"
+                  placeholder={t("admin.createAdvisor.placeholders.email")}
                   disabled={loading}
                   className={inputClass}
                 />
@@ -307,7 +307,7 @@ export default function CreateAdvisor() {
                   htmlFor="advisor-gender"
                   className={labelClass}
                 >
-                  Gender
+                  {t("admin.createAdvisor.fields.gender")}
                   <span className="ml-1 text-[#2F8F4E]">*</span>
                 </label>
 
@@ -319,9 +319,9 @@ export default function CreateAdvisor() {
                   disabled={loading}
                   className={`${inputClass} cursor-pointer`}
                 >
-                  <option value="">Select gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
+                  <option value="">{t("admin.createAdvisor.options.selectGender")}</option>
+                  <option value="male">{t("admin.createAdvisor.options.male")}</option>
+                  <option value="female">{t("admin.createAdvisor.options.female")}</option>
                 </select>
               </div>
 
@@ -331,7 +331,7 @@ export default function CreateAdvisor() {
                   htmlFor="advisor-type"
                   className={labelClass}
                 >
-                  Area of support
+                  {t("admin.createAdvisor.fields.supportArea")}
                   <span className="ml-1 text-[#2F8F4E]">*</span>
                 </label>
 
@@ -343,13 +343,13 @@ export default function CreateAdvisor() {
                   disabled={loading}
                   className={`${inputClass} cursor-pointer`}
                 >
-                  <option value="">Select area of support</option>
-                  <option value="medical">Medical</option>
-                  <option value="legal">Legal</option>
+                  <option value="">{t("admin.createAdvisor.options.selectSupportArea")}</option>
+                  <option value="medical">{t("admin.createAdvisor.options.medical")}</option>
+                  <option value="legal">{t("admin.createAdvisor.options.legal")}</option>
                   <option value="psychological">
-                    Psychological
+                    {t("admin.createAdvisor.options.psychological")}
                   </option>
-                  <option value="general">General</option>
+                  <option value="general">{t("admin.createAdvisor.options.general")}</option>
                 </select>
               </div>
 
@@ -359,7 +359,7 @@ export default function CreateAdvisor() {
                   htmlFor="advisor-phone"
                   className={labelClass}
                 >
-                  Phone number
+                  {t("admin.createAdvisor.fields.phone")}
                   <span className="ml-1 text-[#2F8F4E]">*</span>
                 </label>
 
@@ -375,7 +375,7 @@ export default function CreateAdvisor() {
                     name="phone_number"
                     value={formData.phone_number}
                     onChange={handleChange}
-                    placeholder="Enter phone number"
+                    placeholder={t("admin.createAdvisor.placeholders.phone")}
                     disabled={loading}
                     className={`${inputClass} pl-11`}
                   />
@@ -388,7 +388,7 @@ export default function CreateAdvisor() {
                   htmlFor="advisor-location"
                   className={labelClass}
                 >
-                  Location
+                  {t("admin.createAdvisor.fields.location")}
                   <span className="ml-1 text-[#2F8F4E]">*</span>
                 </label>
 
@@ -404,7 +404,7 @@ export default function CreateAdvisor() {
                     name="location"
                     value={formData.location}
                     onChange={handleChange}
-                    placeholder="e.g. Addis Ababa"
+                    placeholder={t("admin.createAdvisor.placeholders.location")}
                     disabled={loading}
                     className={`${inputClass} pl-11`}
                   />
@@ -423,12 +423,11 @@ export default function CreateAdvisor() {
 
                 <div>
                   <h2 className="text-lg font-bold text-[#173B28]">
-                    Availability
+                    {t("admin.createAdvisor.availability")}
                   </h2>
 
                   <p className="mt-1 text-sm text-[#5C7764]">
-                    Set the advisor's regular working hours and account
-                    availability.
+                    {t("admin.createAdvisor.availabilityDescription")}
                   </p>
                 </div>
               </div>
@@ -443,7 +442,7 @@ export default function CreateAdvisor() {
                     htmlFor="advisor-start"
                     className={labelClass}
                   >
-                    Available from
+                    {t("admin.createAdvisor.fields.availableFrom")}
                     <span className="ml-1 text-[#2F8F4E]">*</span>
                   </label>
 
@@ -471,7 +470,7 @@ export default function CreateAdvisor() {
                     htmlFor="advisor-end"
                     className={labelClass}
                   >
-                    Available until
+                    {t("admin.createAdvisor.fields.availableUntil")}
                     <span className="ml-1 text-[#2F8F4E]">*</span>
                   </label>
 
@@ -498,12 +497,11 @@ export default function CreateAdvisor() {
               <div className="mt-7 flex items-center justify-between gap-6 rounded-xl border border-[#D7E5D9] bg-[#FAFBF7] px-5 py-4">
                 <div>
                   <p className="text-sm font-semibold text-[#173B28]">
-                    Account status
+                    {t("admin.createAdvisor.fields.accountStatus")}
                   </p>
 
                   <p className="mt-1 text-xs leading-5 text-[#5C7764]">
-                    Active advisors can sign in and receive support requests
-                    immediately after creation.
+                    {t("admin.createAdvisor.activeDescription")}
                   </p>
                 </div>
 
@@ -511,7 +509,7 @@ export default function CreateAdvisor() {
                   type="button"
                   role="switch"
                   aria-checked={formData.active}
-                  aria-label="Toggle advisor account status"
+                  aria-label={t("admin.createAdvisor.toggleAccountStatus")}
                   onClick={() =>
                     setFormData((previous) => ({
                       ...previous,
@@ -535,8 +533,8 @@ export default function CreateAdvisor() {
 
               <p className="mt-3 text-xs font-medium text-[#2F8F4E]">
                 {formData.active
-                  ? "Advisor account will be active."
-                  : "Advisor account will be inactive."}
+                  ? t("admin.createAdvisor.activeStatus")
+                  : t("admin.createAdvisor.inactiveStatus")}
               </p>
             </div>
           </section>
@@ -545,7 +543,7 @@ export default function CreateAdvisor() {
           <div className="flex flex-col-reverse gap-4 border-t border-[#D7E5D9] bg-[#FAFBF7] px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
             <div>
               <p className="text-xs text-[#719079]">
-                <span className="text-[#2F8F4E]">*</span> Required fields
+                <span className="text-[#2F8F4E]">*</span> {t("admin.createAdvisor.requiredFields")}
               </p>
             </div>
 
@@ -556,7 +554,7 @@ export default function CreateAdvisor() {
                 disabled={loading}
                 className="rounded-lg px-6 py-3 text-sm font-semibold text-[#176B3A] transition hover:bg-[#E7F1E3] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Cancel
+                {t("admin.common.cancel")}
               </button>
 
               <button
@@ -565,11 +563,11 @@ export default function CreateAdvisor() {
                 className="flex items-center justify-center gap-2 rounded-lg bg-[#2F8F4E] px-7 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#176B3A] focus:outline-none focus:ring-2 focus:ring-[#2F8F4E]/30 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? (
-                  "Creating advisor..."
+                  t("admin.createAdvisor.creating")
                 ) : (
                   <>
                     <UserPlus size={16} />
-                    Create advisor
+                    {t("admin.createAdvisor.submit")}
                   </>
                 )}
               </button>
@@ -580,13 +578,10 @@ export default function CreateAdvisor() {
         {/* Footer note */}
         <footer className="mt-6 text-center">
           <p className="text-xs leading-5 text-[#719079]">
-            SafeLink advisor accounts are managed by authorized
-            administrators. Please verify the information before creating
-            the account.
+            {t("admin.createAdvisor.footerNote")}
           </p>
         </footer>
       </div>
     </main>
   );
 }
-

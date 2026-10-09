@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Home,
   MessageSquare,
@@ -17,29 +18,29 @@ type AdvisorSidebarProps = {
 
 const navigationLinks = [
   {
-    label: "Dashboard",
+    label: "dashboard",
     path: "/advisor/dashboard",
     icon: Home,
   },
   {
-    label: "User Conversations",
+    label: "userConversations",
     path: "/advisor",
     icon: MessageSquare,
     end: true,
   },
   {
-    label: "Admin Chat",
+    label: "adminChat",
     path: "/advisor/messages",
     icon: MessageCircle,
   },
   {
-    label: "Awareness",
+    label: "awareness",
     path: "/advisor/awareness",
     icon: Diamond,
   },
 
   {
-    label: "Profile",
+    label: "profile",
     path: "/advisor/profile",
     icon: User,
   },
@@ -50,6 +51,7 @@ export default function AdvisorSidebar({
   onClose,
 }: AdvisorSidebarProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   function handleLogout() {
     localStorage.removeItem("advisor_token");
@@ -60,7 +62,7 @@ export default function AdvisorSidebar({
 
   return (
     <aside
-      aria-label="Advisor navigation"
+      aria-label={t("advisorPortal.sidebar.navigation")}
       className={`fixed inset-y-0 left-0 z-50 h-screen flex-col overflow-y-auto border-r border-[#DCE8D9] bg-white px-4 py-6 transition-transform duration-200 lg:w-[230px] lg:translate-x-0 ${
         mobileMenuOpen
           ? "flex w-[min(85vw,300px)] shadow-xl lg:w-[230px]"
@@ -76,11 +78,11 @@ export default function AdvisorSidebar({
             onClose();
           }}
           className="flex items-center gap-3 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F8F4E] focus-visible:ring-offset-2"
-          aria-label="Go to Advisor Dashboard"
+          aria-label={t("advisorPortal.sidebar.goToDashboard")}
         >
           <img
             src="/safelink-logo.png"
-            alt="SafeLink logo"
+            alt={t("advisorPortal.sidebar.logoAlt")}
             className="h-auto w-10 shrink-0 object-contain"
           />
 
@@ -89,18 +91,18 @@ export default function AdvisorSidebar({
               SafeLink
             </span>
             <span className="mt-1.5 block text-[8px] font-semibold tracking-[0.18em] text-[#7B8F82]">
-              PRIVATE SUPPORT
+              {t("advisorPortal.common.privateSupport")}
             </span>
           </span>
         </button>
       </div>
 
       <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#8A9A90]">
-        Your space
+        {t("advisorPortal.sidebar.yourSpace")}
       </p>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1" aria-label="Advisor menu">
+      <nav className="flex-1 space-y-1" aria-label={t("advisorPortal.sidebar.menu")}>
         {navigationLinks.map((link) => {
           const Icon = link.icon;
 
@@ -119,7 +121,7 @@ export default function AdvisorSidebar({
               }
             >
               <Icon size={18} strokeWidth={1.8} />
-              <span>{link.label}</span>
+              <span>{t(`advisorPortal.sidebar.links.${link.label}`)}</span>
             </NavLink>
           );
         })}
@@ -129,7 +131,7 @@ export default function AdvisorSidebar({
       <div className="mt-8 border-t border-[#E4ECE2] pt-4">
         <div className="mb-3 flex items-center gap-2 px-3 text-xs text-[#607568]">
           <span className="h-2 w-2 shrink-0 rounded-full bg-[#2F8F4E]" />
-          Advisor workspace
+          {t("advisorPortal.sidebar.workspace")}
         </div>
 
         <button
@@ -138,7 +140,7 @@ export default function AdvisorSidebar({
           className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#607568] transition-colors hover:bg-[#F4F7F2] hover:text-[#173B28] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F8F4E]"
         >
           <LogOut size={18} strokeWidth={1.8} />
-          <span>Logout</span>
+          <span>{t("advisorPortal.sidebar.logout")}</span>
         </button>
       </div>
 
@@ -146,7 +148,7 @@ export default function AdvisorSidebar({
       <button
         type="button"
         onClick={onClose}
-        aria-label="Close advisor navigation"
+        aria-label={t("advisorPortal.sidebar.closeNavigation")}
         className="absolute right-3 top-3 rounded-lg p-2 text-[#607568] transition hover:bg-[#F4F7F2] hover:text-[#173B28] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F8F4E] lg:hidden"
       >
         <X size={18} />

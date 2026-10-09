@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginSession } from "../api/sessionApi";
 import { loginAdvisor } from "../api/advisorAuthApi";
+import { useLanguage } from "../context/LanguageContext";
+import { useTranslation } from "react-i18next";
 
 interface AdminLoginResponse {
   message?: string;
@@ -26,6 +28,8 @@ function detectRole(id: string): Role | null {
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { setLanguage } = useLanguage();
+  const { t } = useTranslation();
 
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
@@ -41,17 +45,17 @@ export default function LoginPage() {
     const role = detectRole(loginId);
 
     if (!loginId) {
-      setError("Please enter your SafeLink ID.");
+      setError(t("login.missingId"));
       return;
     }
 
     if (!role) {
-      setError("Invalid SafeLink ID.");
+      setError(t("login.invalidId"));
       return;
     }
 
     if ((role === "advisor" || role === "admin") && !password) {
-      setError("Please enter your password.");
+      setError(t("login.missingPassword"));
       return;
     }
 
@@ -62,6 +66,7 @@ export default function LoginPage() {
       if (role === "user") {
         const response = await loginSession(loginId, password || undefined);
 
+        setLanguage(response.session.language);
         localStorage.setItem(
           "safelink_session",
           JSON.stringify(response.session),
@@ -135,7 +140,7 @@ export default function LoginPage() {
       setError(
         error instanceof Error
           ? error.message
-          : "Login failed. Please try again.",
+          : t("login.failed"),
       );
     } finally {
       setLoading(false);
@@ -185,7 +190,7 @@ export default function LoginPage() {
           sm:top-5
         "
       >
-        ← Back
+        ← {t("back")}
       </button>
 
       {/* Login card */}
@@ -220,10 +225,10 @@ export default function LoginPage() {
 
           {/* Heading */}
           <div className="mb-4 text-center">
-            <h1 className="text-2xl font-bold text-[#173B28]">Welcome back</h1>
+            <h1 className="text-2xl font-bold text-[#173B28]">{t("login.heading")}</h1>
 
             <p className="mt-1 text-xs text-[#789187]">
-              Sign in to your SafeLink account
+              {t("login.description")}
             </p>
           </div>
 
@@ -239,7 +244,7 @@ export default function LoginPage() {
                 text-[#173B28]
               "
             >
-              SafeLink ID
+              {t("safeLinkId")}
             </label>
 
             <input
@@ -250,7 +255,7 @@ export default function LoginPage() {
                 setId(event.target.value);
                 setError("");
               }}
-              placeholder="e.g. SF123456"
+              placeholder={t("login.idPlaceholder")}
               autoComplete="username"
               className="
                 w-full
@@ -287,7 +292,7 @@ export default function LoginPage() {
                 text-[#173B28]
               "
             >
-              Password / PIN
+              {t("login.passwordLabel")}
             </label>
 
             <div className="relative">
@@ -299,7 +304,7 @@ export default function LoginPage() {
                   setPassword(event.target.value);
                   setError("");
                 }}
-                placeholder="Enter password or PIN"
+                placeholder={t("login.passwordPlaceholder")}
                 autoComplete="current-password"
                 className="
                   w-full
@@ -334,12 +339,12 @@ export default function LoginPage() {
                   text-[#2F8F4E]
                 "
               >
-                {showPassword ? "Hide" : "Show"}
+                {t(showPassword ? "login.hide" : "login.show")}
               </button>
             </div>
 
             <p className="mt-1 text-[10px] text-[#8CA59A]">
-              Optional for user accounts
+              {t("login.optionalPassword")}
             </p>
           </div>
 
@@ -383,14 +388,14 @@ export default function LoginPage() {
               disabled:opacity-60
             "
           >
-            {loading ? "Signing in..." : "Continue securely →"}
+            {loading ? t("login.signingIn") : t("login.continue")}
           </button>
 
         
 
           {/* Create */}
           <div className="mt-3 text-center">
-            <span className="text-xs text-[#789187]">Need a new session? </span>
+            <span className="text-xs text-[#789187]">{t("login.newSession")} </span>
 
             <button
               type="button"
@@ -402,7 +407,7 @@ export default function LoginPage() {
                 hover:underline
               "
             >
-              Create one
+              {t("login.createOne")}
             </button>
           </div>
         </form>

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { createSession } from "../api/sessionApi";
-import type { Language } from "../types/session";
+import { useLanguage } from "../context/LanguageContext";
+import { useTranslation } from "react-i18next";
 
 interface CreateSessionPageProps {
   onSessionCreated: (safelinkId: string) => void;
@@ -12,14 +13,15 @@ function CreateSessionPage({
   onSessionCreated,
   onBack,
 }: CreateSessionPageProps) {
-  const [language, setLanguage] = useState<Language>("en");
+  const { language, setLanguage } = useLanguage();
+  const { t } = useTranslation();
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [error, setError] = useState("");
+  const [hasError, setHasError] = useState(false);
 
   const handleCreateSession = async () => {
-    setError("");
+    setHasError(false);
     setIsCreating(true);
 
     try {
@@ -33,9 +35,7 @@ function CreateSessionPage({
     } catch (error) {
       console.error("Failed to create session:", error);
 
-      setError(
-        "We couldn't create your private session. Please check your connection and try again.",
-      );
+      setHasError(true);
     } finally {
       setIsCreating(false);
     }
@@ -55,7 +55,7 @@ function CreateSessionPage({
         className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full bg-white/85 px-3.5 py-2 text-sm font-medium text-[#173B28] shadow-sm backdrop-blur-sm transition hover:bg-white sm:left-6 sm:top-6"
       >
         <ArrowLeft size={17} />
-        Back
+        {t("back")}
       </button>
 
       {/* Main card */}
@@ -72,12 +72,11 @@ function CreateSessionPage({
         {/* Heading */}
         <div className="mt-2 text-center">
           <h1 className="text-2xl font-bold tracking-tight text-[#173B28] sm:text-[25px]">
-            Create your SafeLink session
+            {t("sessionForm.title")}
           </h1>
 
           <p className="mx-auto mt-1.5 max-w-[330px] text-sm leading-5 text-[#5B6F62]">
-            Start a private space without sharing your name, phone number, or
-            email.
+            {t("sessionForm.description")}
           </p>
         </div>
 
@@ -89,18 +88,18 @@ function CreateSessionPage({
               htmlFor="language"
               className="mb-1.5 block text-sm font-semibold text-[#173B28]"
             >
-              Language
+              {t("chooseLanguage")}
             </label>
 
             <select
               id="language"
               value={language}
-              onChange={(e) => setLanguage(e.target.value as Language)}
+              onChange={(e) => setLanguage(e.target.value as typeof language)}
               className="w-full rounded-xl border border-[#2F8F4E]/25 bg-[#FAFBF7] px-4 py-3 text-sm text-[#173B28] outline-none transition focus:border-[#2F8F4E] focus:ring-2 focus:ring-[#2F8F4E]/15"
             >
-              <option value="en">English</option>
-              <option value="am">Amharic</option>
-              <option value="om">Afaan Oromoo</option>
+              <option value="en">{t("language.en")}</option>
+              <option value="am">{t("language.am")}</option>
+              <option value="om">{t("language.om")}</option>
             </select>
           </div>
 
@@ -111,10 +110,10 @@ function CreateSessionPage({
                 htmlFor="password"
                 className="text-sm font-semibold text-[#173B28]"
               >
-                Optional PIN
+                {t("optionalPin")}
               </label>
 
-              <span className="text-xs text-[#6B7F72]">Optional</span>
+              <span className="text-xs text-[#6B7F72]">{t("sessionForm.optional")}</span>
             </div>
 
             <div className="relative">
@@ -123,7 +122,7 @@ function CreateSessionPage({
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Create a PIN"
+                placeholder={t("sessionForm.createPinPlaceholder")}
                 maxLength={20}
                 className="w-full rounded-xl border border-[#2F8F4E]/25 bg-[#FAFBF7] px-4 py-3 pr-12 text-sm text-[#173B28] outline-none transition placeholder:text-[#91A197] focus:border-[#2F8F4E] focus:ring-2 focus:ring-[#2F8F4E]/15"
               />
@@ -131,7 +130,7 @@ function CreateSessionPage({
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? "Hide PIN" : "Show PIN"}
+                aria-label={t(showPassword ? "login.hide" : "login.show")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#6B7F72] transition hover:text-[#176B3A]"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -139,14 +138,14 @@ function CreateSessionPage({
             </div>
 
             <p className="mt-1.5 text-xs text-[#6B7F72]">
-              Use 4–20 characters. You can leave this empty.
+              {t("sessionForm.pinHelp")}
             </p>
           </div>
 
           {/* Error */}
-          {error && (
+          {hasError && (
             <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2">
-              <p className="text-xs leading-5 text-red-700">{error}</p>
+              <p className="text-xs leading-5 text-red-700">{t("sessionForm.createError")}</p>
             </div>
           )}
 
@@ -160,11 +159,11 @@ function CreateSessionPage({
             {isCreating ? (
               <>
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                Creating session...
+                {t("sessionForm.createLoading")}
               </>
             ) : (
               <>
-                Create private session
+                {t("sessionForm.create")}
                 <span aria-hidden="true">→</span>
               </>
             )}
@@ -174,14 +173,13 @@ function CreateSessionPage({
         {/* Privacy message */}
         <div className="mt-4 rounded-xl border border-[#2F8F4E]/15 bg-[#E7F1E3] px-3.5 py-2.5">
           <p className="text-center text-xs leading-5 text-[#365844]">
-            No name, phone number, or email is required. Keep your SafeLink ID
-            safe so you can access your session again.
+            {t("sessionForm.privacy")}
           </p>
         </div>
 
         {/* Footer */}
         <p className="mt-3 text-center text-[11px] text-[#718277]">
-          Private. Safe. Designed for you.
+          {t("sessionForm.tagline")}
         </p>
       </div>
     </main>

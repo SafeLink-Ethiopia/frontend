@@ -6,6 +6,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import axios from "axios";
+import { useTranslation } from "react-i18next";
 import {
   ArrowDown,
   ArrowLeft,
@@ -122,14 +123,14 @@ const formatTime = (value: string | Date) => {
   });
 };
 
-const formatDate = (value: string | Date) => {
+const formatDate = (value: string | Date, todayLabel: string, yesterdayLabel: string) => {
   const date = new Date(value);
   const today = new Date();
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
 
-  if (date.toDateString() === today.toDateString()) return "Today";
-  if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+  if (date.toDateString() === today.toDateString()) return todayLabel;
+  if (date.toDateString() === yesterday.toDateString()) return yesterdayLabel;
 
   return date.toLocaleDateString([], {
     day: "numeric",
@@ -152,6 +153,7 @@ const shouldShowDateSeparator = (messages: Message[], index: number) => {
 /* ------------------------------------------------------------------ */
 
 export default function AdminMessages() {
+  const { t } = useTranslation();
   /* Data */
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
@@ -249,7 +251,7 @@ export default function AdminMessages() {
     advisors.find((advisor) => advisor.advisor_id === advisorId);
 
   const getAdvisorName = (advisorId: string) =>
-    getAdvisor(advisorId)?.name || "Advisor";
+    getAdvisor(advisorId)?.name || t("admin.advisorChat.advisor");
 
   const getAdvisorEmail = (advisorId: string) =>
     getAdvisor(advisorId)?.email || "";
@@ -323,7 +325,7 @@ export default function AdminMessages() {
         const token = localStorage.getItem("adminToken");
 
         if (!token) {
-          showStatus("error", "Admin authentication required.");
+          showStatus("error", t("admin.common.errors.authRequired"));
           setLoading(false);
           return;
         }
@@ -346,16 +348,16 @@ export default function AdminMessages() {
         if (axios.isAxiosError(error)) {
           if (error.response?.status === 401) {
             localStorage.removeItem("adminToken");
-            showStatus("error", "Your admin session has expired.");
+            showStatus("error", t("admin.messages.errors.sessionExpired"));
             return;
           }
 
           showStatus(
             "error",
-            error.response?.data?.message || "Failed to load conversations.",
+            error.response?.data?.message || t("admin.messages.errors.load"),
           );
         } else {
-          showStatus("error", "Failed to load conversations.");
+          showStatus("error", t("admin.messages.errors.load"));
         }
       } finally {
         setLoading(false);
@@ -380,7 +382,7 @@ export default function AdminMessages() {
 
     const handleDisconnect = () => {
       setSocketConnected(false);
-      showStatus("info", "Connection lost. Reconnecting...");
+      showStatus("info", t("admin.messages.connectionLost"));
     };
 
     const handleConnectError = (error: Error) => {
@@ -390,7 +392,7 @@ export default function AdminMessages() {
 
     const handleMessageError = (data: { message?: string }) => {
       setSending(false);
-      showStatus("error", data?.message || "Message operation failed.");
+      showStatus("error", data?.message || t("admin.chat.errors.messageOperation"));
     };
 
     socket.on("connect", handleConnect);
@@ -719,7 +721,7 @@ export default function AdminMessages() {
 
       const timeout = setTimeout(() => {
         socket.off("connect", handleConnect);
-        reject(new Error("Socket connection timed out."));
+        reject(new Error(t("admin.messages.errors.socketTimeout")));
       }, 5000);
 
       socket.once("connect", handleConnect);
@@ -778,7 +780,7 @@ export default function AdminMessages() {
     if (!text || sending) return;
 
     if (!selectedConversation) {
-      showStatus("error", "Select a conversation first.");
+      showStatus("error", t("admin.messages.errors.selectConversation"));
       return;
     }
 
@@ -815,7 +817,7 @@ export default function AdminMessages() {
       requestAnimationFrame(() => inputRef.current?.focus());
     } catch (error) {
       console.error("Send failed:", error);
-      showStatus("error", "Could not connect to the messaging server.");
+      showStatus("error", t("admin.chat.errors.connectionFailed"));
     } finally {
       setSending(false);
     }
@@ -886,7 +888,7 @@ export default function AdminMessages() {
       cancelEditing();
     } catch (error) {
       console.error("Edit failed:", error);
-      showStatus("error", "Could not connect to the messaging server.");
+      showStatus("error", t("admin.chat.errors.connectionFailed"));
     }
   };
 
@@ -929,7 +931,7 @@ export default function AdminMessages() {
     try {
       await ensureSocketConnected();
     } catch {
-      showStatus("error", "Could not connect to the messaging server.");
+      showStatus("error", t("admin.chat.errors.connectionFailed"));
       return;
     }
 
@@ -969,7 +971,7 @@ export default function AdminMessages() {
 
     showStatus(
       "success",
-      deleteType === "me" ? "Deleted for you." : "Deleted for everyone.",
+      deleteType === "me" ? t("admin.chat.deletedForYou") : t("admin.chat.deletedForEveryone"),
     );
 
     closeDeleteModal();
@@ -992,10 +994,10 @@ export default function AdminMessages() {
       });
 
       setShowDeleteConversationModal(false);
-      showStatus("success", "Conversation removed.");
+      showStatus("success", t("admin.messages.conversationRemoved"));
     } catch (error) {
       console.error("Delete conversation failed:", error);
-      showStatus("error", "Could not connect to the messaging server.");
+      showStatus("error", t("admin.chat.errors.connectionFailed"));
     }
   };
 
@@ -1023,7 +1025,7 @@ export default function AdminMessages() {
       cancelChatDeleteMode();
     } catch (error) {
       console.error("Delete chats failed:", error);
-      showStatus("error", "Could not connect to the messaging server.");
+      showStatus("error", t("admin.chat.errors.connectionFailed"));
     }
   };
 
@@ -1111,7 +1113,7 @@ export default function AdminMessages() {
       <div className="flex h-[100dvh] items-center justify-center bg-[#FAFBF7]">
         <div className="flex flex-col items-center gap-3">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#DCE8DD] border-t-[#2F8F4E]" />
-          <p className="text-sm text-[#6B7D70]">Loading messages...</p>
+          <p className="text-sm text-[#6B7D70]">{t("admin.messages.loading")}</p>
         </div>
       </div>
     );
@@ -1153,11 +1155,11 @@ export default function AdminMessages() {
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight text-[#176B3A]">
-                Messages
+                {t("admin.messages.title")}
               </h1>
 
               <p className="mt-1 text-sm text-[#2F8F4E]">
-                Chat with your advisors
+                {t("admin.messages.subtitle")}
               </p>
             </div>
 
@@ -1166,7 +1168,7 @@ export default function AdminMessages() {
                 type="button"
                 onClick={() => setShowListMenu((current) => !current)}
                 className="flex h-9 w-9 items-center justify-center rounded-full text-[#173B28] transition hover:bg-[#E7F1E3]"
-                aria-label="Conversation list menu"
+                aria-label={t("admin.messages.conversationListMenu")}
               >
                 <MoreVertical size={19} />
               </button>
@@ -1191,7 +1193,7 @@ export default function AdminMessages() {
                           }}
                           className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
                         >
-                          Delete chats
+                          {t("admin.messages.deleteChats")}
                         </button>
 
                         <button
@@ -1206,7 +1208,7 @@ export default function AdminMessages() {
                           }}
                           className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1] disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                          Delete messages
+                          {t("admin.chat.deleteMessages")}
                         </button>
                       </>
                     ) : (
@@ -1218,7 +1220,7 @@ export default function AdminMessages() {
                         }}
                         className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
                       >
-                        Cancel selection
+                        {t("admin.chat.cancelSelection")}
                       </button>
                     )}
                   </div>
@@ -1238,7 +1240,7 @@ export default function AdminMessages() {
               type="text"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search advisors..."
+              placeholder={t("admin.messages.searchAdvisors")}
               className="h-12 w-full rounded-2xl border border-[#DCE8DD] bg-white pl-11 pr-4 text-sm text-[#173B28] outline-none placeholder:text-[#8A968D] focus:border-[#2F8F4E]"
             />
           </div>
@@ -1248,7 +1250,7 @@ export default function AdminMessages() {
         {!socketConnected && (
           <div className="mx-4 mb-3 flex items-center gap-2 rounded-xl bg-[#E7F1E3] px-3 py-2.5 text-xs font-medium text-[#176B3A]">
             <WifiOff size={14} />
-            Connecting...
+            {t("admin.chat.connecting")}
           </div>
         )}
 
@@ -1256,7 +1258,7 @@ export default function AdminMessages() {
         {chatDeleteMode && (
           <div className="flex shrink-0 items-center justify-between border-y border-[#DCE8DD] bg-[#E7F1E3] px-5 py-3">
             <span className="text-sm font-medium text-[#173B28]">
-              {selectedConversationIds.length} selected
+              {t("admin.messages.selectedChats", { count: selectedConversationIds.length })}
             </span>
 
             <div className="flex items-center gap-2">
@@ -1265,7 +1267,7 @@ export default function AdminMessages() {
                 onClick={cancelChatDeleteMode}
                 className="rounded-full px-3 py-1.5 text-xs font-medium text-[#173B28] hover:bg-white"
               >
-                Cancel
+                {t("admin.common.cancel")}
               </button>
 
               <button
@@ -1274,7 +1276,7 @@ export default function AdminMessages() {
                 onClick={() => setShowDeleteChatsModal(true)}
                 className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Delete selected
+                {t("admin.messages.deleteSelectedChats")}
               </button>
             </div>
           </div>
@@ -1289,13 +1291,13 @@ export default function AdminMessages() {
               </div>
 
               <p className="font-semibold text-[#173B28]">
-                {search ? "No advisors found" : "No conversations yet"}
+                {search ? t("admin.messages.noAdvisorsFound") : t("admin.messages.noConversations")}
               </p>
 
               <p className="mt-1 text-sm leading-6 text-[#6B7D70]">
                 {search
-                  ? "Try another search term."
-                  : "Conversations with advisors will appear here."}
+                  ? t("admin.chat.tryAnotherSearch")
+                  : t("admin.messages.conversationListEmpty")}
               </p>
             </div>
           ) : (
@@ -1375,14 +1377,14 @@ export default function AdminMessages() {
                         }`}
                       >
                         {typing
-                          ? "typing..."
+                          ? t("admin.chat.typing")
                           : lastMessage
                             ? isGone(lastMessage)
-                              ? "This message was deleted"
+                              ? t("admin.chat.messageDeleted")
                               : lastMessage.sender === "admin"
-                                ? `You: ${lastMessage.text}`
+                                ? t("admin.chat.youPrefix", { text: lastMessage.text })
                                 : lastMessage.text
-                            : advisorEmail || "Start a conversation"}
+                            : advisorEmail || t("admin.messages.startConversationAction")}
                       </p>
 
                       {unread > 0 && !isSelected && (
@@ -1416,11 +1418,11 @@ export default function AdminMessages() {
               </div>
 
               <h2 className="text-xl font-semibold text-[#173B28]">
-                Your messages
+                {t("admin.messages.yourMessages")}
               </h2>
 
               <p className="mt-2 text-sm leading-6 text-[#6B7D70]">
-                Select an advisor to start chatting.
+                {t("admin.messages.selectAdvisor")}
               </p>
             </div>
           </div>
@@ -1435,7 +1437,7 @@ export default function AdminMessages() {
                   resetChatUi();
                 }}
                 className="flex h-9 w-9 items-center justify-center rounded-full text-[#173B28] transition hover:bg-[#F3F7F1] md:hidden"
-                aria-label="Back to conversations"
+                aria-label={t("admin.messages.backToConversations")}
               >
                 <ArrowLeft size={19} />
               </button>
@@ -1457,9 +1459,9 @@ export default function AdminMessages() {
 
                 <p className="truncate text-sm text-[#6B7D70]">
                   {selectedTyping ? (
-                    <span className="text-[#2F8F4E]">typing...</span>
+                    <span className="text-[#2F8F4E]">{t("admin.chat.typing")}</span>
                   ) : (
-                    selectedAdvisorEmail || "Advisor"
+                    selectedAdvisorEmail || t("admin.advisorChat.advisor")
                   )}
                 </p>
               </div>
@@ -1471,7 +1473,7 @@ export default function AdminMessages() {
                   if (showChatSearch) setChatSearch("");
                 }}
                 className="flex h-10 w-10 items-center justify-center rounded-full text-[#173B28] transition hover:bg-[#F3F7F1]"
-                aria-label="Search messages"
+                aria-label={t("admin.chat.searchMessages")}
               >
                 <Search size={19} />
               </button>
@@ -1481,7 +1483,7 @@ export default function AdminMessages() {
                   type="button"
                   onClick={() => setShowHeaderMenu((current) => !current)}
                   className="flex h-10 w-10 items-center justify-center rounded-full text-[#173B28] transition hover:bg-[#F3F7F1]"
-                  aria-label="Conversation menu"
+                  aria-label={t("admin.chat.conversationMenu")}
                 >
                   <MoreVertical size={19} />
                 </button>
@@ -1504,7 +1506,7 @@ export default function AdminMessages() {
                         }}
                         className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
                       >
-                        Delete messages
+                        {t("admin.chat.deleteMessages")}
                       </button>
 
                       <div className="border-t border-[#DCE8DD]" />
@@ -1518,7 +1520,7 @@ export default function AdminMessages() {
                         className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-red-600 transition hover:bg-red-50"
                       >
                         <Trash2 size={17} />
-                        Delete conversation
+                        {t("admin.chat.deleteConversation")}
                       </button>
                     </div>
                   </>
@@ -1530,8 +1532,7 @@ export default function AdminMessages() {
             {deleteMode && (
               <div className="flex shrink-0 items-center justify-between border-b border-[#DCE8DD] bg-[#E7F1E3] px-4 py-3 sm:px-6">
                 <span className="text-sm font-medium text-[#173B28]">
-                  {selectedMessageIds.length} message
-                  {selectedMessageIds.length === 1 ? "" : "s"} selected
+                  {t("admin.chat.selectedMessages", { count: selectedMessageIds.length })}
                 </span>
 
                 <div className="flex items-center gap-2">
@@ -1540,7 +1541,7 @@ export default function AdminMessages() {
                     onClick={exitDeleteMode}
                     className="rounded-full px-3 py-1.5 text-xs font-medium text-[#173B28] hover:bg-white"
                   >
-                    Cancel
+                    {t("admin.common.cancel")}
                   </button>
 
                   <button
@@ -1555,7 +1556,7 @@ export default function AdminMessages() {
                     }
                     className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    Delete selected
+                    {t("admin.chat.deleteSelected")}
                   </button>
                 </div>
               </div>
@@ -1574,7 +1575,7 @@ export default function AdminMessages() {
                     autoFocus
                     value={chatSearch}
                     onChange={(event) => setChatSearch(event.target.value)}
-                    placeholder="Search messages..."
+                    placeholder={t("admin.chat.searchMessages")}
                     className="h-11 w-full rounded-2xl border border-[#DCE8DD] bg-[#FAFBF7] pl-10 pr-10 text-sm text-[#173B28] outline-none placeholder:text-[#8A968D] focus:border-[#2F8F4E]"
                   />
 
@@ -1583,7 +1584,7 @@ export default function AdminMessages() {
                       type="button"
                       onClick={() => setChatSearch("")}
                       className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full hover:bg-[#F3F7F1]"
-                      aria-label="Clear search"
+                      aria-label={t("admin.common.clearSearch")}
                     >
                       <X size={16} />
                     </button>
@@ -1606,8 +1607,7 @@ export default function AdminMessages() {
                 <div className="mx-auto flex max-w-4xl flex-col">
                   <div className="mb-4 flex justify-center px-2 sm:mb-6">
                     <span className="max-w-full rounded-full bg-[#E7F1E3] px-3 py-1.5 text-center text-[10px] text-[#176B3A] sm:px-4 sm:py-2 sm:text-xs">
-                      Messages between SafeLink administrators and advisors are
-                      private.
+                      {t("admin.messages.privacyNotice")}
                     </span>
                   </div>
 
@@ -1619,13 +1619,13 @@ export default function AdminMessages() {
                         </div>
 
                         <h2 className="text-sm font-semibold text-[#173B28]">
-                          {chatSearch ? "No messages found" : "No messages yet"}
+                          {chatSearch ? t("admin.chat.noMessagesFound") : t("admin.chat.noMessages")}
                         </h2>
 
                         <p className="mx-auto mt-1 max-w-xs text-sm text-[#6B7D70]">
                           {chatSearch
-                            ? "Try another search term."
-                            : `Start a conversation with ${selectedAdvisorName}.`}
+                            ? t("admin.chat.tryAnotherSearch")
+                            : t("admin.messages.startConversation", { name: selectedAdvisorName })}
                         </p>
                       </div>
                     </div>
@@ -1647,7 +1647,11 @@ export default function AdminMessages() {
                           {showDate && (
                             <div className="my-4 flex justify-center">
                               <span className="rounded-full border border-[#DCE8DD] bg-white px-3 py-1 text-[10px] text-[#6B7D70] shadow-sm sm:text-xs">
-                                {formatDate(message.timestamp)}
+                                {formatDate(
+                                  message.timestamp,
+                                  t("admin.chat.today"),
+                                  t("admin.chat.yesterday"),
+                                )}
                               </span>
                             </div>
                           )}
@@ -1673,7 +1677,7 @@ export default function AdminMessages() {
                                       ? "border-[#2F8F4E] bg-[#2F8F4E] text-white"
                                       : "border-[#DCE8DD] bg-white text-transparent"
                                   }`}
-                                  aria-label="Select message"
+                                  aria-label={t("admin.chat.selectMessage")}
                                 >
                                   <Check size={14} strokeWidth={3} />
                                 </button>
@@ -1683,7 +1687,7 @@ export default function AdminMessages() {
                                 {isEditing ? (
                                   <div className="w-[340px] max-w-[78vw] rounded-2xl bg-[#2F8F4E] p-3 shadow-sm">
                                     <div className="mb-2 text-xs font-semibold text-white/90">
-                                      Editing message
+                                      {t("admin.chat.editingMessage")}
                                     </div>
 
                                     <textarea
@@ -1704,7 +1708,7 @@ export default function AdminMessages() {
                                         className="flex items-center gap-1 rounded-full border border-white/30 px-3 py-1.5 text-xs text-white transition hover:bg-white/10"
                                       >
                                         <X size={13} />
-                                        Cancel
+                                        {t("admin.common.cancel")}
                                       </button>
 
                                       <button
@@ -1713,7 +1717,7 @@ export default function AdminMessages() {
                                         onClick={() => void saveEdit()}
                                         className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[#2F8F4E] transition disabled:opacity-50"
                                       >
-                                        Save
+                                        {t("admin.common.save")}
                                       </button>
                                     </div>
                                   </div>
@@ -1733,7 +1737,7 @@ export default function AdminMessages() {
                                       <div className="mb-2 min-w-0 border-l-2 border-[#2F8F4E] pl-3">
                                         <div className="text-[11px] font-semibold text-[#2F8F4E]">
                                           {message.replyTo.sender === "admin"
-                                            ? "You"
+                                            ? t("admin.chat.you")
                                             : selectedAdvisorName}
                                         </div>
 
@@ -1749,7 +1753,7 @@ export default function AdminMessages() {
                                       }`}
                                     >
                                       {deleted
-                                        ? "This message was deleted"
+                                        ? t("admin.chat.messageDeleted")
                                         : message.text}
                                     </p>
 
@@ -1761,7 +1765,7 @@ export default function AdminMessages() {
 
                                         {message.edited === true && (
                                           <span className="whitespace-nowrap text-[10px] leading-none text-slate-400">
-                                            edited
+                                            {t("admin.chat.edited")}
                                           </span>
                                         )}
 
@@ -1795,7 +1799,7 @@ export default function AdminMessages() {
                                           className="flex w-full items-center gap-3 px-3 py-2.5 text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
                                         >
                                           <Reply size={16} />
-                                          Reply
+                                          {t("admin.chat.reply")}
                                         </button>
 
                                         <button
@@ -1806,7 +1810,7 @@ export default function AdminMessages() {
                                           className="flex w-full items-center gap-3 px-3 py-2.5 text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
                                         >
                                           <Copy size={16} />
-                                          Copy
+                                          {t("admin.chat.copy")}
                                         </button>
 
                                         {isAdmin && (
@@ -1818,7 +1822,7 @@ export default function AdminMessages() {
                                             className="flex w-full items-center gap-3 px-3 py-2.5 text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
                                           >
                                             <Edit3 size={16} />
-                                            Edit
+                                            {t("admin.common.edit")}
                                           </button>
                                         )}
 
@@ -1830,7 +1834,7 @@ export default function AdminMessages() {
                                           className="flex w-full items-center gap-3 px-3 py-2.5 text-sm text-red-600 transition hover:bg-red-50"
                                         >
                                           <Trash2 size={16} />
-                                          Delete
+                                          {t("admin.common.delete")}
                                         </button>
                                       </div>
                                     </>
@@ -1848,7 +1852,7 @@ export default function AdminMessages() {
                                     )
                                   }
                                   className="mb-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#6B7D70] transition hover:bg-white sm:opacity-0 sm:group-hover:opacity-100"
-                                  aria-label="Message actions"
+                                  aria-label={t("admin.chat.messageActions")}
                                 >
                                   <MoreVertical size={15} />
                                 </button>
@@ -1887,7 +1891,7 @@ export default function AdminMessages() {
                   type="button"
                   onClick={scrollToBottom}
                   className="absolute bottom-4 right-4 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-[#DCE8DD] bg-white text-[#173B28] shadow-lg transition hover:bg-[#F3F7F1]"
-                  aria-label="Scroll to bottom"
+                  aria-label={t("admin.chat.scrollToBottom")}
                 >
                   <ArrowDown size={19} />
                 </button>
@@ -1901,10 +1905,9 @@ export default function AdminMessages() {
 
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold text-[#2F8F4E]">
-                    Replying to{" "}
                     {replyingTo.sender === "admin"
-                      ? "yourself"
-                      : selectedAdvisorName}
+                      ? t("admin.chat.replyingToYourself")
+                      : t("admin.chat.replyingTo", { name: selectedAdvisorName })}
                   </p>
 
                   <p className="truncate text-sm text-[#6B7D70]">
@@ -1916,7 +1919,7 @@ export default function AdminMessages() {
                   type="button"
                   onClick={() => setReplyingTo(null)}
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-[#F3F7F1]"
-                  aria-label="Cancel reply"
+                  aria-label={t("admin.chat.cancelReply")}
                 >
                   <X size={17} />
                 </button>
@@ -1930,7 +1933,7 @@ export default function AdminMessages() {
 
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold text-[#2F8F4E]">
-                    Editing message
+                    {t("admin.chat.editingMessage")}
                   </p>
 
                   <p className="truncate text-sm text-[#6B7D70]">
@@ -1942,7 +1945,7 @@ export default function AdminMessages() {
                   type="button"
                   onClick={cancelEditing}
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-[#F3F7F1]"
-                  aria-label="Cancel editing"
+                  aria-label={t("admin.chat.cancelEditing")}
                 >
                   <X size={17} />
                 </button>
@@ -1960,8 +1963,8 @@ export default function AdminMessages() {
                   rows={1}
                   placeholder={
                     editingMessageId
-                      ? "Edit message..."
-                      : `Message ${selectedAdvisorName}...`
+                      ? t("admin.chat.editPlaceholder")
+                      : t("admin.chat.messagePlaceholder", { name: selectedAdvisorName })
                   }
                   className="max-h-32 min-h-[48px] flex-1 resize-none rounded-3xl border border-[#DCE8DD] bg-[#FAFBF7] px-5 py-3 text-sm text-[#173B28] outline-none placeholder:text-[#8A968D] focus:border-[#2F8F4E]"
                 />
@@ -1979,7 +1982,7 @@ export default function AdminMessages() {
                       : messageText.trim())
                   }
                   className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#2F8F4E] text-white transition hover:bg-[#176B3A] disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label={editingMessageId ? "Save edit" : "Send message"}
+                  aria-label={editingMessageId ? t("admin.common.saveEdit") : t("admin.chat.sendMessage")}
                 >
                   {editingMessageId ? (
                     <Check size={19} />
@@ -1991,10 +1994,8 @@ export default function AdminMessages() {
 
               <p className="mx-auto mt-2 hidden max-w-4xl text-[11px] text-[#6B7D70] sm:block">
                 {socketConnected
-                  ? `Enter to ${
-                      editingMessageId ? "save" : "send"
-                    } • Shift + Enter for a new line`
-                  : "Connecting to messaging server..."}
+                  ? t("admin.chat.keyboardHint", { action: editingMessageId ? t("admin.common.save") : t("admin.chat.sendMessage") })
+                  : t("admin.messages.connecting")}
               </p>
             </footer>
           </>
@@ -2021,7 +2022,7 @@ export default function AdminMessages() {
             <button
               type="button"
               onClick={() => setStatusMessage(null)}
-              aria-label="Dismiss"
+              aria-label={t("admin.common.dismiss")}
             >
               <X size={16} className="text-[#6B7D70]" />
             </button>
@@ -2044,16 +2045,11 @@ export default function AdminMessages() {
           >
             <div className="border-b border-[#DCE8DD] p-4 sm:p-5">
               <h3 className="text-base font-semibold text-[#173B28]">
-                Delete{" "}
-                {deleteTargets.length === 1
-                  ? "message"
-                  : `${deleteTargets.length} messages`}
+                {t("admin.chat.deleteTargetTitle", { count: deleteTargets.length })}
               </h3>
 
               <p className="mt-1 text-xs text-[#6B7D70] sm:text-sm">
-                Choose how you want to delete{" "}
-                {deleteTargets.length === 1 ? "this message" : "these messages"}
-                .
+                {t("admin.chat.deleteTargetDescription", { count: deleteTargets.length })}
               </p>
             </div>
 
@@ -2067,10 +2063,10 @@ export default function AdminMessages() {
 
                 <div>
                   <p className="text-sm font-medium text-[#173B28]">
-                    Delete for me
+                    {t("admin.chat.deleteForMe")}
                   </p>
                   <p className="text-xs text-[#6B7D70]">
-                    Remove it from your messages.
+                    {t("admin.messages.removeFromMessages")}
                   </p>
                 </div>
               </button>
@@ -2085,10 +2081,10 @@ export default function AdminMessages() {
 
                   <div>
                     <p className="text-sm font-medium text-red-600">
-                      Delete for everyone
+                      {t("admin.chat.deleteForEveryone")}
                     </p>
                     <p className="text-xs text-[#6B7D70]">
-                      Remove it for both users.
+                      {t("admin.chat.removeForBoth")}
                     </p>
                   </div>
                 </button>
@@ -2101,7 +2097,7 @@ export default function AdminMessages() {
                 onClick={closeDeleteModal}
                 className="rounded-lg px-4 py-2 text-sm font-medium text-[#173B28] hover:bg-[#F3F7F1]"
               >
-                Cancel
+                {t("admin.common.cancel")}
               </button>
             </div>
           </div>
@@ -2127,7 +2123,7 @@ export default function AdminMessages() {
               </div>
 
               <h3 className="text-lg font-semibold text-[#173B28]">
-                Hide conversation?
+                {t("admin.chat.hideConversationQuestion")}
               </h3>
 
               <div className="mt-3 flex items-center gap-3 rounded-xl bg-[#F3F7F1] p-3">
@@ -2146,9 +2142,7 @@ export default function AdminMessages() {
               </div>
 
               <p className="mt-3 text-sm leading-6 text-[#6B7D70]">
-                This removes the conversation from your admin messages. It does
-                not permanently remove the stored conversation from the
-                database.
+                {t("admin.messages.hideConversationDescription")}
               </p>
 
               <div className="mt-5 flex flex-col-reverse justify-end gap-2 sm:flex-row">
@@ -2157,7 +2151,7 @@ export default function AdminMessages() {
                   onClick={() => setShowDeleteConversationModal(false)}
                   className="w-full rounded-xl px-4 py-2.5 text-sm font-medium text-[#173B28] hover:bg-[#F3F7F1] sm:w-auto"
                 >
-                  Cancel
+                  {t("admin.common.cancel")}
                 </button>
 
                 <button
@@ -2165,7 +2159,7 @@ export default function AdminMessages() {
                   onClick={() => void confirmDeleteConversation()}
                   className="w-full rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 sm:w-auto"
                 >
-                  Hide conversation
+                  {t("admin.chat.hideConversation")}
                 </button>
               </div>
             </div>
@@ -2192,13 +2186,11 @@ export default function AdminMessages() {
               </div>
 
               <h3 className="text-lg font-semibold text-[#173B28]">
-                Hide {selectedConversationIds.length} chat
-                {selectedConversationIds.length === 1 ? "" : "s"}?
+                {t("admin.messages.hideChatsQuestion", { count: selectedConversationIds.length })}
               </h3>
 
               <p className="mt-2 text-sm leading-6 text-[#6B7D70]">
-                The selected chats will be removed from your admin messages. The
-                conversations stay stored in the database.
+                {t("admin.messages.hideChatsDescription")}
               </p>
 
               <div className="mt-5 flex flex-col-reverse justify-end gap-2 sm:flex-row">
@@ -2207,7 +2199,7 @@ export default function AdminMessages() {
                   onClick={() => setShowDeleteChatsModal(false)}
                   className="w-full rounded-xl px-4 py-2.5 text-sm font-medium text-[#173B28] hover:bg-[#F3F7F1] sm:w-auto"
                 >
-                  Cancel
+                  {t("admin.common.cancel")}
                 </button>
 
                 <button
@@ -2215,7 +2207,7 @@ export default function AdminMessages() {
                   onClick={() => void confirmDeleteSelectedChats()}
                   className="w-full rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 sm:w-auto"
                 >
-                  Hide chats
+                  {t("admin.messages.hideChats")}
                 </button>
               </div>
             </div>

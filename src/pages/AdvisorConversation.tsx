@@ -8,6 +8,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   Check,
@@ -43,6 +44,7 @@ interface ConfirmationState {
 export default function AdvisorConversation() {
   const { conversationId } = useParams<{ conversationId: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
 
@@ -81,7 +83,7 @@ export default function AdvisorConversation() {
       setConversation(result);
     } catch (err) {
       console.error("[AdvisorConversation] Load error:", err);
-      setError("Unable to load this conversation.");
+      setError(t("conversation.loadError"));
     } finally {
       setLoading(false);
     }
@@ -455,7 +457,7 @@ export default function AdvisorConversation() {
     }
 
     if (!socket.connected) {
-      setError("Connection lost. Please wait for the connection to return.");
+      setError(t("conversation.connectionLost"));
 
       socket.connect();
       return;
@@ -474,7 +476,7 @@ export default function AdvisorConversation() {
       setMessage("");
     } catch (err) {
       console.error("[AdvisorConversation] Send error:", err);
-      setError("Unable to send your message.");
+      setError(t("conversation.sendError"));
     } finally {
       setSending(false);
     }
@@ -590,11 +592,11 @@ export default function AdvisorConversation() {
           </div>
 
           <h1 className="mt-5 text-xl font-bold text-[#173B28]">
-            Conversation unavailable
+            {t("conversation.unavailable")}
           </h1>
 
           <p className="mt-2 text-sm leading-6 text-[#2F8F4E]">
-            {error || "This conversation could not be found."}
+            {error || t("conversation.notFound")}
           </p>
 
           <button
@@ -602,7 +604,7 @@ export default function AdvisorConversation() {
             onClick={() => navigate("/advisor/messages")}
             className="mt-6 rounded-xl bg-[#2F8F4E] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#176B3A]"
           >
-            Back to messages
+            {t("conversation.backToMessages")}
           </button>
         </div>
       </main>
@@ -626,7 +628,7 @@ export default function AdvisorConversation() {
               type="button"
               onClick={() => navigate("/advisor/messages")}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#2F8F4E]/20 bg-white text-[#173B28] shadow-sm transition hover:border-[#2F8F4E] hover:bg-[#E7F1E3]"
-              aria-label="Back to messages"
+              aria-label={t("conversation.backToMessages")}
             >
               <ArrowLeft size={20} />
             </button>
@@ -639,11 +641,15 @@ export default function AdvisorConversation() {
 
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-[#2F8F4E]">
-                    SafeLink Advisor
+                    {t("conversation.safeLinkAdvisor")}
                   </p>
 
                   <h1 className="truncate text-lg font-bold text-[#173B28] md:text-xl">
-                    {conversation.advisor_type} support
+                    {t("conversation.advisorSupport", {
+                      advisor: t(`conversation.advisor.${conversation.advisor_type}`, {
+                        defaultValue: conversation.advisor_type,
+                      }),
+                    })}
                   </h1>
                 </div>
               </div>
@@ -668,7 +674,7 @@ export default function AdvisorConversation() {
               }`}
             />
 
-            {socketConnected ? "Connected" : "Reconnecting"}
+            {t(socketConnected ? "conversation.connected" : "conversation.reconnecting")}
           </div>
         </header>
 
@@ -684,7 +690,7 @@ export default function AdvisorConversation() {
               type="button"
               onClick={() => setError("")}
               className="rounded-lg p-1 text-[#2F8F4E] transition hover:bg-white"
-              aria-label="Close error"
+              aria-label={t("conversation.closeError")}
             >
               <X size={17} />
             </button>
@@ -700,11 +706,11 @@ export default function AdvisorConversation() {
           <div className="flex items-center justify-between border-b border-[#2F8F4E]/10 bg-white px-5 py-4">
             <div>
               <p className="text-sm font-semibold text-[#173B28]">
-                Conversation
+                {t("conversation.conversation")}
               </p>
 
               <p className="text-xs text-[#2F8F4E]/70">
-                Messages are updated in real time
+                {t("conversation.realTimeUpdates")}
               </p>
             </div>
 
@@ -716,7 +722,7 @@ export default function AdvisorConversation() {
               />
 
               <span className="text-xs text-[#2F8F4E]">
-                {socketConnected ? "Online" : "Offline"}
+                {t(socketConnected ? "conversation.online" : "conversation.offline")}
               </span>
             </div>
           </div>
@@ -734,12 +740,11 @@ export default function AdvisorConversation() {
                   </div>
 
                   <h2 className="mt-5 font-semibold text-[#173B28]">
-                    No messages yet
+                    {t("conversation.noMessages")}
                   </h2>
 
                   <p className="mt-2 text-sm leading-6 text-[#2F8F4E]/70">
-                    When the user sends a message, it will appear here
-                    instantly.
+                    {t("conversation.waitingForMessage")}
                   </p>
                 </div>
               </div>
@@ -768,7 +773,7 @@ export default function AdvisorConversation() {
                               )
                             }
                             className="flex h-7 w-7 items-center justify-center rounded-full border border-[#2F8F4E]/15 bg-white text-[#2F8F4E] shadow-sm transition hover:bg-[#E7F1E3] hover:text-[#176B3A]"
-                            aria-label="Message options"
+                            aria-label={t("conversation.messageOptions")}
                           >
                             <MoreVertical size={15} />
                           </button>
@@ -781,7 +786,7 @@ export default function AdvisorConversation() {
                                 className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-[#173B28] transition hover:bg-[#E7F1E3]"
                               >
                                 <Edit3 size={15} className="text-[#2F8F4E]" />
-                                Edit
+                                {t("conversation.edit")}
                               </button>
 
                               <button
@@ -797,7 +802,7 @@ export default function AdvisorConversation() {
                                 className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-red-600 transition hover:bg-red-50"
                               >
                                 <Trash2 size={15} />
-                                Delete
+                                {t("conversation.delete")}
                               </button>
                             </div>
                           )}
@@ -818,7 +823,7 @@ export default function AdvisorConversation() {
                               isAdvisor ? "text-[#E7F1E3]" : "text-[#2F8F4E]"
                             }`}
                           >
-                            {isAdvisor ? "You" : "User"}
+                            {t(isAdvisor ? "conversation.you" : "conversation.user")}
                           </span>
                         </div>
 
@@ -850,7 +855,7 @@ export default function AdvisorConversation() {
                                 onClick={cancelEditing}
                                 className="rounded-lg px-3 py-1.5 text-xs text-white/70 transition hover:bg-white/10 hover:text-white"
                               >
-                                Cancel
+                                {t("conversation.cancel")}
                               </button>
 
                               <button
@@ -859,7 +864,7 @@ export default function AdvisorConversation() {
                                 disabled={!editingText.trim()}
                                 className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[#176B3A] transition hover:bg-[#E7F1E3] disabled:opacity-50"
                               >
-                                Save
+                                {t("conversation.save")}
                               </button>
                             </div>
                           </div>
@@ -894,7 +899,11 @@ export default function AdvisorConversation() {
                             </span>
                           )}
 
-                          {msg.edited && <span className="italic">edited</span>}
+                          {msg.edited && (
+                            <span className="italic">
+                              {t("conversation.edited")}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -918,9 +927,11 @@ export default function AdvisorConversation() {
                   value={message}
                   onChange={(event) => setMessage(event.target.value)}
                   onKeyDown={handleInputKeyDown}
-                  placeholder={
-                    socketConnected ? "Type your reply..." : "Connecting..."
-                  }
+                  placeholder={t(
+                    socketConnected
+                      ? "conversation.typeReply"
+                      : "conversation.connecting",
+                  )}
                   disabled={!socketConnected}
                   className="w-full bg-transparent px-4 py-3.5 text-sm text-[#173B28] outline-none placeholder:text-[#2F8F4E]/50 disabled:cursor-not-allowed"
                 />
@@ -931,7 +942,7 @@ export default function AdvisorConversation() {
                 onClick={handleSendMessage}
                 disabled={sending || !message.trim() || !socketConnected}
                 className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#2F8F4E] text-white shadow-sm transition hover:bg-[#176B3A] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="Send message"
+                aria-label={t("conversation.sendMessage")}
               >
                 <Send size={19} />
               </button>
@@ -939,7 +950,7 @@ export default function AdvisorConversation() {
 
             <div className="mt-2 flex items-center justify-between px-1">
               <p className="text-[11px] text-[#2F8F4E]/60">
-                Press Enter to send
+                {t("conversation.pressEnterToSend")}
               </p>
 
               <div className="flex items-center gap-1.5 text-[11px] text-[#2F8F4E]/60">
@@ -949,7 +960,11 @@ export default function AdvisorConversation() {
                   }`}
                 />
 
-                {socketConnected ? "Secure connection" : "Reconnecting"}
+                {t(
+                  socketConnected
+                    ? "conversation.secureConnection"
+                    : "conversation.reconnecting",
+                )}
               </div>
             </div>
           </div>
@@ -968,11 +983,11 @@ export default function AdvisorConversation() {
             </div>
 
             <h2 className="mt-5 text-lg font-bold text-[#173B28]">
-              Delete this message?
+              {t("conversation.deleteConfirm")}
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-[#2F8F4E]/75">
-              This message will be removed from your conversation view.
+              {t("conversation.deleteDescription")}
             </p>
 
             <div className="mt-6 flex justify-end gap-3">
@@ -981,7 +996,7 @@ export default function AdvisorConversation() {
                 onClick={() => setConfirmation(null)}
                 className="rounded-xl border border-[#2F8F4E]/20 bg-white px-4 py-2.5 text-sm font-semibold text-[#173B28] transition hover:bg-[#E7F1E3]"
               >
-                Cancel
+                {t("conversation.cancel")}
               </button>
 
               <button
@@ -989,7 +1004,7 @@ export default function AdvisorConversation() {
                 onClick={deleteMessage}
                 className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
               >
-                Delete
+                {t("conversation.delete")}
               </button>
             </div>
           </div>

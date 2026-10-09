@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "../context/LanguageContext";
+import { useTranslation } from "react-i18next";
 
 interface UserSession {
   safelink_id: string;
@@ -18,35 +20,31 @@ const advisorInfo: Record<
   }
 > = {
   medical: {
-    title: "Medical Advisor",
-    description: "Medical and health support",
+    title: "profile.medicalAdvisor",
+    description: "profile.medicalDescription",
     symbol: "✚",
   },
   legal: {
-    title: "Legal Advisor",
-    description: "Legal information and guidance",
+    title: "profile.legalAdvisor",
+    description: "profile.legalDescription",
     symbol: "§",
   },
   psychological: {
-    title: "Psychological Advisor",
-    description: "Emotional and psychological support",
+    title: "profile.psychologicalAdvisor",
+    description: "profile.psychologicalDescription",
     symbol: "◌",
   },
   general: {
-    title: "General Advisor",
-    description: "General support and guidance",
+    title: "profile.generalAdvisor",
+    description: "profile.generalDescription",
     symbol: "•",
   },
 };
 
-const languageNames: Record<UserSession["language"], string> = {
-  en: "English",
-  am: "Amharic",
-  om: "Afaan Oromo",
-};
-
 function UserProfile() {
   const navigate = useNavigate();
+  const { language: activeLanguage, setLanguage } = useLanguage();
+  const { t } = useTranslation();
 
   const [session, setSession] = useState<UserSession | null>(null);
   const [selectedAdvisor, setSelectedAdvisor] = useState<AdvisorType | null>(
@@ -110,6 +108,7 @@ function UserProfile() {
 
   const handleLanguageChange = (language: UserSession["language"]) => {
     if (!session) return;
+    setLanguage(language);
 
     const updatedSession: UserSession = {
       ...session,
@@ -147,7 +146,7 @@ function UserProfile() {
   }
 
   const formattedDate = new Date(session.created_at).toLocaleDateString(
-    "en-US",
+    activeLanguage === "am" ? "am-ET" : activeLanguage === "om" ? "om-ET" : "en",
     {
       year: "numeric",
       month: "long",
@@ -162,11 +161,11 @@ function UserProfile() {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
-              Account
+              {t("profile.account")}
             </p>
 
             <h1 className="mt-1 text-xl font-semibold tracking-tight">
-              Your Profile
+              {t("profile.title")}
             </h1>
           </div>
 
@@ -174,7 +173,7 @@ function UserProfile() {
             onClick={() => navigate("/user/dashboard")}
             className="rounded-lg border border-[#BFD5C2] bg-white px-4 py-2 text-sm font-medium text-[#176B3A] transition hover:border-[#2F8F4E] hover:bg-[#E7F1E3]"
           >
-            Dashboard
+            {t("common.dashboard")}
           </button>
         </div>
       </header>
@@ -191,17 +190,17 @@ function UserProfile() {
               </div>
 
               <div>
-                <h2 className="text-xl font-semibold">SafeLink User</h2>
+                <h2 className="text-xl font-semibold">{t("profile.user")}</h2>
 
                 <div className="mt-1 flex items-center gap-2 text-sm text-[#607568]">
                   <span className="h-2 w-2 rounded-full bg-[#2F8F4E]" />
-                  Private support account
+                  {t("profile.privateAccount")}
                 </div>
               </div>
             </div>
 
             <div className="sm:text-right">
-              <p className="text-xs text-[#607568]">SafeLink ID</p>
+              <p className="text-xs text-[#607568]">{t("safeLinkId")}</p>
 
               <div className="mt-1 flex items-center gap-2 sm:justify-end">
                 <span className="font-mono text-sm font-semibold">
@@ -210,9 +209,9 @@ function UserProfile() {
 
                 <button
                   onClick={handleCopy}
-                  title={copied ? "Copied" : "Copy SafeLink ID"}
+                  title={t(copied ? "copied" : "copySafeLinkId")}
                   aria-label={
-                    copied ? "SafeLink ID copied" : "Copy SafeLink ID"
+                    t(copied ? "sessionCreatedPage.copiedMessage" : "copySafeLinkId")
                   }
                   className="flex h-8 w-8 items-center justify-center rounded-md border border-[#C9DCC9] text-[#2F8F4E] transition hover:bg-[#E7F1E3]"
                 >
@@ -222,7 +221,7 @@ function UserProfile() {
 
               {copied && (
                 <p className="mt-1 text-xs font-medium text-[#2F8F4E]">
-                  Copied
+                  {t("copied")}
                 </p>
               )}
             </div>
@@ -233,15 +232,15 @@ function UserProfile() {
         <section className="mt-10">
           <div className="mb-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
-              Account
+              {t("profile.account")}
             </p>
 
-            <h3 className="mt-1 text-lg font-semibold">Account information</h3>
+            <h3 className="mt-1 text-lg font-semibold">{t("profile.accountInfo")}</h3>
           </div>
 
           <div className="overflow-hidden rounded-xl border border-[#DDE8DC] bg-white">
             <div className="grid grid-cols-1 gap-1 border-b border-[#DDE8DC] px-6 py-5 sm:grid-cols-2">
-              <span className="text-sm text-[#607568]">SafeLink ID</span>
+              <span className="text-sm text-[#607568]">{t("safeLinkId")}</span>
 
               <span className="font-mono text-sm font-medium sm:text-right">
                 {session.safelink_id}
@@ -250,18 +249,18 @@ function UserProfile() {
 
             {/* Language */}
             <div className="relative grid grid-cols-1 gap-2 px-6 py-5 sm:grid-cols-2">
-              <span className="text-sm text-[#607568]">Preferred language</span>
+              <span className="text-sm text-[#607568]">{t("profile.preferredLanguage")}</span>
 
               <div className="flex items-center gap-3 sm:justify-end">
                 <span className="text-sm font-medium">
-                  {languageNames[session.language]}
+                  {t(`language.${activeLanguage}`)}
                 </span>
 
                 <button
                   onClick={() => setShowLanguageMenu(!showLanguageMenu)}
                   className="text-sm font-medium text-[#2F8F4E] hover:underline"
                 >
-                  Change
+                  {t("profile.change")}
                 </button>
               </div>
 
@@ -273,12 +272,12 @@ function UserProfile() {
                         key={language}
                         onClick={() => handleLanguageChange(language)}
                         className={`block w-full px-4 py-3 text-left text-sm transition hover:bg-[#E7F1E3] ${
-                          session.language === language
+                          activeLanguage === language
                             ? "font-semibold text-[#2F8F4E]"
                             : "text-[#173B28]"
                         }`}
                       >
-                        {languageNames[language]}
+                        {t(`language.${language}`)}
                       </button>
                     ),
                   )}
@@ -287,13 +286,13 @@ function UserProfile() {
             </div>
 
             <div className="grid grid-cols-1 gap-1 border-t border-[#DDE8DC] px-6 py-5 sm:grid-cols-2">
-              <span className="text-sm text-[#607568]">Account type</span>
+              <span className="text-sm text-[#607568]">{t("profile.accountType")}</span>
 
-              <span className="text-sm font-medium sm:text-right">User</span>
+              <span className="text-sm font-medium sm:text-right">{t("profile.user")}</span>
             </div>
 
             <div className="grid grid-cols-1 gap-1 border-t border-[#DDE8DC] px-6 py-5 sm:grid-cols-2">
-              <span className="text-sm text-[#607568]">Created</span>
+              <span className="text-sm text-[#607568]">{t("profile.created")}</span>
 
               <span className="text-sm font-medium sm:text-right">
                 {formattedDate}
@@ -306,10 +305,10 @@ function UserProfile() {
         <section className="mt-10">
           <div className="mb-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
-              Support
+              {t("profile.support")}
             </p>
 
-            <h3 className="mt-1 text-lg font-semibold">Your advisor</h3>
+            <h3 className="mt-1 text-lg font-semibold">{t("profile.yourAdvisor")}</h3>
           </div>
 
           {selectedAdvisor ? (
@@ -322,11 +321,11 @@ function UserProfile() {
 
                   <div>
                     <h4 className="font-semibold">
-                      {advisorInfo[selectedAdvisor].title}
+                      {t(advisorInfo[selectedAdvisor].title)}
                     </h4>
 
                     <p className="mt-1 text-sm text-[#607568]">
-                      {advisorInfo[selectedAdvisor].description}
+                      {t(advisorInfo[selectedAdvisor].description)}
                     </p>
                   </div>
                 </div>
@@ -336,14 +335,14 @@ function UserProfile() {
                     onClick={handleChangeAdvisor}
                     className="rounded-lg border border-[#BFD5C2] px-4 py-2.5 text-sm font-medium text-[#176B3A] transition hover:bg-[#E7F1E3]"
                   >
-                    Change advisor
+                    {t("profile.changeAdvisor")}
                   </button>
 
                   <button
                     onClick={handleOpenChat}
                     className="rounded-lg bg-[#2F8F4E] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#176B3A]"
                   >
-                    Open Chat
+                    {t("profile.openChat")}
                   </button>
                 </div>
               </div>
@@ -351,14 +350,14 @@ function UserProfile() {
           ) : (
             <div className="rounded-xl border border-[#DDE8DC] bg-white px-6 py-6">
               <p className="text-sm text-[#607568]">
-                You have not selected an advisor yet.
+                {t("profile.noAdvisor")}
               </p>
 
               <button
                 onClick={() => navigate("/user/dashboard")}
                 className="mt-4 text-sm font-semibold text-[#2F8F4E] hover:underline"
               >
-                Find an advisor →
+                {t("profile.findAdvisor")}
               </button>
             </div>
           )}
@@ -368,10 +367,10 @@ function UserProfile() {
         <section className="mt-10">
           <div className="mb-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
-              Security
+              {t("profile.security")}
             </p>
 
-            <h3 className="mt-1 text-lg font-semibold">Session security</h3>
+            <h3 className="mt-1 text-lg font-semibold">{t("profile.sessionSecurity")}</h3>
           </div>
 
           <div className="flex items-start gap-4 rounded-xl border border-[#CFE2D1] bg-[#E7F1E3]/60 px-6 py-5">
@@ -381,12 +380,11 @@ function UserProfile() {
 
             <div>
               <p className="text-sm font-semibold text-[#176B3A]">
-                Your private session is active
+                {t("profile.sessionActive")}
               </p>
 
               <p className="mt-1 max-w-2xl text-sm leading-6 text-[#607568]">
-                Your SafeLink ID is used to access your private support session.
-                Keep it confidential and only share it with people you trust.
+                {t("profile.sessionActiveDescription")}
               </p>
             </div>
           </div>
@@ -399,12 +397,11 @@ function UserProfile() {
 
             <div>
               <h3 className="text-sm font-semibold">
-                Keep your SafeLink ID private
+                {t("profile.keepIdPrivate")}
               </h3>
 
               <p className="mt-1 max-w-2xl text-sm leading-6 text-[#607568]">
-                Anyone with your SafeLink ID may be able to access your support
-                session. Do not share it publicly.
+                {t("profile.idWarning")}
               </p>
             </div>
           </div>
@@ -416,7 +413,7 @@ function UserProfile() {
             onClick={handleLogout}
             className="text-sm font-medium text-red-600 transition hover:text-red-700 hover:underline"
           >
-            Log out
+            {t("common.logOut")}
           </button>
         </div>
       </main>

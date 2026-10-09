@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface SessionCreatedPageProps {
   safelinkId: string;
@@ -10,6 +11,7 @@ function SessionCreatedPage({
   safelinkId,
   onContinue,
 }: SessionCreatedPageProps) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -67,23 +69,22 @@ function SessionCreatedPage({
           </div>
 
           <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#2F8F4E]">
-            Session created
+            {t("sessionCreatedPage.created")}
           </p>
 
           <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-[#173B28] sm:text-[26px]">
-            Your SafeLink ID
+            {t("yourSafeLinkId")}
           </h1>
 
           <p className="mx-auto mt-2 max-w-[340px] text-sm leading-5 text-[#5B6F62]">
-            Your private session is ready. Keep your SafeLink ID safe because
-            you'll need it to return to your session.
+            {t("sessionCreatedPage.description")}
           </p>
         </div>
 
         {/* SafeLink ID */}
         <div className="mt-5">
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#5B6F62]">
-            Your private ID
+            {t("sessionCreatedPage.privateId")}
           </p>
 
           <div className="flex items-center gap-3 rounded-xl border border-[#2F8F4E]/20 bg-[#E7F1E3] px-4 py-4">
@@ -94,8 +95,8 @@ function SessionCreatedPage({
             <button
               type="button"
               onClick={handleCopy}
-              title={copied ? "Copied" : "Copy SafeLink ID"}
-              aria-label={copied ? "SafeLink ID copied" : "Copy SafeLink ID"}
+              title={t(copied ? "copied" : "copySafeLinkId")}
+              aria-label={t(copied ? "sessionCreatedPage.copiedMessage" : "copySafeLinkId")}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-[#176B3A] shadow-sm transition hover:bg-[#FAFBF7] active:scale-95"
             >
               {copied ? (
@@ -109,7 +110,7 @@ function SessionCreatedPage({
           <div className="mt-2 h-4 text-center">
             {copied && (
               <p className="text-xs font-medium text-[#2F8F4E]">
-                SafeLink ID copied
+                {t("sessionCreatedPage.copiedMessage")}
               </p>
             )}
           </div>
@@ -118,8 +119,7 @@ function SessionCreatedPage({
         {/* Privacy information */}
         <div className="mt-4 rounded-xl border border-[#2F8F4E]/15 bg-[#FAFBF7] px-3.5 py-2.5">
           <p className="text-xs leading-5 text-[#5B6F62]">
-            No name, phone number, or email is attached to this session. Your
-            SafeLink ID is what you use to return to your private session.
+            {t("sessionCreatedPage.privacy")}
           </p>
         </div>
 
@@ -129,13 +129,13 @@ function SessionCreatedPage({
           onClick={onContinue}
           className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#2F8F4E] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#176B3A]"
         >
-          Continue to SafeLink
+          {t("sessionCreatedPage.continue")}
           <span aria-hidden="true">→</span>
         </button>
 
         {/* Reminder */}
         <p className="mt-3 text-center text-[11px] leading-4 text-[#718277]">
-          Keep your SafeLink ID somewhere private and accessible to you.
+          {t("sessionCreatedPage.reminder")}
         </p>
       </div>
     </main>
