@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "./components/LanguageSwitcher";
+import { getSafelinkId } from "./services/session";
 import AdvisorLayout from "./components/advisor/AdvisorLayout";
 import {
   BrowserRouter,
@@ -131,10 +134,11 @@ function SessionCreatedRoute({ safelinkId }: { safelinkId: string }) {
 // =========================
 
 function App() {
+  const { t } = useTranslation();
   const [safelinkId, setSafelinkId] = useState("");
 
   const [hasSavedSession] = useState(() => {
-    return localStorage.getItem("safelink_session") !== null;
+    return Boolean(getSafelinkId());
   });
 
   const handleSessionCreated = (id: string) => {
@@ -143,6 +147,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <LanguageSwitcher />
       <Routes>
         {/* =====================================================
             PUBLIC ROUTES
@@ -274,16 +279,16 @@ function App() {
             <Route path="awareness" element={<AdminAwareness />} />
 
             {/* Users */}
-            <Route path="users" element={<div>Users</div>} />
+            <Route path="users" element={<div>{t("admin.placeholders.users")}</div>} />
 
             {/* Reports */}
-            <Route path="reports" element={<div>Reports</div>} />
+            <Route path="reports" element={<div>{t("admin.placeholders.reports")}</div>} />
 
             {/* Resources */}
-            <Route path="resources" element={<div>Resources</div>} />
+            <Route path="resources" element={<div>{t("admin.placeholders.resources")}</div>} />
 
             {/* Settings */}
-            <Route path="settings" element={<div>Settings</div>} />
+            <Route path="settings" element={<div>{t("admin.placeholders.settings")}</div>} />
 
             {/* =================================================
                 ADVISOR MANAGEMENT

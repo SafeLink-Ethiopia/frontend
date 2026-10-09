@@ -1,10 +1,12 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { resetAdvisorPassword } from "../../services/advisorApi";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState("");
   const [resetToken, setResetToken] = useState("");
@@ -37,28 +39,28 @@ export default function ResetPassword() {
 
     if (!email || !resetToken) {
       setError(
-        "Your password reset session has expired. Please request a new code.",
+        t("advisorPortal.resetPassword.sessionExpired"),
       );
       return;
     }
 
     if (!newPassword) {
-      setError("Please enter a new password.");
+      setError(t("advisorPortal.resetPassword.passwordRequired"));
       return;
     }
 
     if (newPassword.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError(t("advisorPortal.resetPassword.passwordTooShort"));
       return;
     }
 
     if (newPassword.length > 72) {
-      setError("Password cannot exceed 72 characters.");
+      setError(t("advisorPortal.resetPassword.passwordTooLong"));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(t("advisorPortal.resetPassword.passwordMismatch"));
       return;
     }
 
@@ -72,7 +74,7 @@ export default function ResetPassword() {
         confirmPassword,
       );
 
-      setSuccess(data.message || "Password reset successfully.");
+      setSuccess(data.message || t("advisorPortal.resetPassword.success"));
 
       sessionStorage.removeItem("advisorResetEmail");
       sessionStorage.removeItem("advisorResetToken");
@@ -85,10 +87,10 @@ export default function ResetPassword() {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         setError(
-          error.response?.data?.message || "Unable to reset your password.",
+          error.response?.data?.message || t("advisorPortal.resetPassword.requestError"),
         );
       } else {
-        setError("Something went wrong. Please try again.");
+        setError(t("advisorPortal.common.unexpectedError"));
       }
     } finally {
       setLoading(false);
@@ -101,11 +103,11 @@ export default function ResetPassword() {
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-slate-900">
-              Reset Password
+              {t("advisorPortal.resetPassword.title")}
             </h1>
 
             <p className="mt-3 text-sm leading-6 text-slate-500">
-              Create a new password for your advisor account.
+              {t("advisorPortal.resetPassword.description")}
             </p>
           </div>
 
@@ -127,7 +129,7 @@ export default function ResetPassword() {
                 htmlFor="newPassword"
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
-                New Password
+                {t("advisorPortal.resetPassword.newPassword")}
               </label>
 
               <input
@@ -135,7 +137,7 @@ export default function ResetPassword() {
                 type="password"
                 value={newPassword}
                 onChange={(event) => setNewPassword(event.target.value)}
-                placeholder="Enter new password"
+                placeholder={t("advisorPortal.resetPassword.newPasswordPlaceholder")}
                 autoComplete="new-password"
                 disabled={loading}
                 className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
@@ -147,7 +149,7 @@ export default function ResetPassword() {
                 htmlFor="confirmPassword"
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Confirm Password
+                {t("advisorPortal.resetPassword.confirmPassword")}
               </label>
 
               <input
@@ -155,7 +157,7 @@ export default function ResetPassword() {
                 type="password"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
-                placeholder="Confirm new password"
+                placeholder={t("advisorPortal.resetPassword.confirmPasswordPlaceholder")}
                 autoComplete="new-password"
                 disabled={loading}
                 className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
@@ -163,7 +165,7 @@ export default function ResetPassword() {
             </div>
 
             <p className="text-xs text-slate-500">
-              Password must be between 8 and 72 characters.
+              {t("advisorPortal.resetPassword.passwordHint")}
             </p>
 
             <button
@@ -171,7 +173,7 @@ export default function ResetPassword() {
               disabled={loading}
               className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? "Resetting Password..." : "Reset Password"}
+              {loading ? t("advisorPortal.resetPassword.resetting") : t("advisorPortal.resetPassword.title")}
             </button>
           </form>
 
@@ -180,13 +182,13 @@ export default function ResetPassword() {
               to="/advisor/login"
               className="text-sm font-medium text-blue-600 transition hover:text-blue-700 hover:underline"
             >
-              Back to Login
+              {t("advisorPortal.common.backToLogin")}
             </Link>
           </div>
         </div>
 
         <p className="mt-6 text-center text-xs text-slate-400">
-          SafeLink Advisor Portal
+          {t("advisorPortal.common.brandFooter")}
         </p>
       </div>
     </div>

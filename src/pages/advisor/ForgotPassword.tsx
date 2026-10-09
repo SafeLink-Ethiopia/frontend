@@ -1,10 +1,12 @@
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { forgotAdvisorPassword } from "../../services/advisorApi";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
@@ -18,7 +20,7 @@ export default function ForgotPassword() {
     setSuccess("");
 
     if (!email.trim()) {
-      setError("Email is required.");
+      setError(t("advisorPortal.forgotPassword.emailRequired"));
       return;
     }
 
@@ -40,10 +42,10 @@ export default function ForgotPassword() {
       if (axios.isAxiosError(error)) {
         setError(
           error.response?.data?.message ||
-            "Unable to process your request.",
+            t("advisorPortal.forgotPassword.requestError"),
         );
       } else {
-        setError("Something went wrong. Please try again.");
+        setError(t("advisorPortal.common.unexpectedError"));
       }
     } finally {
       setLoading(false);
@@ -61,16 +63,15 @@ export default function ForgotPassword() {
             </div>
 
             <p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-[#a79093]">
-              Advisor Portal
+              {t("advisorPortal.common.portal")}
             </p>
 
             <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#3e1919] sm:text-3xl">
-              Forgot your password?
+              {t("advisorPortal.forgotPassword.title")}
             </h1>
 
             <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#a79093]">
-              Enter your advisor account email and we will send you
-              a 6-digit verification code to reset your password.
+              {t("advisorPortal.forgotPassword.description")}
             </p>
           </div>
 
@@ -100,7 +101,7 @@ export default function ForgotPassword() {
                   htmlFor="email"
                   className="mb-2 block text-sm font-semibold text-[#3e1919]"
                 >
-                  Email Address
+                  {t("advisorPortal.forgotPassword.email")}
                 </label>
 
                 <input
@@ -108,15 +109,14 @@ export default function ForgotPassword() {
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  placeholder="Enter your email"
+                  placeholder={t("advisorPortal.forgotPassword.emailPlaceholder")}
                   autoComplete="email"
                   disabled={loading}
                   className="w-full border border-[#a79093]/40 bg-[#f7f5f6] px-4 py-3 text-sm text-[#3e1919] outline-none transition placeholder:text-[#a79093] focus:border-[#3e1919] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                 />
 
                 <p className="mt-2 text-xs leading-5 text-[#a79093]">
-                  Use the email address associated with your advisor
-                  account.
+                  {t("advisorPortal.forgotPassword.emailHint")}
                 </p>
               </div>
 
@@ -126,8 +126,8 @@ export default function ForgotPassword() {
                 className="w-full bg-[#3e1919] px-4 py-3 text-sm font-semibold text-[#f0e2d6] transition hover:bg-[#3e1919]/90 focus:outline-none focus:ring-2 focus:ring-[#3e1919]/30 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading
-                  ? "Sending Code..."
-                  : "Send Verification Code"}
+                  ? t("advisorPortal.forgotPassword.sending")
+                  : t("advisorPortal.forgotPassword.sendCode")}
               </button>
             </form>
 
@@ -137,7 +137,7 @@ export default function ForgotPassword() {
                 to="/advisor/login"
                 className="text-sm font-semibold text-[#3e1919] transition hover:text-[#a79093] hover:underline"
               >
-                ← Back to Login
+                {t("advisorPortal.common.backToLogin")}
               </Link>
             </div>
           </div>
@@ -147,13 +147,12 @@ export default function ForgotPassword() {
             <span className="text-sm">🔒</span>
 
             <p className="text-xs leading-5 text-[#a79093]">
-              For your security, the verification code will be sent
-              only to the email associated with your advisor account.
+              {t("advisorPortal.forgotPassword.securityNote")}
             </p>
           </div>
 
           <p className="mt-6 text-center text-xs text-[#a79093]">
-            SafeLink Advisor Portal
+            {t("advisorPortal.common.brandFooter")}
           </p>
         </div>
       </div>

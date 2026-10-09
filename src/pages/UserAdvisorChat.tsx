@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   Check,
@@ -30,20 +31,6 @@ interface UserAdvisorChatProps {
   onBack?: () => void;
 }
 
-const advisorLabels: Record<AdvisorType, string> = {
-  medical: "Medical Advisor",
-  legal: "Legal Advisor",
-  psychological: "Psychological Advisor",
-  general: "General Advisor",
-};
-
-const advisorDescriptions: Record<AdvisorType, string> = {
-  medical: "Get support for health-related concerns.",
-  legal: "Get guidance about legal concerns.",
-  psychological: "Get confidential emotional support.",
-  general: "Get general guidance and support.",
-};
-
 const advisorTypes: AdvisorType[] = [
   "medical",
   "legal",
@@ -53,6 +40,19 @@ const advisorTypes: AdvisorType[] = [
 
 function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const advisorLabels: Record<AdvisorType, string> = {
+    medical: t("conversation.advisor.medical"),
+    legal: t("conversation.advisor.legal"),
+    psychological: t("conversation.advisor.psychological"),
+    general: t("conversation.advisor.general"),
+  };
+  const advisorDescriptions: Record<AdvisorType, string> = {
+    medical: t("conversation.advisor.medicalDescription"),
+    legal: t("conversation.advisor.legalDescription"),
+    psychological: t("conversation.advisor.psychologicalDescription"),
+    general: t("conversation.advisor.generalDescription"),
+  };
 
   const [sessionId, setSessionId] = useState("");
 
@@ -493,7 +493,7 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
   const handleDeleteMessage = async (messageId: string) => {
     if (!conversation) return;
 
-    const confirmed = window.confirm("Delete this message?");
+    const confirmed = window.confirm(t("conversation.deleteConfirm"));
 
     if (!confirmed) return;
 
@@ -598,7 +598,7 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
           <div className="w-10 h-10 rounded-full border-4 border-[#E7F1E3] border-t-[#2F8F4E] animate-spin mx-auto" />
 
           <p className="mt-4 text-sm text-[#176B3A]">
-            Loading your advisors...
+            {t("conversation.loadingAdvisors")}
           </p>
         </div>
       </div>
@@ -620,7 +620,7 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
       {mobileSidebarOpen && (
         <button
           type="button"
-          aria-label="Close advisor menu"
+          aria-label={t("conversation.closeAdvisorMenu")}
           onClick={() => setMobileSidebarOpen(false)}
           className="fixed inset-0 z-30 bg-black/20 lg:hidden"
         />
@@ -666,7 +666,7 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
           >
             <ArrowLeft size={19} />
 
-            <span className="font-semibold text-sm">Back</span>
+            <span className="font-semibold text-sm">{t("common.back")}</span>
           </button>
 
           <button
@@ -682,11 +682,11 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
         <div className="flex-1 min-h-0 overflow-y-auto px-3 py-5">
           <div className="px-2 mb-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-[#2F8F4E]">
-              Advisors
+              {t("conversation.advisors")}
             </p>
 
             <p className="mt-1 text-xs text-[#6B7C70]">
-              Choose who you want to talk to.
+              {t("conversation.chooseAdvisorToTalk")}
             </p>
           </div>
 
@@ -773,7 +773,7 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
                           <span className="w-1.5 h-1.5 rounded-full bg-[#2F8F4E]" />
 
                           <span className="text-[10px] text-[#6B7C70]">
-                            Conversation active
+                            {t("conversation.active")}
                           </span>
                         </div>
                       )}
@@ -795,8 +795,7 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
               />
 
               <p className="text-[11px] leading-4 text-[#53685A]">
-                Your conversation is private. Choose the advisor that best
-                matches your needs.
+                {t("conversation.privateChooseAdvisor")}
               </p>
             </div>
           </div>
@@ -836,7 +835,7 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
                 <span className="w-1.5 h-1.5 rounded-full bg-[#2F8F4E]" />
 
                 <span className="text-[11px] sm:text-xs text-[#6B7C70]">
-                  Private conversation
+                  {t("conversation.privateConversation")}
                 </span>
               </div>
             </div>
@@ -858,12 +857,11 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
                 </div>
 
                 <h2 className="mt-5 text-xl font-semibold text-[#173B28]">
-                  Choose an advisor
+                  {t("conversation.chooseAdvisor")}
                 </h2>
 
                 <p className="mt-2 text-sm leading-6 text-[#66786B]">
-                  Select an advisor from the sidebar to start or continue a
-                  private conversation.
+                  {t("conversation.selectAdvisorFromSidebar")}
                 </p>
 
                 <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -914,7 +912,9 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
                 <div className="flex justify-center mb-5">
                   <div className="rounded-full bg-[#E7F1E3] border border-[#DCE8DD] px-3 py-1.5">
                     <p className="text-[10px] sm:text-xs text-[#176B3A]">
-                      Your conversation with {advisorLabels[selectedAdvisor]}
+                      {t("conversation.yourConversationWith", {
+                        advisor: advisorLabels[selectedAdvisor],
+                      })}
                     </p>
                   </div>
                 </div>
@@ -927,11 +927,11 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
                     </div>
 
                     <h2 className="mt-4 text-base font-semibold text-[#173B28]">
-                      Start your conversation
+                      {t("conversation.startConversation")}
                     </h2>
 
                     <p className="mt-1 text-sm text-[#6B7C70]">
-                      Send a message to your advisor.
+                      {t("conversation.sendFirstMessage")}
                     </p>
                   </div>
                 ) : (
@@ -959,7 +959,7 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
                           >
                             <div className="max-w-[85%] rounded-2xl px-4 py-2.5 bg-[#F3F7F1] border border-[#DCE8DD]">
                               <p className="text-xs italic text-[#7A897E]">
-                                Message deleted
+                                {t("conversation.messageDeleted")}
                               </p>
                             </div>
                           </div>
@@ -1030,12 +1030,12 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
                                         ? "You"
                                         : repliedMessage?.sender === "advisor"
                                           ? advisorLabels[selectedAdvisor]
-                                          : "Original message"}
+                                          : t("conversation.originalMessage")}
                                     </p>
 
                                     <p className="mt-0.5 text-[11px] text-[#65766A] truncate">
                                       {repliedMessage?.text ||
-                                        "Original message unavailable"}
+                                        t("conversation.originalMessageUnavailable")}
                                     </p>
                                   </div>
                                 </div>
@@ -1103,7 +1103,7 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
                                           hover:bg-[#F3F7F1]
                                         "
                                     >
-                                      Cancel
+                                      {t("conversation.cancel")}
                                     </button>
 
                                     <button
@@ -1120,7 +1120,7 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
                                           hover:bg-[#176B3A]
                                         "
                                     >
-                                      Save
+                                      {t("conversation.save")}
                                     </button>
                                   </div>
                                 </div>
@@ -1149,7 +1149,9 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
                                       `}
                                   >
                                     {item.edited && (
-                                      <span className="text-[9px]">edited</span>
+                                      <span className="text-[9px]">
+                                        {t("conversation.edited")}
+                                      </span>
                                     )}
 
                                     <span className="text-[9px]">
@@ -1221,7 +1223,7 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
                                     "
                                 >
                                   <Reply size={11} />
-                                  Reply
+                                  {t("conversation.reply")}
                                 </button>
 
                                 {/* Edit + Delete */}
@@ -1249,7 +1251,7 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
                                         "
                                     >
                                       <Edit3 size={11} />
-                                      Edit
+                                      {t("conversation.edit")}
                                     </button>
 
                                     <button
@@ -1271,7 +1273,7 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
                                         "
                                     >
                                       <Trash2 size={11} />
-                                      Delete
+                                      {t("conversation.delete")}
                                     </button>
                                   </>
                                 )}
@@ -1299,10 +1301,12 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
 
                   <div className="min-w-0 flex-1 border-l-2 border-[#2F8F4E] pl-3">
                     <p className="text-[10px] font-semibold text-[#176B3A]">
-                      Replying to{" "}
-                      {replyingTo.sender === "user"
-                        ? "your message"
-                        : advisorLabels[selectedAdvisor]}
+                      {t("conversation.replyingTo", {
+                        sender:
+                          replyingTo.sender === "user"
+                            ? t("conversation.yourMessage")
+                            : advisorLabels[selectedAdvisor],
+                      })}
                     </p>
 
                     <p className="text-xs text-[#65766A] truncate mt-0.5">
@@ -1359,9 +1363,11 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
                     value={messageText}
                     onChange={(event) => setMessageText(event.target.value)}
                     onKeyDown={handleComposerKeyDown}
-                    placeholder={
-                      replyingTo ? "Write your reply..." : "Write a message..."
-                    }
+                    placeholder={t(
+                      replyingTo
+                        ? "conversation.writeReply"
+                        : "conversation.writeMessage",
+                    )}
                     rows={1}
                     className="
                       flex-1
@@ -1397,14 +1403,14 @@ function UserAdvisorChat({ onBack }: UserAdvisorChatProps) {
                       disabled:cursor-not-allowed
                       transition
                     "
-                    aria-label="Send message"
+                    aria-label={t("conversation.sendMessage")}
                   >
                     <Send size={17} />
                   </button>
                 </div>
 
                 <p className="text-[9px] sm:text-[10px] text-[#8A978E] mt-1.5 px-1">
-                  Press Enter to send · Shift + Enter for a new line
+                  {t("conversation.sendKeyboardHint")}
                 </p>
               </div>
             </footer>

@@ -1,10 +1,12 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useTranslation } from "react-i18next";
 import { changeAdvisorPassword } from "../../services/advisorApi";
 
 export default function ChangePassword() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -21,27 +23,27 @@ export default function ChangePassword() {
     setSuccess("");
 
     if (!token) {
-      setError("Your session has expired. Please log in again.");
+      setError(t("advisorWorkspace.sessionExpired"));
       return;
     }
 
     if (!newPassword) {
-      setError("New password is required.");
+      setError(t("advisorWorkspace.newPasswordRequired"));
       return;
     }
 
     if (!confirmPassword) {
-      setError("Please confirm your new password.");
+      setError(t("advisorWorkspace.confirmPasswordRequired"));
       return;
     }
 
     if (newPassword.length < 8 || newPassword.length > 72) {
-      setError("Password must be between 8 and 72 characters.");
+      setError(t("advisorWorkspace.passwordLengthError"));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(t("advisorWorkspace.passwordsDoNotMatch"));
       return;
     }
 
@@ -75,10 +77,10 @@ export default function ChangePassword() {
       if (axios.isAxiosError(error)) {
         setError(
           error.response?.data?.message ||
-            "Failed to change password.",
+            t("advisorWorkspace.passwordChangeFailed"),
         );
       } else {
-        setError("Something went wrong. Please try again.");
+        setError(t("advisorWorkspace.genericError"));
       }
     } finally {
       setLoading(false);
@@ -105,16 +107,15 @@ export default function ChangePassword() {
             </div>
 
             <p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-[#a79093]">
-              Advisor Portal
+              {t("advisorWorkspace.advisorPortal")}
             </p>
 
             <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#3e1919] sm:text-3xl">
-              Change your password
+              {t("advisorWorkspace.changeYourPassword")}
             </h1>
 
             <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#a79093]">
-              You are using a temporary password. Create a new
-              password before continuing to your advisor dashboard.
+              {t("advisorWorkspace.temporaryPasswordDescription")}
             </p>
           </div>
 
@@ -145,7 +146,7 @@ export default function ChangePassword() {
                   htmlFor="newPassword"
                   className="mb-2 block text-sm font-semibold text-[#3e1919]"
                 >
-                  New Password
+                  {t("advisorWorkspace.newPassword")}
                 </label>
 
                 <input
@@ -155,14 +156,14 @@ export default function ChangePassword() {
                   onChange={(event) =>
                     setNewPassword(event.target.value)
                   }
-                  placeholder="Enter your new password"
+                  placeholder={t("advisorWorkspace.enterNewPassword")}
                   autoComplete="new-password"
                   disabled={loading}
                   className="w-full border border-[#a79093]/40 bg-[#f7f5f6] px-4 py-3 text-sm text-[#3e1919] outline-none transition placeholder:text-[#a79093] focus:border-[#3e1919] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                 />
 
                 <p className="mt-2 text-xs leading-5 text-[#a79093]">
-                  Use between 8 and 72 characters.
+                  {t("advisorWorkspace.passwordLengthHint")}
                 </p>
               </div>
 
@@ -172,7 +173,7 @@ export default function ChangePassword() {
                   htmlFor="confirmPassword"
                   className="mb-2 block text-sm font-semibold text-[#3e1919]"
                 >
-                  Confirm New Password
+                  {t("advisorWorkspace.confirmNewPasswordLabel")}
                 </label>
 
                 <input
@@ -182,7 +183,7 @@ export default function ChangePassword() {
                   onChange={(event) =>
                     setConfirmPassword(event.target.value)
                   }
-                  placeholder="Confirm your new password"
+                  placeholder={t("advisorWorkspace.confirmNewPassword")}
                   autoComplete="new-password"
                   disabled={loading}
                   className="w-full border border-[#a79093]/40 bg-[#f7f5f6] px-4 py-3 text-sm text-[#3e1919] outline-none transition placeholder:text-[#a79093] focus:border-[#3e1919] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
@@ -196,8 +197,8 @@ export default function ChangePassword() {
                 className="w-full bg-[#3e1919] px-4 py-3 text-sm font-semibold text-[#f0e2d6] transition hover:bg-[#3e1919]/90 focus:outline-none focus:ring-2 focus:ring-[#3e1919]/30 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading
-                  ? "Changing Password..."
-                  : "Change Password"}
+                  ? t("advisorWorkspace.changingPassword")
+                  : t("advisorWorkspace.changePassword")}
               </button>
             </form>
 
@@ -209,7 +210,7 @@ export default function ChangePassword() {
                 disabled={loading}
                 className="w-full border border-[#a79093]/50 bg-transparent px-4 py-3 text-sm font-semibold text-[#3e1919] transition hover:bg-[#f0e2d6] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Cancel and Logout
+                {t("advisorWorkspace.cancelAndLogout")}
               </button>
             </div>
           </div>
@@ -219,14 +220,12 @@ export default function ChangePassword() {
             <span className="text-sm">🔒</span>
 
             <p className="text-xs leading-5 text-[#a79093]">
-              Choose a password that is difficult for others to
-              guess and keep it private. Your new password will be
-              required the next time you sign in.
+              {t("advisorWorkspace.passwordSecurityNote")}
             </p>
           </div>
 
           <p className="mt-6 text-center text-xs text-[#a79093]">
-            SafeLink Advisor Portal
+            {t("advisorWorkspace.safeLinkAdvisorPortal")}
           </p>
         </div>
       </div>

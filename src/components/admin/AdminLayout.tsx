@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Menu, ShieldCheck } from "lucide-react";
 import { Outlet, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import AdminSidebar from "./AdminSidebar";
 
 export default function AdminLayout() {
+  const { t } = useTranslation();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -21,7 +23,7 @@ export default function AdminLayout() {
       {mobileMenuOpen && (
         <button
           type="button"
-          aria-label="Close admin navigation"
+          aria-label={t("admin.layout.closeNavigation")}
           onClick={() => setMobileMenuOpen(false)}
           className="fixed inset-0 z-40 bg-[#173B28]/35 backdrop-blur-[1px] lg:hidden"
         />
@@ -33,7 +35,7 @@ export default function AdminLayout() {
             <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white">
               <img
                 src="/safelink-logo.png"
-                alt="SafeLink logo"
+                alt={t("admin.brand.logoAlt")}
                 className="h-full w-full object-contain"
               />
             </div>
@@ -41,18 +43,18 @@ export default function AdminLayout() {
               <p className="truncate text-sm font-semibold text-[#173B28]">
                 SafeLink
               </p>
-              <p className="text-[11px] text-[#718575]">Administration</p>
+              <p className="text-[11px] text-[#718575]">{t("admin.brand.administration")}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <span className="hidden items-center gap-1.5 text-xs font-medium text-[#55705D] sm:inline-flex">
               <ShieldCheck size={14} className="text-[#2F8F4E]" aria-hidden="true" />
-              Admin workspace
+              {t("admin.brand.workspace")}
             </span>
             <button
               type="button"
-              aria-label="Open admin navigation"
+              aria-label={t("admin.layout.openNavigation")}
               aria-expanded={mobileMenuOpen}
               onClick={() => setMobileMenuOpen(true)}
               className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-[#176B3A] transition hover:bg-[#E7F1E3] focus:outline-none focus:ring-2 focus:ring-[#2F8F4E] focus:ring-offset-2"

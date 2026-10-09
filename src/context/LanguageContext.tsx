@@ -5,8 +5,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import i18n from "../i18n";
+import type { Language as SessionLanguage } from "../types/session";
 
-export type Language = "en" | "am" | "om";
+export type Language = SessionLanguage;
 
 interface LanguageContextType {
   language: Language;
@@ -19,26 +21,51 @@ const LanguageContext = createContext<LanguageContextType | undefined>(
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
-    const savedLanguage = localStorage.getItem("safelink_language");
-
-    if (
-      savedLanguage === "en" ||
-      savedLanguage === "am" ||
-      savedLanguage === "om"
-    ) {
-      return savedLanguage;
+    try {
+      const savedSession = localStorage.getItem("safelink_session");
+      if (savedSession) {
+        const session = JSON.parse(savedSession);
+        if (session?.language === "en" || session?.language === "am" || session?.language === "om") {
+          return session.language;
+        }
+      }
+    } catch (error) {
+      console.error("Unable to read saved session language:", error);
     }
-
     return "en";
   });
 
   const setLanguage = (newLanguage: Language) => {
     setLanguageState(newLanguage);
-    localStorage.setItem("safelink_language", newLanguage);
+
+    try {
+      const savedSession = localStorage.getItem("safelink_session");
+      if (savedSession) {
+        const session = JSON.parse(savedSession);
+        if (session && typeof session === "object") {
+          localStorage.setItem(
+            "safelink_session",
+            JSON.stringify({ ...session, language: newLanguage }),
+          );
+        }
+      } else {
+        localStorage.setItem(
+          "safelink_session",
+          JSON.stringify({ language: newLanguage }),
+        );
+      }
+    } catch (error) {
+      console.error("Unable to update saved session language:", error);
+    }
+
+    void i18n.changeLanguage(newLanguage);
   };
 
   useEffect(() => {
     document.documentElement.lang = language;
+    if (i18n.language !== language) {
+      void i18n.changeLanguage(language);
+    }
   }, [language]);
 
   return (

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Menu } from "lucide-react";
 import QuickExit from "../QuickExit";
 import { getUserConversations } from "../../api/conversationApi";
 import UserSidebar from "./UserSidebar";
+import { getSafelinkId } from "../../services/session";
 
 function readSessionId(): string | null {
   const savedSession = localStorage.getItem("safelink_session");
@@ -18,13 +20,14 @@ function readSessionId(): string | null {
 }
 
 export default function UserLayout() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const wasMenuOpen = useRef(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
-  const hasSession = localStorage.getItem("safelink_session") !== null;
+  const hasSession = Boolean(getSafelinkId());
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -108,7 +111,7 @@ export default function UserLayout() {
       {mobileMenuOpen && (
         <button
           type="button"
-          aria-label="Close navigation menu"
+          aria-label={t("common.closeNavigation")}
           onClick={() => setMobileMenuOpen(false)}
           className="fixed inset-0 z-40 bg-[#173B28]/35 lg:hidden"
         />
@@ -120,7 +123,7 @@ export default function UserLayout() {
             <button
               type="button"
               ref={menuTriggerRef}
-              aria-label="Open navigation menu"
+              aria-label={t("common.openNavigation")}
               aria-expanded={mobileMenuOpen}
               aria-controls="user-dashboard-sidebar"
               onClick={() => setMobileMenuOpen(true)}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   ArrowLeft,
@@ -44,7 +45,11 @@ function formatTime(timestamp: string) {
   });
 }
 
-function formatDate(timestamp: string) {
+function formatDate(
+  timestamp: string,
+  todayLabel: string,
+  yesterdayLabel: string,
+) {
   const date = new Date(timestamp);
   const today = new Date();
   const yesterday = new Date();
@@ -52,11 +57,11 @@ function formatDate(timestamp: string) {
   yesterday.setDate(yesterday.getDate() - 1);
 
   if (date.toDateString() === today.toDateString()) {
-    return "Today";
+    return todayLabel;
   }
 
   if (date.toDateString() === yesterday.toDateString()) {
-    return "Yesterday";
+    return yesterdayLabel;
   }
 
   return date.toLocaleDateString([], {
@@ -99,6 +104,7 @@ function mapMongoFacility(f: MongoFacility): RecommendationFacility {
 /* ------------------------------------------------------------------ */
 
 export default function AdvisorPage() {
+  const { t } = useTranslation();
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
   const [selectedConversation, setSelectedConversation] =
@@ -338,9 +344,12 @@ export default function AdvisorPage() {
     }
 
     const confirmed = window.confirm(
-      `Delete ${selectedConversationIds.length} selected chat${
-        selectedConversationIds.length === 1 ? "" : "s"
-      } from the advisor list?`,
+      t(
+        selectedConversationIds.length === 1
+          ? "advisorWorkspace.deleteSelectedChatConfirm"
+          : "advisorWorkspace.deleteSelectedChatsConfirm",
+        { count: selectedConversationIds.length },
+      ),
     );
 
     if (!confirmed) return;
@@ -363,7 +372,7 @@ export default function AdvisorPage() {
     } catch (error) {
       console.error("Failed to delete selected conversations:", error);
 
-      alert("Failed to delete selected chats.");
+      alert(t("advisorWorkspace.deleteSelectedChatsFailed"));
     } finally {
       setLoading(false);
     }
@@ -393,7 +402,10 @@ export default function AdvisorPage() {
       if (replyingTo) {
         const quotedText = replyingTo.text.trim();
 
-        messageToSend = `↩ Reply to: "${quotedText}"\n\n${messageToSend}`;
+        messageToSend = t("advisorWorkspace.replyToQuotedMessage", {
+          message: quotedText,
+          reply: messageToSend,
+        });
       }
 
       const updated = await sendAdvisorMessage(
@@ -413,7 +425,7 @@ export default function AdvisorPage() {
     } catch (error) {
       console.error("Failed to send advisor message:", error);
 
-      alert("Failed to send message.");
+      alert(t("advisorWorkspace.sendMessageFailed"));
     } finally {
       setLoading(false);
     }
@@ -460,7 +472,7 @@ export default function AdvisorPage() {
       } catch (fallbackError) {
         console.error("Clipboard fallback failed:", fallbackError);
 
-        alert("Unable to copy this message.");
+        alert(t("advisorWorkspace.copyMessageFailed"));
       }
     }
   };
@@ -547,7 +559,7 @@ export default function AdvisorPage() {
     } catch (error) {
       console.error("Failed to edit message:", error);
 
-      alert("Failed to edit message.");
+      alert(t("advisorWorkspace.editMessageFailed"));
     } finally {
       setLoading(false);
     }
@@ -567,7 +579,7 @@ export default function AdvisorPage() {
       return;
     }
 
-    const confirmed = window.confirm("Delete this message?");
+    const confirmed = window.confirm(t("advisorWorkspace.deleteMessageConfirm"));
 
     if (!confirmed) return;
 
@@ -586,7 +598,7 @@ export default function AdvisorPage() {
     } catch (error) {
       console.error("Failed to delete message:", error);
 
-      alert("Failed to delete message.");
+      alert(t("advisorWorkspace.deleteMessageFailed"));
     } finally {
       setLoading(false);
     }
@@ -620,9 +632,12 @@ export default function AdvisorPage() {
     }
 
     const confirmed = window.confirm(
-      `Delete ${selectedMessageIds.length} selected message${
-        selectedMessageIds.length === 1 ? "" : "s"
-      }?`,
+      t(
+        selectedMessageIds.length === 1
+          ? "advisorWorkspace.deleteSelectedMessageConfirm"
+          : "advisorWorkspace.deleteSelectedMessagesConfirm",
+        { count: selectedMessageIds.length },
+      ),
     );
 
     if (!confirmed) return;
@@ -642,7 +657,7 @@ export default function AdvisorPage() {
     } catch (error) {
       console.error("Failed to delete selected messages:", error);
 
-      alert("Failed to delete selected messages.");
+      alert(t("advisorWorkspace.deleteSelectedMessagesFailed"));
     } finally {
       setLoading(false);
     }
@@ -687,7 +702,7 @@ export default function AdvisorPage() {
     } catch (error) {
       console.error("Failed to recommend facility:", error);
 
-      alert("Failed to recommend facility.");
+      alert(t("advisorWorkspace.recommendFacilityFailed"));
     } finally {
       setLoading(false);
     }
@@ -712,7 +727,7 @@ export default function AdvisorPage() {
 
             description:
               customFacility.notes.trim() ||
-              "Added by advisor during a conversation.",
+              t("advisorWorkspace.facilityAddedDuringConversation"),
           },
           token,
         );
@@ -740,16 +755,18 @@ export default function AdvisorPage() {
 
   const latestMessage = (conversation: Conversation) => {
     if (conversation.messages.length === 0) {
-      return "No messages yet";
+      return t("advisorWorkspace.noMessagesYet");
     }
 
     const last = conversation.messages[conversation.messages.length - 1];
 
     if (last.deleted) {
-      return "Message deleted";
+      return t("advisorWorkspace.messageDeleted");
     }
 
-    return last.sender === "advisor" ? `You: ${last.text}` : last.text;
+    return last.sender === "advisor"
+      ? t("advisorWorkspace.youMessage", { message: last.text })
+      : last.text;
   };
 
   const latestMessageTime = (conversation: Conversation) => {
@@ -788,7 +805,8 @@ export default function AdvisorPage() {
     );
   });
 
-  const sessionDisplay = selectedConversation?.session_id || "SafeLink user";
+  const sessionDisplay =
+    selectedConversation?.session_id || t("advisorWorkspace.safeLinkUser");
 
   const shouldShowDateSeparator = (messages: Message[], index: number) => {
     if (index === 0) return true;
@@ -819,11 +837,11 @@ export default function AdvisorPage() {
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-2xl font-semibold tracking-tight text-[#176B3A]">
-                  Messages
+                  {t("advisorWorkspace.messages")}
                 </h1>
 
                 <p className="mt-1 text-sm text-[#2F8F4E]">
-                  Chat with SafeLink users
+                  {t("advisorWorkspace.chatWithSafeLinkUsers")}
                 </p>
               </div>
 
@@ -832,7 +850,7 @@ export default function AdvisorPage() {
                   type="button"
                   onClick={() => setShowListMenu((current) => !current)}
                   className="flex h-9 w-9 items-center justify-center rounded-full text-[#173B28] transition hover:bg-[#E7F1E3]"
-                  aria-label="Conversation list menu"
+                  aria-label={t("advisorWorkspace.conversationListMenu")}
                 >
                   <MoreVertical size={19} />
                 </button>
@@ -862,7 +880,7 @@ export default function AdvisorPage() {
                             }}
                             className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
                           >
-                            Delete chats
+                            {t("advisorWorkspace.deleteChats")}
                           </button>
 
                           <button
@@ -880,7 +898,7 @@ export default function AdvisorPage() {
                             }}
                             className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
                           >
-                            Delete messages
+                            {t("advisorWorkspace.deleteMessages")}
                           </button>
                         </>
                       ) : (
@@ -889,7 +907,7 @@ export default function AdvisorPage() {
                           onClick={cancelChatDeleteMode}
                           className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
                         >
-                          Cancel selection
+                          {t("advisorWorkspace.cancelSelection")}
                         </button>
                       )}
                     </div>
@@ -909,7 +927,7 @@ export default function AdvisorPage() {
               <input
                 value={conversationSearch}
                 onChange={(event) => setConversationSearch(event.target.value)}
-                placeholder="Search users..."
+                placeholder={t("advisorWorkspace.searchUsers")}
                 className="h-12 w-full rounded-2xl border border-[#DCE8DD] bg-white pl-11 pr-4 text-sm text-[#173B28] outline-none placeholder:text-[#8A968D] focus:border-[#2F8F4E]"
               />
             </div>
@@ -920,7 +938,9 @@ export default function AdvisorPage() {
           {chatDeleteMode && (
             <div className="flex shrink-0 items-center justify-between border-y border-[#DCE8DD] bg-[#E7F1E3] px-5 py-3">
               <span className="text-sm font-medium text-[#173B28]">
-                {selectedConversationIds.length} selected
+                {t("advisorWorkspace.selectedCount", {
+                  count: selectedConversationIds.length,
+                })}
               </span>
 
               <div className="flex items-center gap-2">
@@ -929,7 +949,7 @@ export default function AdvisorPage() {
                   onClick={cancelChatDeleteMode}
                   className="rounded-full px-3 py-1.5 text-xs font-medium text-[#173B28] hover:bg-white"
                 >
-                  Cancel
+                  {t("advisorWorkspace.cancel")}
                 </button>
 
                 <button
@@ -938,7 +958,7 @@ export default function AdvisorPage() {
                   onClick={confirmSelectedConversationsDeletion}
                   className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  Delete selected
+                  {t("advisorWorkspace.deleteSelected")}
                 </button>
               </div>
             </div>
@@ -949,8 +969,12 @@ export default function AdvisorPage() {
           {deleteMode && (
             <div className="flex shrink-0 items-center justify-between border-y border-[#DCE8DD] bg-[#E7F1E3] px-5 py-3">
               <span className="text-sm font-medium text-[#173B28]">
-                {selectedMessageIds.length} message
-                {selectedMessageIds.length === 1 ? "" : "s"} selected
+                {t(
+                  selectedMessageIds.length === 1
+                    ? "advisorWorkspace.selectedMessageCount"
+                    : "advisorWorkspace.selectedMessagesCount",
+                  { count: selectedMessageIds.length },
+                )}
               </span>
 
               <div className="flex items-center gap-2">
@@ -959,7 +983,7 @@ export default function AdvisorPage() {
                   onClick={cancelDeleteMode}
                   className="rounded-full px-3 py-1.5 text-xs font-medium text-[#173B28] hover:bg-white"
                 >
-                  Cancel
+                  {t("advisorWorkspace.cancel")}
                 </button>
 
                 <button
@@ -968,7 +992,7 @@ export default function AdvisorPage() {
                   onClick={confirmSelectedDeletion}
                   className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  Delete selected
+                  {t("advisorWorkspace.deleteSelected")}
                 </button>
               </div>
             </div>
@@ -985,14 +1009,14 @@ export default function AdvisorPage() {
 
                 <p className="font-semibold text-[#173B28]">
                   {conversationSearch
-                    ? "No users found"
-                    : "No conversations yet"}
+                    ? t("advisorWorkspace.noUsersFound")
+                    : t("advisorWorkspace.noConversationsYet")}
                 </p>
 
                 <p className="mt-1 text-sm leading-6 text-[#6B7D70]">
                   {conversationSearch
-                    ? "Try another search term."
-                    : "New SafeLink support requests will appear here."}
+                    ? t("advisorWorkspace.tryAnotherSearch")
+                    : t("advisorWorkspace.newSupportRequestsAppear")}
                 </p>
               </div>
             ) : (
@@ -1064,7 +1088,7 @@ export default function AdvisorPage() {
 
                         {conversation.urgent && (
                           <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-[9px] font-bold text-red-600">
-                            URGENT
+                            {t("advisorWorkspace.urgent")}
                           </span>
                         )}
                       </div>
@@ -1093,11 +1117,11 @@ export default function AdvisorPage() {
                 </div>
 
                 <h2 className="text-xl font-semibold text-[#173B28]">
-                  SafeLink Advisor
+                  {t("advisorWorkspace.safeLinkAdvisor")}
                 </h2>
 
                 <p className="mt-2 text-sm leading-6 text-[#6B7D70]">
-                  Select a conversation to connect with a SafeLink user.
+                  {t("advisorWorkspace.selectConversationToConnect")}
                 </p>
               </div>
             </div>
@@ -1112,7 +1136,7 @@ export default function AdvisorPage() {
                   type="button"
                   onClick={() => setShowMobileChat(false)}
                   className="flex h-9 w-9 items-center justify-center rounded-full text-[#173B28] transition hover:bg-[#F3F7F1] md:hidden"
-                  aria-label="Back to conversations"
+                  aria-label={t("advisorWorkspace.backToConversations")}
                 >
                   <ArrowLeft size={19} />
                 </button>
@@ -1136,7 +1160,7 @@ export default function AdvisorPage() {
                     type="button"
                     onClick={() => setShowHeaderMenu((current) => !current)}
                     className="flex h-10 w-10 items-center justify-center rounded-full text-[#173B28] transition hover:bg-[#F3F7F1]"
-                    aria-label="Conversation menu"
+                    aria-label={t("advisorWorkspace.conversationMenu")}
                   >
                     <MoreVertical size={19} />
                   </button>
@@ -1160,7 +1184,7 @@ export default function AdvisorPage() {
                           }}
                           className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
                         >
-                          Delete messages
+                          {t("advisorWorkspace.deleteMessages")}
                         </button>
 
                         <button
@@ -1172,7 +1196,7 @@ export default function AdvisorPage() {
                           }}
                           className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
                         >
-                          Recommend facility
+                          {t("advisorWorkspace.recommendFacility")}
                         </button>
 
                         <div className="border-t border-[#DCE8DD]" />
@@ -1194,7 +1218,7 @@ export default function AdvisorPage() {
                           }}
                           className="w-full px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
                         >
-                          Close chat
+                          {t("advisorWorkspace.closeChat")}
                         </button>
                       </div>
                     </>
@@ -1221,11 +1245,11 @@ export default function AdvisorPage() {
                           </div>
 
                           <h2 className="text-sm font-semibold text-[#173B28]">
-                            No messages yet
+                            {t("advisorWorkspace.noMessagesYet")}
                           </h2>
 
                           <p className="mt-1 text-sm text-[#6B7D70]">
-                            Say hello to start the conversation.
+                            {t("advisorWorkspace.sayHelloToStart")}
                           </p>
                         </div>
                       </div>
@@ -1249,7 +1273,11 @@ export default function AdvisorPage() {
                             {showDate && (
                               <div className="my-4 flex justify-center">
                                 <span className="rounded-full border border-[#DCE8DD] bg-white px-3 py-1 text-[10px] text-[#6B7D70] shadow-sm sm:text-xs">
-                                  {formatDate(currentMessage.timestamp)}
+                                  {formatDate(
+                                    currentMessage.timestamp,
+                                    t("advisorWorkspace.today"),
+                                    t("advisorWorkspace.yesterday"),
+                                  )}
                                 </span>
                               </div>
                             )}
@@ -1279,7 +1307,7 @@ export default function AdvisorPage() {
                                           ? "border-[#2F8F4E] bg-[#2F8F4E] text-white"
                                           : "border-[#DCE8DD] bg-white text-transparent"
                                       }`}
-                                      aria-label="Select message"
+                                      aria-label={t("advisorWorkspace.selectMessage")}
                                     >
                                       <Check size={14} strokeWidth={3} />
                                     </button>
@@ -1303,7 +1331,7 @@ export default function AdvisorPage() {
                                   >
                                     {currentMessage.deleted ? (
                                       <p className="text-sm italic text-[#6B7D70]">
-                                        This message was deleted
+                                        {t("advisorWorkspace.messageWasDeleted")}
                                       </p>
                                     ) : (
                                       <>
@@ -1320,7 +1348,7 @@ export default function AdvisorPage() {
 
                                           {currentMessage.edited && (
                                             <span className="text-[10px] leading-none text-slate-400">
-                                              edited
+                                              {t("advisorWorkspace.edited")}
                                             </span>
                                           )}
 
@@ -1367,7 +1395,7 @@ export default function AdvisorPage() {
                                           >
                                             <span className="text-base">↩</span>
 
-                                            <span>Reply</span>
+                                            <span>{t("advisorWorkspace.reply")}</span>
                                           </button>
                                         )}
 
@@ -1383,7 +1411,7 @@ export default function AdvisorPage() {
                                           >
                                             <Copy size={15} />
 
-                                            <span>Copy</span>
+                                            <span>{t("advisorWorkspace.copy")}</span>
                                           </button>
                                         )}
 
@@ -1400,7 +1428,7 @@ export default function AdvisorPage() {
                                             >
                                               <span>✏️</span>
 
-                                              <span>Edit</span>
+                                              <span>{t("advisorWorkspace.edit")}</span>
                                             </button>
                                           )}
 
@@ -1417,7 +1445,7 @@ export default function AdvisorPage() {
                                             >
                                               <span>🗑️</span>
 
-                                              <span>Delete</span>
+                                              <span>{t("advisorWorkspace.delete")}</span>
                                             </button>
                                           )}
                                       </div>
@@ -1438,7 +1466,7 @@ export default function AdvisorPage() {
                                       )
                                     }
                                     className="mb-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#6B7D70] opacity-0 transition hover:bg-white group-hover:opacity-100"
-                                    aria-label="Message actions"
+                                    aria-label={t("advisorWorkspace.messageActions")}
                                   >
                                     <MoreVertical size={15} />
                                   </button>
@@ -1456,7 +1484,7 @@ export default function AdvisorPage() {
                       <div className="mt-2 flex justify-end">
                         <div className="max-w-[88%] rounded-2xl border border-[#DCE8DD] bg-white p-4 shadow-sm sm:max-w-[70%]">
                           <p className="text-[10px] font-bold uppercase tracking-wider text-[#176B3A]">
-                            ✓ Facility recommended
+                            ✓ {t("advisorWorkspace.facilityRecommended")}
                           </p>
 
                           <div className="mt-2 space-y-1 text-[13px] text-[#173B28]">
@@ -1499,9 +1527,9 @@ export default function AdvisorPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-semibold text-[#2F8F4E]">
-                        Replying to{" "}
+                        {t("advisorWorkspace.replyingTo")}{" "}
                         {replyingTo.sender === "advisor"
-                          ? "yourself"
+                          ? t("advisorWorkspace.yourself")
                           : sessionDisplay}
                       </span>
                     </div>
@@ -1515,7 +1543,7 @@ export default function AdvisorPage() {
                     type="button"
                     onClick={cancelReply}
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#6B7D70] hover:bg-[#F3F7F1]"
-                    aria-label="Cancel reply"
+                    aria-label={t("advisorWorkspace.cancelReply")}
                   >
                     <X size={17} />
                   </button>
@@ -1532,7 +1560,7 @@ export default function AdvisorPage() {
 
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold text-[#2F8F4E]">
-                      Editing message
+                      {t("advisorWorkspace.editingMessage")}
                     </p>
 
                     <p className="truncate text-sm text-[#6B7D70]">
@@ -1544,7 +1572,7 @@ export default function AdvisorPage() {
                     type="button"
                     onClick={cancelEditing}
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-[#F3F7F1]"
-                    aria-label="Cancel editing"
+                    aria-label={t("advisorWorkspace.cancelEditing")}
                   >
                     <X size={17} />
                   </button>
@@ -1579,10 +1607,12 @@ export default function AdvisorPage() {
                     rows={1}
                     placeholder={
                       editingMessageId
-                        ? "Edit message..."
+                        ? t("advisorWorkspace.editMessagePlaceholder")
                         : replyingTo
-                          ? "Write a reply..."
-                          : `Message ${sessionDisplay}...`
+                          ? t("advisorWorkspace.writeReply")
+                          : t("advisorWorkspace.messageSession", {
+                              session: sessionDisplay,
+                            })
                     }
                     className="max-h-32 min-h-[48px] flex-1 resize-none rounded-3xl border border-[#DCE8DD] bg-[#FAFBF7] px-5 py-3 text-sm text-[#173B28] outline-none placeholder:text-[#8A968D] focus:border-[#2F8F4E]"
                   />
@@ -1597,7 +1627,11 @@ export default function AdvisorPage() {
                       !(editingMessageId ? editingText.trim() : message.trim())
                     }
                     className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#2F8F4E] text-white transition hover:bg-[#176B3A] disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label={editingMessageId ? "Save edit" : "Send message"}
+                    aria-label={
+                      editingMessageId
+                        ? t("advisorWorkspace.saveEdit")
+                        : t("advisorWorkspace.sendMessage")
+                    }
                   >
                     {editingMessageId ? (
                       <Check size={19} />
@@ -1608,8 +1642,11 @@ export default function AdvisorPage() {
                 </div>
 
                 <p className="mx-auto mt-2 max-w-4xl text-[11px] text-[#6B7D70]">
-                  Enter to {editingMessageId ? "save" : "send"} • Shift + Enter
-                  for a new line
+                  {t("advisorWorkspace.keyboardHint", {
+                    action: editingMessageId
+                      ? t("advisorWorkspace.save")
+                      : t("advisorWorkspace.send"),
+                  })}
                 </p>
               </footer>
             </>
@@ -1636,11 +1673,11 @@ export default function AdvisorPage() {
               <div className="flex items-center justify-between border-b border-[#DCE8DD] px-5 py-4">
                 <div>
                   <h3 className="font-semibold text-[#173B28]">
-                    Recommend a facility
+                    {t("advisorWorkspace.recommendFacilityTitle")}
                   </h3>
 
                   <p className="text-xs text-[#6B7D70]">
-                    Choose a support facility for this user.
+                    {t("advisorWorkspace.chooseSupportFacility")}
                   </p>
                 </div>
 
@@ -1654,7 +1691,7 @@ export default function AdvisorPage() {
                     setFacilitySearch("");
                   }}
                   className="flex h-9 w-9 items-center justify-center rounded-full text-[#173B28] hover:bg-[#F3F7F1]"
-                  aria-label="Close facility panel"
+                  aria-label={t("advisorWorkspace.closeFacilityPanel")}
                 >
                   <X size={18} />
                 </button>
@@ -1670,7 +1707,7 @@ export default function AdvisorPage() {
                   <input
                     value={facilitySearch}
                     onChange={(event) => setFacilitySearch(event.target.value)}
-                    placeholder="Search facility..."
+                    placeholder={t("advisorWorkspace.searchFacility")}
                     className="h-11 w-full rounded-xl border border-transparent bg-[#F3F7F1] pl-9 pr-4 text-sm text-[#173B28] outline-none placeholder:text-[#8A968D] focus:border-[#DCE8DD]"
                   />
                 </div>
@@ -1678,7 +1715,7 @@ export default function AdvisorPage() {
                 <div className="space-y-3">
                   {filteredFacilities.length === 0 ? (
                     <div className="rounded-xl bg-[#F3F7F1] p-5 text-center text-sm text-[#6B7D70]">
-                      No facilities found.
+                      {t("advisorWorkspace.noFacilitiesFound")}
                     </div>
                   ) : (
                     filteredFacilities.map((facility) => (
@@ -1731,24 +1768,24 @@ export default function AdvisorPage() {
                   className="mt-4 w-full rounded-xl border border-dashed border-[#2F8F4E] bg-[#E7F1E3] px-4 py-3 text-sm font-semibold text-[#176B3A] hover:bg-[#DCE8DD]"
                 >
                   {showCustomFacility
-                    ? "− Hide manual facility"
-                    : "+ Add a facility manually"}
+                    ? `− ${t("advisorWorkspace.hideManualFacility")}`
+                    : `+ ${t("advisorWorkspace.addFacilityManually")}`}
                 </button>
 
                 {showCustomFacility && (
                   <div className="mt-4 rounded-xl border border-[#DCE8DD] bg-white p-4">
                     <p className="mb-3 font-semibold text-[#173B28]">
-                      New facility
+                      {t("advisorWorkspace.newFacility")}
                     </p>
 
                     <div className="space-y-2">
                       {(
                         [
-                          ["facility_id", "Facility ID"],
-                          ["facility_name", "Facility name"],
-                          ["location", "Location"],
-                          ["contact", "Contact"],
-                          ["notes", "Notes"],
+                          ["facility_id", t("advisorWorkspace.facilityId")],
+                          ["facility_name", t("advisorWorkspace.facilityName")],
+                          ["location", t("advisorWorkspace.location")],
+                          ["contact", t("advisorWorkspace.contact")],
+                          ["notes", t("advisorWorkspace.notes")],
                         ] as const
                       ).map(([field, placeholder]) => (
                         <input
@@ -1779,7 +1816,9 @@ export default function AdvisorPage() {
                       }
                       className="mt-3 w-full rounded-xl bg-[#2F8F4E] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#176B3A] disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      {loading ? "Recommending..." : "Recommend this facility"}
+                      {loading
+                        ? t("advisorWorkspace.recommending")
+                        : t("advisorWorkspace.recommendThisFacility")}
                     </button>
                   </div>
                 )}

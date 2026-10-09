@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 type AdminSidebarProps = {
   mobileMenuOpen: boolean;
@@ -17,27 +18,27 @@ type AdminSidebarProps = {
 
 const navItems = [
   {
-    label: "Dashboard",
+    labelKey: "admin.navigation.dashboard",
     path: "/admin/dashboard",
     icon: LayoutDashboard,
   },
   {
-    label: "Awareness",
+    labelKey: "admin.navigation.awareness",
     path: "/admin/awareness",
     icon: Megaphone,
   },
   {
-    label: "Create Advisor",
+    labelKey: "admin.navigation.createAdvisor",
     path: "/admin/advisors/create",
     icon: UserRoundPlus,
   },
   {
-    label: "Advisors",
+    labelKey: "admin.navigation.advisors",
     path: "/admin/advisors",
     icon: UsersRound,
   },
   {
-    label: "Messages",
+    labelKey: "admin.navigation.messages",
     path: "/admin/messages",
     icon: MessageSquare,
   },
@@ -48,6 +49,7 @@ export default function AdminSidebar({
   onClose,
 }: AdminSidebarProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleLogout = async () => {
     const token = localStorage.getItem("adminToken");
@@ -72,7 +74,7 @@ export default function AdminSidebar({
 
   return (
     <aside
-      aria-label="Admin sidebar"
+      aria-label={t("admin.navigation.sidebar")}
       className={`${
         mobileMenuOpen
           ? "fixed inset-y-0 left-0 z-50 flex w-[min(18rem,88vw)] shadow-xl"
@@ -88,12 +90,12 @@ export default function AdminSidebar({
             onClose();
           }}
           className="flex min-w-0 items-center gap-3 rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-[#2F8F4E] focus:ring-offset-2"
-          aria-label="Go to SafeLink admin dashboard"
+          aria-label={t("admin.navigation.goToDashboard")}
         >
           <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white">
             <img
               src="/safelink-logo.png"
-              alt="SafeLink logo"
+              alt={t("admin.brand.logoAlt")}
               className="h-full w-full object-contain"
             />
           </span>
@@ -102,7 +104,7 @@ export default function AdminSidebar({
               SafeLink
             </span>
             <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-[#718575]">
-              Private support
+              {t("admin.brand.privateSupport")}
             </span>
           </span>
         </button>
@@ -110,7 +112,7 @@ export default function AdminSidebar({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close admin navigation"
+          aria-label={t("admin.layout.closeNavigation")}
           className="ml-2 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#55705D] transition hover:bg-[#E7F1E3] hover:text-[#176B3A] focus:outline-none focus:ring-2 focus:ring-[#2F8F4E] lg:hidden"
         >
           <X size={19} aria-hidden="true" />
@@ -118,9 +120,9 @@ export default function AdminSidebar({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-7" aria-label="Admin navigation">
+      <nav className="flex-1 px-4 py-7" aria-label={t("admin.navigation.label")}>
         <p className="mb-3 px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#718575]">
-          Management
+          {t("admin.navigation.management")}
         </p>
 
         <div className="space-y-1.5">
@@ -152,7 +154,7 @@ export default function AdminSidebar({
                       }`}
                       aria-hidden="true"
                     />
-                    <span className="min-w-0 flex-1">{item.label}</span>
+                    <span className="min-w-0 flex-1">{t(item.labelKey)}</span>
                     {isActive && (
                       <ChevronRight
                         size={15}
@@ -173,9 +175,9 @@ export default function AdminSidebar({
         <div className="mb-4 flex items-center gap-2.5 px-3">
           <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#2F8F4E]" />
           <div className="min-w-0">
-            <p className="text-xs font-medium text-[#55705D]">Admin workspace</p>
+            <p className="text-xs font-medium text-[#55705D]">{t("admin.brand.workspace")}</p>
             <p className="mt-0.5 truncate text-xs text-[#718575]">
-              Manage SafeLink
+              {t("admin.navigation.manageSafeLink")}
             </p>
           </div>
         </div>
@@ -190,7 +192,7 @@ export default function AdminSidebar({
             className="shrink-0 text-[#718575] transition group-hover:text-[#176B3A]"
             aria-hidden="true"
           />
-          Log out
+          {t("admin.navigation.logOut")}
         </button>
       </div>
     </aside>

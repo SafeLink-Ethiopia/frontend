@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { io, Socket } from "socket.io-client";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:5000/api";
 const SOCKET_URL = "http://localhost:5000";
@@ -54,6 +55,7 @@ type DeleteType = "me" | "everyone";
 
 function AdvisorMessages() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<
@@ -143,12 +145,12 @@ function AdvisorMessages() {
 
       setError(
         err?.response?.data?.message ||
-          "Unable to load your conversations. Please try again.",
+          t("advisorWorkspace.loadConversationsFailed"),
       );
     } finally {
       setLoading(false);
     }
-  }, [logout]);
+  }, [logout, t]);
 
   useEffect(() => {
     loadConversations();
@@ -197,13 +199,14 @@ function AdvisorMessages() {
         }
 
         setError(
-          err?.response?.data?.message || "Unable to open this conversation.",
+          err?.response?.data?.message ||
+            t("advisorWorkspace.openConversationFailed"),
         );
       } finally {
         setChatLoading(false);
       }
     },
-    [logout],
+    [logout, t],
   );
 
   /*
@@ -424,14 +427,14 @@ function AdvisorMessages() {
     });
 
     socket.on("message_error", (data: any) => {
-      setError(data?.message || "Something went wrong with the message.");
+      setError(data?.message || t("advisorWorkspace.messageError"));
     });
 
     return () => {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [logout]);
+  }, [logout, t]);
 
   /*
    * ------------------------------------------------------------
@@ -499,11 +502,13 @@ function AdvisorMessages() {
         conversation.messages[conversation.messages.length - 1];
 
       return (
-        "safelink administrator".includes(query) ||
+        t("advisorWorkspace.safeLinkAdministrator")
+          .toLowerCase()
+          .includes(query) ||
         lastMessage?.text?.toLowerCase().includes(query)
       );
     });
-  }, [conversations, search]);
+  }, [conversations, search, t]);
 
   /*
    * ------------------------------------------------------------
@@ -572,8 +577,8 @@ function AdvisorMessages() {
       a.getMonth() === b.getMonth() &&
       a.getFullYear() === b.getFullYear();
 
-    if (sameDay(date, today)) return "Today";
-    if (sameDay(date, yesterday)) return "Yesterday";
+    if (sameDay(date, today)) return t("advisorWorkspace.today");
+    if (sameDay(date, yesterday)) return t("advisorWorkspace.yesterday");
 
     return new Intl.DateTimeFormat([], {
       weekday: "long",
@@ -738,11 +743,11 @@ function AdvisorMessages() {
     const last = conversation.messages[conversation.messages.length - 1];
 
     if (!last) {
-      return "Start a conversation";
+      return t("advisorWorkspace.startConversation");
     }
 
     if (last.deleted || last.deletedForAdvisor) {
-      return "Message deleted";
+      return t("advisorWorkspace.messageDeleted");
     }
 
     return last.text;
@@ -815,11 +820,11 @@ function AdvisorMessages() {
           <div className="flex items-center justify-between mb-5">
             <div>
               <h1 className="text-2xl font-bold" style={{ color: COLORS.ink }}>
-                Messages
+                {t("advisorWorkspace.messages")}
               </h1>
 
               <p className="text-sm mt-1" style={{ color: COLORS.muted }}>
-                Private communication with SafeLink
+                {t("advisorWorkspace.privateCommunicationWithSafeLink")}
               </p>
             </div>
 
@@ -863,7 +868,7 @@ function AdvisorMessages() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search conversations..."
+              placeholder={t("advisorWorkspace.searchConversations")}
               className="w-full pl-11 pr-4 py-3 rounded-xl outline-none text-sm border"
               style={{
                 background: COLORS.soft,
@@ -896,7 +901,7 @@ function AdvisorMessages() {
                 onClick={loadConversations}
                 className="mt-2 text-xs font-semibold underline"
               >
-                Try again
+                {t("advisorWorkspace.tryAgain")}
               </button>
             </div>
           )}
@@ -922,7 +927,9 @@ function AdvisorMessages() {
               </div>
 
               <h3 className="font-semibold" style={{ color: COLORS.ink }}>
-                {search ? "No conversations found" : "No conversations yet"}
+                {search
+                  ? t("advisorWorkspace.noConversationsFound")
+                  : t("advisorWorkspace.noConversationsYet")}
               </h3>
 
               <p
@@ -930,8 +937,8 @@ function AdvisorMessages() {
                 style={{ color: COLORS.muted }}
               >
                 {search
-                  ? "Try another search term."
-                  : "Your administrator conversations will appear here."}
+                  ? t("advisorWorkspace.tryAnotherSearch")
+                  : t("advisorWorkspace.adminConversationsAppear")}
               </p>
             </div>
           ) : (
@@ -990,11 +997,11 @@ function AdvisorMessages() {
                           className="font-semibold truncate"
                           style={{ color: COLORS.ink }}
                         >
-                          SafeLink Administrator
+                          {t("advisorWorkspace.safeLinkAdministrator")}
                         </span>
 
                         <span
-                          title="Official SafeLink account"
+                          title={t("advisorWorkspace.officialSafeLinkAccount")}
                           className="flex-shrink-0"
                         >
                           <svg
@@ -1119,12 +1126,11 @@ function AdvisorMessages() {
               </div>
 
               <h2 className="text-2xl font-bold" style={{ color: COLORS.ink }}>
-                Your SafeLink Messages
+                {t("advisorWorkspace.yourSafeLinkMessages")}
               </h2>
 
               <p className="mt-3 leading-7" style={{ color: COLORS.muted }}>
-                Select the SafeLink Administrator conversation to communicate
-                privately with the administration team.
+                {t("advisorWorkspace.selectAdminConversationDescription")}
               </p>
 
               <div
@@ -1159,15 +1165,14 @@ function AdvisorMessages() {
                       className="font-semibold text-sm"
                       style={{ color: COLORS.ink }}
                     >
-                      Private communication
+                      {t("advisorWorkspace.privateCommunication")}
                     </p>
 
                     <p
                       className="text-xs mt-1 leading-5"
                       style={{ color: COLORS.muted }}
                     >
-                      Use this space for official communication, questions, and
-                      support from SafeLink administration.
+                      {t("advisorWorkspace.officialCommunicationDescription")}
                     </p>
                   </div>
                 </div>
@@ -1198,7 +1203,7 @@ function AdvisorMessages() {
                   }}
                   className="md:hidden w-9 h-9 rounded-xl flex items-center justify-center"
                   style={{ background: COLORS.soft }}
-                  aria-label="Back to conversations"
+                  aria-label={t("advisorWorkspace.backToConversations")}
                 >
                   <svg
                     width="20"
@@ -1240,7 +1245,7 @@ function AdvisorMessages() {
                       className="font-bold truncate"
                       style={{ color: COLORS.ink }}
                     >
-                      SafeLink Administrator
+                      {t("advisorWorkspace.safeLinkAdministrator")}
                     </h2>
 
                     <span
@@ -1250,14 +1255,14 @@ function AdvisorMessages() {
                         color: COLORS.forest,
                       }}
                     >
-                      OFFICIAL
+                      {t("advisorWorkspace.official")}
                     </span>
                   </div>
 
                   <p className="text-xs mt-0.5" style={{ color: COLORS.muted }}>
                     {socketConnected
-                      ? "Online • Secure communication"
-                      : "Connecting..."}
+                      ? t("advisorWorkspace.onlineSecureCommunication")
+                      : t("advisorWorkspace.connecting")}
                   </p>
                 </div>
               </div>
@@ -1268,7 +1273,7 @@ function AdvisorMessages() {
                   setDeleteConversationModal(true);
                 }}
                 className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-red-50"
-                title="Delete conversation"
+                title={t("advisorWorkspace.deleteConversation")}
               >
                 <svg
                   width="19"
@@ -1320,7 +1325,7 @@ function AdvisorMessages() {
                     <rect x="3" y="11" width="18" height="10" rx="2" />
                     <path d="M7 11V7a5 5 0 0110 0v4" />
                   </svg>
-                  This is a private SafeLink conversation
+                  {t("advisorWorkspace.privateSafeLinkConversation")}
                 </div>
               </div>
 
@@ -1356,15 +1361,14 @@ function AdvisorMessages() {
                     </div>
 
                     <h3 className="font-bold" style={{ color: COLORS.ink }}>
-                      Start the conversation
+                      {t("advisorWorkspace.startConversation")}
                     </h3>
 
                     <p
                       className="text-sm mt-2 leading-6"
                       style={{ color: COLORS.muted }}
                     >
-                      Send a message to the SafeLink Administrator. Your
-                      communication will appear here.
+                      {t("advisorWorkspace.sendAdminMessageDescription")}
                     </p>
                   </div>
                 </div>
@@ -1448,7 +1452,7 @@ function AdvisorMessages() {
                                         : COLORS.muted,
                                     }}
                                   >
-                                    This message was deleted
+                                    {t("advisorWorkspace.messageWasDeleted")}
                                   </p>
                                 ) : (
                                   <>
@@ -1468,7 +1472,7 @@ function AdvisorMessages() {
                                     >
                                       {message.edited && (
                                         <span className="text-[10px]">
-                                          edited
+                                          {t("advisorWorkspace.edited")}
                                         </span>
                                       )}
 
@@ -1609,7 +1613,7 @@ function AdvisorMessages() {
                                         <path d="M12 20h9" />
                                         <path d="M16.5 3.5a2.1 2.1 0 013 3L8 18l-4 1 1-4Z" />
                                       </svg>
-                                      Edit
+                                      {t("advisorWorkspace.edit")}
                                     </button>
 
                                     <button
@@ -1638,7 +1642,7 @@ function AdvisorMessages() {
                                         <path d="M3 6h18" />
                                         <path d="M19 6l-1 14H6L5 6" />
                                       </svg>
-                                      Delete for me
+                                      {t("advisorWorkspace.deleteForMe")}
                                     </button>
 
                                     <button
@@ -1669,7 +1673,7 @@ function AdvisorMessages() {
                                         <path d="M10 11v5" />
                                         <path d="M14 11v5" />
                                       </svg>
-                                      Delete for everyone
+                                      {t("advisorWorkspace.deleteForEveryone")}
                                     </button>
                                   </div>
                                 )}
@@ -1721,7 +1725,7 @@ function AdvisorMessages() {
                       </svg>
 
                       <span className="text-xs font-semibold">
-                        Editing message
+                        {t("advisorWorkspace.editingMessage")}
                       </span>
                     </div>
 
@@ -1729,7 +1733,7 @@ function AdvisorMessages() {
                       onClick={cancelEditing}
                       className="text-xs font-semibold"
                     >
-                      Cancel
+                      {t("advisorWorkspace.cancel")}
                     </button>
                   </div>
                 )}
@@ -1757,8 +1761,8 @@ function AdvisorMessages() {
                       onKeyDown={handleTextareaKeyDown}
                       placeholder={
                         editingMessageId
-                          ? "Edit your message..."
-                          : "Write a message..."
+                          ? t("advisorWorkspace.editYourMessage")
+                          : t("advisorWorkspace.writeMessage")
                       }
                       rows={1}
                       className="flex-1 bg-transparent outline-none resize-none px-4 py-3 text-sm leading-6 max-h-[130px]"
@@ -1776,7 +1780,11 @@ function AdvisorMessages() {
                       background: COLORS.forest,
                       color: "#FFFFFF",
                     }}
-                    title={editingMessageId ? "Save changes" : "Send message"}
+                    title={
+                      editingMessageId
+                        ? t("advisorWorkspace.saveChanges")
+                        : t("advisorWorkspace.sendMessage")
+                    }
                   >
                     {editingMessageId ? (
                       <svg
@@ -1853,7 +1861,7 @@ function AdvisorMessages() {
             </div>
 
             <h3 className="text-lg font-bold" style={{ color: COLORS.ink }}>
-              Delete message?
+              {t("advisorWorkspace.deleteMessageQuestion")}
             </h3>
 
             <p
@@ -1861,8 +1869,8 @@ function AdvisorMessages() {
               style={{ color: COLORS.muted }}
             >
               {deleteTarget.type === "everyone"
-                ? "This message will be removed for everyone in the conversation."
-                : "This message will be removed from your view."}
+                ? t("advisorWorkspace.deleteMessageForEveryoneDescription")
+                : t("advisorWorkspace.deleteMessageForMeDescription")}
             </p>
 
             <div className="flex gap-3 mt-6">
@@ -1875,7 +1883,7 @@ function AdvisorMessages() {
                   background: COLORS.surface,
                 }}
               >
-                Cancel
+                {t("advisorWorkspace.cancel")}
               </button>
 
               <button
@@ -1886,7 +1894,7 @@ function AdvisorMessages() {
                   color: "#FFFFFF",
                 }}
               >
-                Delete
+                {t("advisorWorkspace.delete")}
               </button>
             </div>
           </div>
@@ -1930,15 +1938,14 @@ function AdvisorMessages() {
             </div>
 
             <h3 className="text-lg font-bold" style={{ color: COLORS.ink }}>
-              Delete conversation?
+              {t("advisorWorkspace.deleteConversationQuestion")}
             </h3>
 
             <p
               className="text-sm mt-2 leading-6"
               style={{ color: COLORS.muted }}
             >
-              This will remove the conversation from your messaging list. This
-              action cannot be undone.
+              {t("advisorWorkspace.deleteConversationDescription")}
             </p>
 
             <div className="flex gap-3 mt-6">
@@ -1951,7 +1958,7 @@ function AdvisorMessages() {
                   background: COLORS.surface,
                 }}
               >
-                Cancel
+                {t("advisorWorkspace.cancel")}
               </button>
 
               <button
@@ -1962,7 +1969,7 @@ function AdvisorMessages() {
                   color: "#FFFFFF",
                 }}
               >
-                Delete
+                {t("advisorWorkspace.delete")}
               </button>
             </div>
           </div>

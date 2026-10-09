@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   ArrowDown,
   ArrowLeft,
@@ -83,6 +84,7 @@ const isGone = (message: Message) =>
   );
 
 export default function AdminAdvisorChat() {
+  const { t } = useTranslation();
   const { advisorId } = useParams<{ advisorId: string }>();
   const navigate = useNavigate();
 
@@ -147,13 +149,13 @@ export default function AdminAdvisorChat() {
   useEffect(() => {
     const fetchConversation = async () => {
       if (!advisorId) {
-        setError("Advisor ID is missing.");
+        setError(t("admin.advisorChat.errors.missingAdvisorId"));
         setLoading(false);
         return;
       }
 
       if (!adminToken) {
-        setError("Admin authentication required.");
+        setError(t("admin.common.errors.authRequired"));
         setLoading(false);
         return;
       }
@@ -183,10 +185,10 @@ export default function AdminAdvisorChat() {
           }
 
           setError(
-            err.response?.data?.message || "Failed to load conversation.",
+            err.response?.data?.message || t("admin.advisorChat.errors.load"),
           );
         } else {
-          setError("Something went wrong while loading the conversation.");
+          setError(t("admin.advisorChat.errors.loadUnexpected"));
         }
       } finally {
         setLoading(false);
@@ -194,7 +196,7 @@ export default function AdminAdvisorChat() {
     };
 
     fetchConversation();
-  }, [advisorId, adminToken, navigate]);
+  }, [advisorId, adminToken, navigate, t]);
 
   /* ================================================================ */
   /* SOCKET CONNECTION STATUS                                         */
@@ -211,7 +213,7 @@ export default function AdminAdvisorChat() {
     const handleConnectError = (socketError: Error) => {
       console.error("Socket connection error:", socketError);
       setConnected(false);
-      setError("Could not connect to the messaging server.");
+      setError(t("admin.chat.errors.connectionFailed"));
     };
 
     socket.on("connect", handleConnect);
@@ -227,7 +229,7 @@ export default function AdminAdvisorChat() {
       socket.off("disconnect", handleDisconnect);
       socket.off("connect_error", handleConnectError);
     };
-  }, []);
+  }, [t]);
 
   /* ================================================================ */
   /* JOIN CONVERSATION + SOCKET EVENTS                                */
@@ -441,7 +443,7 @@ export default function AdminAdvisorChat() {
 
     const handleMessageError = (data: { message?: string }) => {
       console.error("Message error:", data.message);
-      setError(data.message || "Message operation failed.");
+      setError(data.message || t("admin.chat.errors.messageOperation"));
       setSending(false);
     };
 
@@ -543,7 +545,7 @@ export default function AdminAdvisorChat() {
     if (!conversation) return;
 
     if (!socket.connected) {
-      setError("Chat connection is not available.");
+      setError(t("admin.chat.errors.connectionUnavailable"));
       return;
     }
 
@@ -609,7 +611,7 @@ export default function AdminAdvisorChat() {
     if (!newText) return;
 
     if (!socket.connected) {
-      setError("Chat connection is not available.");
+      setError(t("admin.chat.errors.connectionUnavailable"));
       return;
     }
 
@@ -685,7 +687,7 @@ export default function AdminAdvisorChat() {
     if (!conversation || deleteTargets.length === 0) return;
 
     if (!socket.connected) {
-      setError("Chat connection is not available.");
+      setError(t("admin.chat.errors.connectionUnavailable"));
       return;
     }
 
@@ -729,7 +731,7 @@ export default function AdminAdvisorChat() {
     if (!conversation) return;
 
     if (!socket.connected) {
-      setError("Chat connection is not available.");
+      setError(t("admin.chat.errors.connectionUnavailable"));
       return;
     }
 
@@ -821,8 +823,8 @@ export default function AdminAdvisorChat() {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
 
-    if (date.toDateString() === today.toDateString()) return "Today";
-    if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+    if (date.toDateString() === today.toDateString()) return t("admin.chat.today");
+    if (date.toDateString() === yesterday.toDateString()) return t("admin.chat.yesterday");
 
     return date.toLocaleDateString([], {
       day: "numeric",
@@ -891,7 +893,7 @@ export default function AdminAdvisorChat() {
       <div className="h-[100dvh] min-h-screen bg-[#FAFBF7] flex items-center justify-center px-4">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-full border-4 border-[#DCE8DD] border-t-[#2F8F4E] animate-spin" />
-          <p className="text-sm text-[#6B7D70]">Loading conversation...</p>
+          <p className="text-sm text-[#6B7D70]">{t("admin.advisorChat.loading")}</p>
         </div>
       </div>
     );
@@ -906,7 +908,7 @@ export default function AdminAdvisorChat() {
           </div>
 
           <h2 className="mt-4 text-lg font-semibold text-[#173B28]">
-            Unable to load conversation
+            {t("admin.advisorChat.unavailable")}
           </h2>
 
           <p className="mt-2 text-sm text-[#6B7D70]">{error}</p>
@@ -916,7 +918,7 @@ export default function AdminAdvisorChat() {
             onClick={() => navigate("/admin/messages")}
             className="mt-5 w-full rounded-xl bg-[#2F8F4E] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#176B3A]"
           >
-            Back to Messages
+            {t("admin.advisorChat.backToMessages")}
           </button>
         </div>
       </div>
@@ -927,7 +929,7 @@ export default function AdminAdvisorChat() {
     return null;
   }
 
-  const advisorName = advisor?.name || "Advisor";
+  const advisorName = advisor?.name || t("admin.advisorChat.advisor");
   const allTargetsOwn = deleteTargets.every(
     (message) => message.sender === "admin",
   );
@@ -946,7 +948,7 @@ export default function AdminAdvisorChat() {
               type="button"
               onClick={() => navigate("/admin/messages")}
               className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-full flex items-center justify-center text-[#173B28] transition hover:bg-[#F3F7F1] active:bg-[#E7F1E3]"
-              aria-label="Back"
+              aria-label={t("admin.common.back")}
             >
               <ArrowLeft size={19} />
             </button>
@@ -979,15 +981,15 @@ export default function AdminAdvisorChat() {
 
               <div className="text-xs sm:text-sm text-[#6B7D70] flex items-center gap-1.5 min-w-0">
                 {typing ? (
-                  <span className="text-[#2F8F4E]">typing...</span>
+                  <span className="text-[#2F8F4E]">{t("admin.chat.typing")}</span>
                 ) : (
                   <span className="truncate">
-                    {advisor?.email || (advisor?.active ? "Online" : "Advisor")}
+                    {advisor?.email || (advisor?.active ? t("admin.chat.online") : t("admin.advisorChat.advisor"))}
                   </span>
                 )}
 
                 {!connected && (
-                  <span className="text-red-500 shrink-0">• Connecting...</span>
+                  <span className="text-red-500 shrink-0">• {t("admin.chat.connecting")}</span>
                 )}
               </div>
             </div>
@@ -1001,7 +1003,7 @@ export default function AdminAdvisorChat() {
                 if (showSearch) setSearchText("");
               }}
               className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[#173B28] transition hover:bg-[#F3F7F1] active:bg-[#E7F1E3]"
-              aria-label="Search"
+              aria-label={t("admin.common.search")}
             >
               <Search size={19} />
             </button>
@@ -1011,7 +1013,7 @@ export default function AdminAdvisorChat() {
                 type="button"
                 onClick={() => setShowConversationMenu((current) => !current)}
                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[#173B28] transition hover:bg-[#F3F7F1] active:bg-[#E7F1E3]"
-                aria-label="More"
+                aria-label={t("admin.common.more")}
               >
                 <MoreVertical size={19} />
               </button>
@@ -1034,7 +1036,7 @@ export default function AdminAdvisorChat() {
                       }}
                       className="w-full px-4 py-3 text-left text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
                     >
-                      Delete messages
+                      {t("admin.chat.deleteMessages")}
                     </button>
 
                     <div className="border-t border-[#DCE8DD]" />
@@ -1048,7 +1050,7 @@ export default function AdminAdvisorChat() {
                       className="w-full px-4 py-3 flex items-center gap-3 text-sm text-red-600 transition hover:bg-red-50 active:bg-red-100"
                     >
                       <Trash2 size={17} />
-                      Delete conversation
+                      {t("admin.chat.deleteConversation")}
                     </button>
                   </div>
                 </>
@@ -1063,8 +1065,7 @@ export default function AdminAdvisorChat() {
         <div className="shrink-0 border-b border-[#DCE8DD] bg-[#E7F1E3] px-3 sm:px-6 py-3">
           <div className="w-full max-w-4xl mx-auto flex items-center justify-between">
             <span className="text-sm font-medium text-[#173B28]">
-              {selectedMessageIds.length} message
-              {selectedMessageIds.length === 1 ? "" : "s"} selected
+              {t("admin.chat.selectedMessages", { count: selectedMessageIds.length })}
             </span>
 
             <div className="flex items-center gap-2">
@@ -1073,7 +1074,7 @@ export default function AdminAdvisorChat() {
                 onClick={exitDeleteMode}
                 className="rounded-full px-3 py-1.5 text-xs font-medium text-[#173B28] hover:bg-white"
               >
-                Cancel
+                {t("admin.common.cancel")}
               </button>
 
               <button
@@ -1088,7 +1089,7 @@ export default function AdminAdvisorChat() {
                 }
                 className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Delete selected
+                {t("admin.chat.deleteSelected")}
               </button>
             </div>
           </div>
@@ -1108,7 +1109,7 @@ export default function AdminAdvisorChat() {
               autoFocus
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
-              placeholder="Search messages..."
+              placeholder={t("admin.chat.searchMessages")}
               className="w-full h-10 sm:h-11 pl-10 pr-10 rounded-2xl bg-[#FAFBF7] text-sm text-[#173B28] outline-none border border-[#DCE8DD] placeholder:text-[#8A968D] focus:border-[#2F8F4E]"
             />
 
@@ -1117,7 +1118,7 @@ export default function AdminAdvisorChat() {
                 type="button"
                 onClick={() => setSearchText("")}
                 className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center hover:bg-[#F3F7F1]"
-                aria-label="Clear search"
+                aria-label={t("admin.common.clearSearch")}
               >
                 <X size={16} />
               </button>
@@ -1140,8 +1141,7 @@ export default function AdminAdvisorChat() {
           <div className="w-full max-w-4xl mx-auto">
             <div className="flex justify-center mb-4 sm:mb-6 px-2">
               <span className="max-w-full text-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#E7F1E3] text-[#176B3A] text-[10px] sm:text-xs">
-                Messages between SafeLink administrators and advisors are
-                private.
+                {t("admin.advisorChat.privacyNotice")}
               </span>
             </div>
 
@@ -1153,13 +1153,13 @@ export default function AdminAdvisorChat() {
                   </div>
 
                   <h2 className="font-semibold text-[#173B28] text-sm sm:text-base">
-                    {searchText ? "No messages found" : "No messages yet"}
+                    {searchText ? t("admin.chat.noMessagesFound") : t("admin.chat.noMessages")}
                   </h2>
 
                   <p className="text-xs sm:text-sm text-[#6B7D70] mt-1 max-w-xs mx-auto">
                     {searchText
-                      ? "Try another search term."
-                      : `Start a conversation with ${advisorName}.`}
+                      ? t("admin.chat.tryAnotherSearch")
+                      : t("admin.advisorChat.startConversation", { name: advisorName })}
                   </p>
                 </div>
               </div>
@@ -1206,7 +1206,7 @@ export default function AdminAdvisorChat() {
                                 ? "border-[#2F8F4E] bg-[#2F8F4E] text-white"
                                 : "border-[#DCE8DD] bg-white text-transparent"
                             }`}
-                            aria-label="Select message"
+                            aria-label={t("admin.chat.selectMessage")}
                           >
                             <Check size={14} strokeWidth={3} />
                           </button>
@@ -1219,7 +1219,7 @@ export default function AdminAdvisorChat() {
                               className="w-[360px] max-w-[80vw] rounded-2xl bg-[#2F8F4E] p-3 shadow-sm"
                             >
                               <div className="mb-2 text-xs font-semibold text-white/90">
-                                Editing message
+                                {t("admin.chat.editingMessage")}
                               </div>
 
                               <textarea
@@ -1248,7 +1248,7 @@ export default function AdminAdvisorChat() {
                                   className="flex items-center gap-1 rounded-full border border-white/30 px-3 py-1.5 text-xs text-white transition hover:bg-white/10"
                                 >
                                   <X size={13} />
-                                  Cancel
+                                  {t("admin.common.cancel")}
                                 </button>
 
                                 <button
@@ -1256,7 +1256,7 @@ export default function AdminAdvisorChat() {
                                   disabled={!editingText.trim()}
                                   className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[#2F8F4E] transition disabled:opacity-50"
                                 >
-                                  Save
+                                  {t("admin.common.save")}
                                 </button>
                               </div>
                             </form>
@@ -1276,7 +1276,7 @@ export default function AdminAdvisorChat() {
                                 <div className="mb-2 pl-2.5 sm:pl-3 border-l-2 border-[#2F8F4E] min-w-0">
                                   <div className="text-[10px] sm:text-[11px] font-semibold text-[#2F8F4E]">
                                     {message.replyTo.sender === "admin"
-                                      ? "You"
+                                      ? t("admin.chat.you")
                                       : advisorName}
                                   </div>
 
@@ -1292,7 +1292,7 @@ export default function AdminAdvisorChat() {
                                 }`}
                               >
                                 {isDeleted
-                                  ? "This message was deleted"
+                                  ? t("admin.chat.messageDeleted")
                                   : message.text}
                               </div>
 
@@ -1304,7 +1304,7 @@ export default function AdminAdvisorChat() {
 
                                   {message.edited === true && (
                                     <span className="text-[10px] text-slate-400 leading-none whitespace-nowrap">
-                                      edited
+                                      {t("admin.chat.edited")}
                                     </span>
                                   )}
 
@@ -1338,7 +1338,7 @@ export default function AdminAdvisorChat() {
                                     className="w-full px-3 py-2.5 flex items-center gap-3 text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
                                   >
                                     <Reply size={16} />
-                                    Reply
+                                    {t("admin.chat.reply")}
                                   </button>
 
                                   <button
@@ -1347,7 +1347,7 @@ export default function AdminAdvisorChat() {
                                     className="w-full px-3 py-2.5 flex items-center gap-3 text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
                                   >
                                     <Copy size={16} />
-                                    Copy
+                                    {t("admin.chat.copy")}
                                   </button>
 
                                   {isAdmin && (
@@ -1357,7 +1357,7 @@ export default function AdminAdvisorChat() {
                                       className="w-full px-3 py-2.5 flex items-center gap-3 text-sm text-[#173B28] transition hover:bg-[#F3F7F1]"
                                     >
                                       <Edit3 size={16} />
-                                      Edit
+                                      {t("admin.common.edit")}
                                     </button>
                                   )}
 
@@ -1367,7 +1367,7 @@ export default function AdminAdvisorChat() {
                                     className="w-full px-3 py-2.5 flex items-center gap-3 text-sm text-red-600 transition hover:bg-red-50"
                                   >
                                     <Trash2 size={16} />
-                                    Delete
+                                    {t("admin.common.delete")}
                                   </button>
                                 </div>
                               </>
@@ -1386,7 +1386,7 @@ export default function AdminAdvisorChat() {
                               )
                             }
                             className="mb-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#6B7D70] transition hover:bg-white sm:opacity-0 sm:group-hover:opacity-100"
-                            aria-label="Message actions"
+                            aria-label={t("admin.chat.messageActions")}
                           >
                             <MoreVertical size={15} />
                           </button>
@@ -1425,7 +1425,7 @@ export default function AdminAdvisorChat() {
             type="button"
             onClick={scrollToBottom}
             className="absolute bottom-4 right-3 sm:right-6 md:right-8 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-[#DCE8DD] shadow-lg flex items-center justify-center text-[#173B28] hover:bg-[#F3F7F1] transition z-20"
-            aria-label="Scroll to bottom"
+            aria-label={t("admin.chat.scrollToBottom")}
           >
             <ArrowDown size={19} />
           </button>
@@ -1441,7 +1441,7 @@ export default function AdminAdvisorChat() {
             <button
               type="button"
               onClick={() => setError("")}
-              aria-label="Dismiss error"
+              aria-label={t("admin.common.dismissError")}
             >
               <X size={14} />
             </button>
@@ -1457,8 +1457,9 @@ export default function AdminAdvisorChat() {
 
             <div className="flex-1 min-w-0">
               <p className="text-[10px] sm:text-xs font-semibold text-[#2F8F4E]">
-                Replying to{" "}
-                {replyingTo.sender === "admin" ? "yourself" : advisorName}
+                {replyingTo.sender === "admin"
+                  ? t("admin.chat.replyingToYourself")
+                  : t("admin.chat.replyingTo", { name: advisorName })}
               </p>
 
               <p className="text-xs sm:text-sm text-[#6B7D70] truncate">
@@ -1470,7 +1471,7 @@ export default function AdminAdvisorChat() {
               type="button"
               onClick={() => setReplyingTo(null)}
               className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center hover:bg-[#F3F7F1]"
-              aria-label="Cancel reply"
+              aria-label={t("admin.chat.cancelReply")}
             >
               <X size={17} />
             </button>
@@ -1486,7 +1487,7 @@ export default function AdminAdvisorChat() {
 
             <div className="flex-1 min-w-0">
               <p className="text-[10px] sm:text-xs font-semibold text-[#2F8F4E]">
-                Editing message
+                {t("admin.chat.editingMessage")}
               </p>
 
               <p className="text-xs sm:text-sm text-[#6B7D70] truncate">
@@ -1498,7 +1499,7 @@ export default function AdminAdvisorChat() {
               type="button"
               onClick={cancelEditing}
               className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center hover:bg-[#F3F7F1]"
-              aria-label="Cancel editing"
+              aria-label={t("admin.chat.cancelEditing")}
             >
               <X size={17} />
             </button>
@@ -1521,8 +1522,8 @@ export default function AdminAdvisorChat() {
               rows={1}
               placeholder={
                 editingMessageId
-                  ? "Edit message..."
-                  : `Message ${advisorName}...`
+                  ? t("admin.chat.editPlaceholder")
+                  : t("admin.chat.messagePlaceholder", { name: advisorName })
               }
               className="flex-1 min-w-0 max-h-32 min-h-[46px] sm:min-h-[48px] resize-none rounded-3xl border border-[#DCE8DD] bg-[#FAFBF7] px-5 py-3 text-sm text-[#173B28] outline-none placeholder:text-[#8A968D] focus:border-[#2F8F4E]"
             />
@@ -1535,7 +1536,7 @@ export default function AdminAdvisorChat() {
                 !(editingMessageId ? editingText.trim() : messageText.trim())
               }
               className="w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-full bg-[#2F8F4E] text-white flex items-center justify-center transition hover:bg-[#176B3A] active:bg-[#176B3A] disabled:opacity-40 disabled:cursor-not-allowed"
-              aria-label={editingMessageId ? "Save edit" : "Send message"}
+              aria-label={editingMessageId ? t("admin.common.saveEdit") : t("admin.chat.sendMessage")}
             >
               {editingMessageId ? (
                 <Check size={19} />
@@ -1546,8 +1547,7 @@ export default function AdminAdvisorChat() {
           </div>
 
           <p className="hidden sm:block mt-2 text-[11px] text-[#6B7D70]">
-            Enter to {editingMessageId ? "save" : "send"} • Shift + Enter for a
-            new line
+            {t("admin.chat.keyboardHint", { action: editingMessageId ? t("admin.common.save") : t("admin.chat.sendMessage") })}
           </p>
         </form>
       </footer>
@@ -1564,16 +1564,11 @@ export default function AdminAdvisorChat() {
           >
             <div className="p-4 sm:p-5 border-b border-[#DCE8DD]">
               <h3 className="font-semibold text-[#173B28] text-base">
-                Delete{" "}
-                {deleteTargets.length === 1
-                  ? "message"
-                  : `${deleteTargets.length} messages`}
+                {t("admin.chat.deleteTargetTitle", { count: deleteTargets.length })}
               </h3>
 
               <p className="text-xs sm:text-sm text-[#6B7D70] mt-1">
-                Choose how you want to delete{" "}
-                {deleteTargets.length === 1 ? "this message" : "these messages"}
-                .
+                {t("admin.chat.deleteTargetDescription", { count: deleteTargets.length })}
               </p>
             </div>
 
@@ -1587,10 +1582,10 @@ export default function AdminAdvisorChat() {
 
                 <div>
                   <p className="text-sm font-medium text-[#173B28]">
-                    Delete for me
+                    {t("admin.chat.deleteForMe")}
                   </p>
                   <p className="text-xs text-[#6B7D70]">
-                    Remove it from your chat.
+                    {t("admin.chat.removeFromChat")}
                   </p>
                 </div>
               </button>
@@ -1605,10 +1600,10 @@ export default function AdminAdvisorChat() {
 
                   <div>
                     <p className="text-sm font-medium text-red-600">
-                      Delete for everyone
+                      {t("admin.chat.deleteForEveryone")}
                     </p>
                     <p className="text-xs text-[#6B7D70]">
-                      Remove it for both users.
+                      {t("admin.chat.removeForBoth")}
                     </p>
                   </div>
                 </button>
@@ -1621,7 +1616,7 @@ export default function AdminAdvisorChat() {
                 onClick={closeDeleteModal}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-[#173B28] hover:bg-[#F3F7F1]"
               >
-                Cancel
+                {t("admin.common.cancel")}
               </button>
             </div>
           </div>
@@ -1644,12 +1639,11 @@ export default function AdminAdvisorChat() {
               </div>
 
               <h3 className="text-lg font-semibold text-[#173B28]">
-                Hide conversation?
+                {t("admin.chat.hideConversationQuestion")}
               </h3>
 
               <p className="mt-2 text-sm leading-6 text-[#6B7D70]">
-                This will hide the conversation from your admin messages. The
-                conversation and its messages will remain stored in MongoDB.
+                {t("admin.chat.hideConversationDescription")}
               </p>
 
               <div className="mt-5 flex flex-col-reverse sm:flex-row justify-end gap-2">
@@ -1658,7 +1652,7 @@ export default function AdminAdvisorChat() {
                   onClick={() => setShowDeleteConversationModal(false)}
                   className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-sm font-medium text-[#173B28] hover:bg-[#F3F7F1]"
                 >
-                  Cancel
+                  {t("admin.common.cancel")}
                 </button>
 
                 <button
@@ -1666,7 +1660,7 @@ export default function AdminAdvisorChat() {
                   onClick={deleteConversation}
                   className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-red-600 text-white text-sm font-medium hover:bg-red-700"
                 >
-                  Hide conversation
+                  {t("admin.chat.hideConversation")}
                 </button>
               </div>
             </div>

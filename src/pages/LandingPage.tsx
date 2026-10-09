@@ -3,8 +3,8 @@
 
 import { useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
-import { getTranslations } from "../i18n/translations";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 /*
   Palette (soft leaf green)
@@ -24,38 +24,18 @@ interface LandingPageProps {
 }
 
 const navLinks = [
-  { id: "home", label: "Home" },
-  { id: "about", label: "About" },
-  { id: "faq", label: "FAQ" },
-  { id: "footer", label: "Contact" },
+  { id: "home", key: "landing.home" },
+  { id: "about", key: "landing.about" },
+  { id: "faq", key: "landing.faq" },
+  { id: "footer", key: "landing.contact" },
 ];
 
 const faqs = [
-  {
-    question: "What is SafeLink?",
-    answer:
-      "SafeLink is a private and supportive platform designed to connect people experiencing Gender-Based Violence with trusted support, information, and resources.",
-  },
-  {
-    question: "Who can use SafeLink?",
-    answer:
-      "SafeLink is for everyone. Gender-Based Violence can affect girls, boys, women, and men. Anyone who needs support can use SafeLink.",
-  },
-  {
-    question: "Is my information private?",
-    answer:
-      "SafeLink is designed with privacy in mind. Your personal information and support conversations should be handled with care and confidentiality.",
-  },
-  {
-    question: "Can I use SafeLink without sharing my identity?",
-    answer:
-      "SafeLink supports private access so that people can seek help without feeling pressured to reveal more information than they are comfortable sharing.",
-  },
-  {
-    question: "What kind of support can I find?",
-    answer:
-      "Depending on your needs, SafeLink can connect you with trusted advisors, relevant information, and appropriate support resources.",
-  },
+  { question: "landing.faqWhat", answer: "landing.faqWhatAnswer" },
+  { question: "landing.faqWho", answer: "landing.faqWhoAnswer" },
+  { question: "landing.faqPrivacy", answer: "landing.faqPrivacyAnswer" },
+  { question: "landing.faqAnonymous", answer: "landing.faqAnonymousAnswer" },
+  { question: "landing.faqSupport", answer: "landing.faqSupportAnswer" },
 ];
 
 /* ---------- LOGO ----------
@@ -64,10 +44,12 @@ const faqs = [
    <img src="/safelink-logo.png" alt="SafeLink" className={className} />
 */
 function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
+  const { t } = useTranslation();
+
   return (
     <img
       src="/safelink-logo.png"
-      alt="SafeLink logo"
+      alt={t("common.logoAlt")}
       className={`${className} object-contain`}
       draggable={false}
     />
@@ -143,7 +125,7 @@ function LandingPage({
   onContinueSession,
 }: LandingPageProps) {
   const { language, setLanguage } = useLanguage();
-  const t = getTranslations(language);
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -187,7 +169,7 @@ function LandingPage({
                     onClick={() => scrollToSection(link.id)}
                     className="text-sm font-medium text-[#173B28]/75 transition hover:text-[#2F8F4E]"
                   >
-                    {link.label}
+                    {t(link.key)}
                   </button>
                 ))}
               </div>
@@ -198,12 +180,12 @@ function LandingPage({
                   onChange={(e) =>
                     setLanguage(e.target.value as "en" | "am" | "om")
                   }
-                  aria-label="Select language"
+                  aria-label={t("language.select")}
                   className="rounded-full bg-[#E7F1E3] px-4 py-2 text-sm font-medium text-[#173B28] outline-none transition hover:bg-[#E7F1E3]"
                 >
-                  <option value="en">English</option>
-                  <option value="am">አማርኛ</option>
-                  <option value="om">Afaan Oromoo</option>
+                  <option value="en">{t("language.en")}</option>
+                  <option value="am">{t("language.am")}</option>
+                  <option value="om">{t("language.om")}</option>
                 </select>
 
                 <button
@@ -211,7 +193,7 @@ function LandingPage({
                   onClick={handleLogin}
                   className="rounded-full bg-[#2F8F4E] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#176B3A]"
                 >
-                  Login
+                  {t("landing.login")}
                 </button>
               </div>
 
@@ -219,7 +201,7 @@ function LandingPage({
                 type="button"
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="rounded-lg p-2 md:hidden"
-                aria-label="Toggle menu"
+                aria-label={t("landing.toggleMenu")}
               >
                 <div className="space-y-1.5">
                   <span className="block h-0.5 w-6 bg-[#2F8F4E]" />
@@ -239,7 +221,7 @@ function LandingPage({
                       onClick={() => scrollToSection(link.id)}
                       className="rounded-lg px-4 py-3 text-left text-sm font-medium text-[#173B28] hover:bg-[#E7F1E3]"
                     >
-                      {link.label}
+                      {t(link.key)}
                     </button>
                   ))}
 
@@ -248,12 +230,12 @@ function LandingPage({
                     onChange={(e) =>
                       setLanguage(e.target.value as "en" | "am" | "om")
                     }
-                    aria-label="Select language"
+                    aria-label={t("language.select")}
                     className="rounded-lg bg-[#E7F1E3] px-4 py-3 text-sm font-medium text-[#173B28] outline-none"
                   >
-                    <option value="en">English</option>
-                    <option value="am">አማርኛ</option>
-                    <option value="om">Afaan Oromoo</option>
+                    <option value="en">{t("language.en")}</option>
+                    <option value="am">{t("language.am")}</option>
+                    <option value="om">{t("language.om")}</option>
                   </select>
 
                   <button
@@ -261,7 +243,7 @@ function LandingPage({
                     onClick={handleLogin}
                     className="mt-2 rounded-lg bg-[#2F8F4E] px-4 py-3 text-sm font-semibold text-white"
                   >
-                    Login
+                    {t("landing.login")}
                   </button>
                 </div>
               </div>
@@ -293,23 +275,20 @@ function LandingPage({
             
 
             <h1 className="mt-10 text-4xl font-bold leading-[1.1] tracking-tight text-[#176B3A] sm:text-5xl lg:text-6xl">
-              You are not alone.
+              {t("landing.heroTitle")}
               <span className="block text-[#2F8F4E]">
-                Help is closer than you think.
+                {t("landing.heroSubtitle")}
               </span>
             </h1>
 
             <div className="mt-6 h-1 w-20 rounded-full bg-[#2F8F4E]" />
 
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-[#173B28]/85">
-              SafeLink connects you to trusted services for medical care,
-              counseling, legal assistance and protection — safely and
-              privately.
+              {t("landing.heroDescription")}
             </p>
 
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#173B28]/65 sm:text-base">
-              GBV can affect girls, boys, women, and men. SafeLink is here for
-              everyone who needs a safe path toward support.
+              {t("landing.gbvNote")}
             </p>
 
             {/* Two main actions */}
@@ -321,7 +300,7 @@ function LandingPage({
           className="group mt-7 inline-flex items-center gap-3 rounded-full bg-[#2F8F4E] px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#176B3A]"
         >
     <span className="text-base font-medium sm:text-lg">
-      {t.iNeedHelp}
+      {t("iNeedHelp")}
     </span>
           <span className="transition-transform duration-200 group-hover:translate-x-1">
             →
@@ -336,7 +315,7 @@ function LandingPage({
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E7F1E3] text-[#2F8F4E]">
                   <Icon name="users" className="h-6 w-6" />
                 </span>
-                <span className="mt-2 text-lg font-bold">{t.imHelping}</span>
+                <span className="mt-2 text-lg font-bold">{t("imHelping")}</span>
                 <span className="text-sm text-[#173B28]/70">
                   Support a friend or loved one.
                 </span>
@@ -353,14 +332,14 @@ function LandingPage({
                 className="mt-5 flex items-center gap-3 rounded-full border border-[#2F8F4E]/50 bg-white/70 px-6 py-3 text-sm font-medium text-[#176B3A] backdrop-blur-md transition hover:bg-[#E7F1E3]"
               >
                 <Icon name="lock" className="h-4 w-4" />
-                <span>{t.continueExistingSession}</span>
+                <span>{t("continueExistingSession")}</span>
                 <span>→</span>
               </button>
             )}
 
             <div className="mt-6 flex items-center gap-2 text-sm text-[#173B28]/70">
               <Icon name="lock" className="h-4 w-4 text-[#2F8F4E]" />
-              <span>Your privacy matters. Seek support at your own pace.</span>
+              <span>{t("landing.privacyPromise")}</span>
             </div>
           </div>
         </div>
@@ -393,22 +372,19 @@ function LandingPage({
       {/* Left: About */}
       <div>
         <span className="text-sm font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
-          About SafeLink
+          {t("landing.aboutTitle")}
         </span>
 
         <h2 className="mt-4 max-w-xl text-3xl font-semibold leading-tight text-[#176B3A] sm:text-4xl lg:text-5xl">
-          A safer link between you and the support you deserve.
+          {t("landing.aboutHeadline")}
         </h2>
 
         <p className="mt-6 max-w-xl text-base leading-7 text-[#173B28]/75 sm:text-lg">
-          SafeLink makes it easier for people affected by Gender-Based
-          Violence to find reliable information, seek support, and connect
-          with trusted people in a safer environment.
+          {t("landing.aboutDescription")}
         </p>
 
         <p className="mt-4 max-w-xl text-base leading-7 text-[#173B28]/65">
-          Asking for help should never be something to feel ashamed of.
-          Your experience matters, and you deserve to be heard.
+          {t("landing.aboutReassurance")}
         </p>
 
         <button
@@ -416,7 +392,7 @@ function LandingPage({
           onClick={onNeedHelp}
           className="group mt-7 inline-flex items-center gap-3 rounded-full bg-[#2F8F4E] px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#176B3A]"
         >
-          <span>Find Support</span>
+          <span>{t("landing.findSupport")}</span>
           <span className="transition-transform duration-200 group-hover:translate-x-1">
             →
           </span>
@@ -427,27 +403,26 @@ function LandingPage({
       <div className="border-l-2 border-[#2F8F4E] pl-8 lg:pl-10">
 
         <p className="text-2xl font-medium leading-relaxed text-[#176B3A] sm:text-3xl">
-          “You do not have to face it alone.”
+          “{t("landing.quote")}”
         </p>
 
         <div className="mt-8 space-y-5">
 
           <div>
             <h3 className="text-base font-semibold text-[#176B3A]">
-              Privacy matters
+              {t("landing.privacyMatters")}
             </h3>
             <p className="mt-1 text-sm leading-6 text-[#173B28]/65">
-              Your journey deserves respect, privacy, and care.
+              {t("landing.privacyDescription")}
             </p>
           </div>
 
           <div>
             <h3 className="text-base font-semibold text-[#176B3A]">
-              Support is for everyone
+              {t("landing.supportEveryone")}
             </h3>
             <p className="mt-1 text-sm leading-6 text-[#173B28]/65">
-              Everyone affected by Gender-Based Violence deserves access
-              to support.
+              {t("landing.supportEveryoneDescription")}
             </p>
           </div>
 
@@ -465,15 +440,15 @@ function LandingPage({
     {/* Header */}
     <div className="max-w-2xl">
       <span className="text-sm font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
-        How SafeLink Works
+        {t("landing.howItWorks")}
       </span>
 
       <h2 className="mt-4 text-3xl font-semibold text-[#176B3A] sm:text-4xl">
-        Support when you need it.
+        {t("landing.supportTitle")}
       </h2>
 
       <p className="mt-4 text-base leading-7 text-[#173B28]/70">
-        Getting support doesn't have to be complicated.
+        {t("landing.supportDescription")}
       </p>
     </div>
 
@@ -490,11 +465,11 @@ function LandingPage({
 
           <div>
             <h3 className="text-lg font-semibold text-[#176B3A]">
-              Create a Safe Session
+              {t("landing.stepOneTitle")}
             </h3>
 
             <p className="mt-2 max-w-xs text-sm leading-6 text-[#173B28]/65">
-              Start a private session and choose the kind of support you need.
+              {t("landing.stepOneDescription")}
             </p>
           </div>
         </div>
@@ -512,12 +487,11 @@ function LandingPage({
 
           <div>
             <h3 className="text-lg font-semibold text-[#176B3A]">
-              Tell Us What You Need
+              {t("landing.stepTwoTitle")}
             </h3>
 
             <p className="mt-2 max-w-xs text-sm leading-6 text-[#173B28]/65">
-              Share only what you feel comfortable sharing and explore
-              available resources.
+              {t("landing.stepTwoDescription")}
             </p>
           </div>
         </div>
@@ -535,11 +509,11 @@ function LandingPage({
 
           <div>
             <h3 className="text-lg font-semibold text-[#176B3A]">
-              Connect With Support
+              {t("landing.stepThreeTitle")}
             </h3>
 
             <p className="mt-2 max-w-xs text-sm leading-6 text-[#173B28]/65">
-              Access trusted advisors and relevant support for your situation.
+              {t("landing.stepThreeDescription")}
             </p>
           </div>
         </div>
@@ -564,12 +538,11 @@ function LandingPage({
       </span>
 
       <h2 className="mt-5 text-3xl font-semibold tracking-tight text-[#176B3A] sm:text-4xl lg:text-5xl">
-        Questions you may have
+        {t("landing.questionsTitle")}
       </h2>
 
       <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-[#173B28]/65">
-        Everything you need to know about SafeLink and how you can access
-        support.
+        {t("landing.questionsDescription")}
       </p>
     </div>
 
@@ -610,7 +583,7 @@ function LandingPage({
                     isOpen ? "text-[#176B3A]" : "text-[#173B28]"
                   }`}
                 >
-                  {faq.question}
+                  {t(faq.question)}
                 </span>
               </div>
 
@@ -636,7 +609,7 @@ function LandingPage({
               <div className="overflow-hidden">
                 <div className="px-6 pb-6 pl-[4.5rem] pr-8 sm:px-7 sm:pb-7 sm:pl-[4.75rem]">
                   <p className="max-w-3xl text-sm leading-7 text-[#173B28]/65 sm:text-base">
-                    {faq.answer}
+                    {t(faq.answer)}
                   </p>
                 </div>
               </div>
@@ -664,16 +637,15 @@ function LandingPage({
         {/* Text */}
         <div className="max-w-2xl">
           <span className="text-sm font-semibold uppercase tracking-[0.16em] text-[#2F8F4E]">
-            We're here for you
+            {t("landing.hereForYou")}
           </span>
 
           <h2 className="mt-4 max-w-xl text-3xl font-semibold leading-tight tracking-tight text-[#176B3A] sm:text-4xl lg:text-[2.75rem]">
-            You don't have to figure it out alone.
+            {t("landing.ctaTitle")}
           </h2>
 
           <p className="mt-5 max-w-xl text-base leading-7 text-[#173B28]/75 sm:text-lg">
-            If you need someone to talk to or help finding the right support,
-            SafeLink can help you take the next step.
+            {t("landing.ctaDescription")}
           </p>
         </div>
 
@@ -684,14 +656,14 @@ function LandingPage({
             onClick={onNeedHelp}
             className="group inline-flex items-center gap-3 rounded-full bg-[#176B3A] px-7 py-4 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#176B3A] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#176B3A] focus:ring-offset-4 focus:ring-offset-[#E7F1E3]"
           >
-            Get support
+            {t("landing.getSupport")}
             <span className="text-lg leading-none transition-transform duration-200 group-hover:translate-x-1">
               →
             </span>
           </button>
 
           <p className="mt-3 text-center text-xs text-[#173B28]/60 lg:text-left">
-            Take the first step when you're ready.
+            {t("landing.readyNote")}
           </p>
         </div>
       </div>
@@ -754,7 +726,7 @@ function LandingPage({
       <div className="lg:col-span-3">
 
         <h4 className="text-sm font-semibold uppercase tracking-wide text-[#2F8F4E]">
-          Contact
+          {t("landing.contact")}
         </h4>
 
         <div className="mt-4 space-y-3">
@@ -782,7 +754,7 @@ function LandingPage({
       <div className="lg:col-span-4">
 
         <h4 className="text-sm font-semibold uppercase tracking-wide text-[#2F8F4E]">
-          Safety & Legal
+          {t("landing.safetyLegal")}
         </h4>
 
         <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3">
@@ -791,28 +763,28 @@ function LandingPage({
             type="button"
             className="text-left text-sm text-white/60 transition hover:text-[#2F8F4E]"
           >
-            Privacy Policy
+            {t("landing.privacyPolicy")}
           </button>
 
           <button
             type="button"
             className="text-left text-sm text-white/60 transition hover:text-[#2F8F4E]"
           >
-            Terms of Use
+            {t("landing.terms")}
           </button>
 
           <button
             type="button"
             className="text-left text-sm text-white/60 transition hover:text-[#2F8F4E]"
           >
-            Safety & Security
+            {t("landing.safetySecurity")}
           </button>
 
           <button
             type="button"
             className="text-left text-sm text-white/60 transition hover:text-[#2F8F4E]"
           >
-            Accessibility
+            {t("landing.accessibility")}
           </button>
 
         </div>
@@ -833,11 +805,11 @@ function LandingPage({
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 
       <p className="text-xs text-white/50">
-        © {new Date().getFullYear()} SafeLink Ethiopia. All rights reserved.
+        {t("landing.copyright", { year: new Date().getFullYear() })}
       </p>
 
       <p className="text-xs text-white/30">
-        Built with care for safer communities.
+        {t("landing.footerNote")}
       </p>
 
     </div>

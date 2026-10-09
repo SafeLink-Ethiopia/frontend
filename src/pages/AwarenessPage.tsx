@@ -10,23 +10,27 @@ import {
 import {
   getAwarenessPosts,
   type AwarenessPost,
-  type Language,
 } from "../api/awarenessApi";
+import { useLanguage } from "../context/LanguageContext";
+import { useTranslation } from "react-i18next";
 
 export default function AwarenessPage() {
   const [posts, setPosts] = useState<AwarenessPost[]>([]);
-  const [language, setLanguage] = useState<Language>("en");
+  const { language, setLanguage } = useLanguage();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [hasError, setHasError] = useState(false);
 
   // New: which article is open (null = list view)
   const [selectedPost, setSelectedPost] =
     useState<AwarenessPost | null>(null);
 function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
+  const { t } = useTranslation();
+
   return (
     <img
       src="/safelink-logo.png"
-      alt="SafeLink logo"
+      alt={t("common.logoAlt")}
       className={`${className} object-contain`}
       draggable={false}
     />
@@ -36,13 +40,13 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
     const loadPosts = async () => {
       try {
         setLoading(true);
-        setError("");
+        setHasError(false);
 
         const data = await getAwarenessPosts();
         setPosts(data);
       } catch (err) {
         console.error("Failed to load awareness posts:", err);
-        setError("Failed to load awareness posts.");
+        setHasError(true);
       } finally {
         setLoading(false);
       }
@@ -81,7 +85,7 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
                 type="button"
                 onClick={() => setSelectedPost(null)}
                 className="group flex items-center gap-3"
-                aria-label="Back to resources"
+                aria-label={t("awareness.backToResources")}
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2F8F4E] transition group-hover:bg-[#176B3A]">
                   <ArrowLeft
@@ -92,21 +96,17 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
 
                 <div className="text-left">
                   <p className="text-sm font-bold text-[#176B3A] transition group-hover:text-[#2F8F4E]">
-                    Back to resources
+                    {t("awareness.backToResources")}
                   </p>
 
                   <p className="mt-0.5 text-[9px] font-semibold tracking-[0.25em] text-[#2F8F4E]">
-                    AWARENESS
+                    {t("common.awareness")}
                   </p>
                 </div>
               </button>
 
               <span className="hidden rounded-full border border-[#2F8F4E]/30 bg-[#E7F1E3] px-3.5 py-1.5 text-xs font-semibold text-[#2F8F4E] sm:inline-flex">
-                {language === "en"
-                  ? "English"
-                  : language === "am"
-                  ? "አማርኛ"
-                  : "Afaan Oromoo"}
+                {t(`language.${language}`)}
               </span>
             </nav>
           </div>
@@ -119,14 +119,14 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
           {/* Eyebrow */}
           <div className="flex flex-wrap items-center gap-3">
             <span className="inline-flex rounded-full bg-[#E7F1E3] px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-[#2F8F4E]">
-              SafeLink Resource
+              {t("awareness.resource")}
             </span>
 
             <span className="inline-flex items-center gap-1.5 text-xs text-[#173B28]/60">
               <CalendarDays size={13} />
               {new Date(
                 selectedPost.created_at,
-              ).toLocaleDateString()}
+              ).toLocaleDateString(language === "am" ? "am-ET" : language === "om" ? "om-ET" : "en")}
             </span>
           </div>
 
@@ -154,7 +154,7 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
                 size={16}
                 className="transition-transform duration-200 group-hover:-translate-x-1"
               />
-              Back to all resources
+              {t("awareness.backToAllResources")}
             </button>
           </div>
         </article>
@@ -188,7 +188,7 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
             </div>
 
             <span className="hidden rounded-full border border-[#2F8F4E]/30 bg-[#E7F1E3] px-3.5 py-1.5 text-xs font-semibold text-[#2F8F4E] sm:inline-flex">
-              Awareness Center
+              {t("awareness.title")}
             </span>
           </nav>
         </div>
@@ -207,19 +207,17 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
 
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#2F8F4E]/30 bg-white/70 px-3.5 py-1.5 text-xs font-medium text-[#2F8F4E] backdrop-blur-md">
             
-            SafeLink Knowledge Center
+            {t("awareness.title")}
           </div>
 
           <h1 className="text-3xl font-bold tracking-tight text-[#176B3A] sm:text-4xl lg:text-5xl">
-            Awareness & Resources
+            {t("awareness.title")}
           </h1>
 
           <div className="mx-auto mt-6 h-1 w-20 rounded-full bg-[#2F8F4E]" />
 
           <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-[#173B28]/75 sm:text-base sm:leading-8">
-            Trusted information and practical resources to help you
-            stay informed, understand important topics, and make
-            safer decisions.
+            {t("awareness.heroDescription")}
           </p>
         </div>
       </section>
@@ -241,11 +239,11 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
 
               <div>
                 <h2 className="text-sm font-semibold text-[#176B3A]">
-                  Choose your language
+                  {t("awareness.chooseLanguage")}
                 </h2>
 
                 <p className="mt-0.5 text-xs text-[#173B28]/60">
-                  Read resources in your preferred language.
+                  {t("awareness.languageDescription")}
                 </p>
               </div>
             </div>
@@ -260,7 +258,7 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
                     : "border border-[#2F8F4E]/40 bg-white text-[#2F8F4E] hover:-translate-y-0.5 hover:border-[#2F8F4E] hover:bg-[#FAFBF7]"
                 }`}
               >
-                English
+                {t("language.en")}
               </button>
 
               <button
@@ -272,7 +270,7 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
                     : "border border-[#2F8F4E]/40 bg-white text-[#2F8F4E] hover:-translate-y-0.5 hover:border-[#2F8F4E] hover:bg-[#FAFBF7]"
                 }`}
               >
-                አማርኛ
+                {t("language.am")}
               </button>
 
               <button
@@ -284,31 +282,28 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
                     : "border border-[#2F8F4E]/40 bg-white text-[#2F8F4E] hover:-translate-y-0.5 hover:border-[#2F8F4E] hover:bg-[#FAFBF7]"
                 }`}
               >
-                Afaan Oromoo
+                {t("language.om")}
               </button>
             </div>
           </div>
         </section>
 
         {/* Section Heading */}
-        {!loading && !error && filteredPosts.length > 0 && (
+        {!loading && !hasError && filteredPosts.length > 0 && (
           <div className="mb-8 flex items-end justify-between gap-4">
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#2F8F4E]">
-                Knowledge & Support
+                {t("awareness.knowledge")}
               </p>
 
               <h2 className="text-2xl font-semibold text-[#176B3A] sm:text-3xl">
-                Latest resources
+                {t("awareness.latest")}
               </h2>
             </div>
 
             <div className="hidden items-center gap-2 rounded-full bg-[#E7F1E3] px-3.5 py-1.5 text-xs font-medium text-[#2F8F4E] sm:flex">
               <BookOpen size={13} />
-              {filteredPosts.length}{" "}
-              {filteredPosts.length === 1
-                ? "resource"
-                : "resources"}
+              {t("awareness.resource", { count: filteredPosts.length })}
             </div>
           </div>
         )}
@@ -326,11 +321,11 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
 
               <div className="text-center">
                 <p className="text-sm font-semibold text-[#176B3A]">
-                  Loading resources
+                  {t("awareness.loading")}
                 </p>
 
                 <p className="mt-1 text-xs text-[#173B28]/60">
-                  Please wait while we fetch the latest information.
+                  {t("awareness.loadingDescription")}
                 </p>
               </div>
             </div>
@@ -338,7 +333,7 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
         )}
 
         {/* Error */}
-        {!loading && error && (
+        {!loading && hasError && (
           <div className="rounded-2xl border border-[#2F8F4E]/30 bg-[#E7F1E3] p-8 text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#2F8F4E]">
               <ShieldCheck
@@ -348,17 +343,17 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
             </div>
 
             <h3 className="font-semibold text-[#176B3A]">
-              Unable to load resources
+              {t("awareness.loadError")}
             </h3>
 
             <p className="mt-2 text-sm text-[#173B28]/70">
-              {error}
+              {t("awareness.loadFailureMessage")}
             </p>
           </div>
         )}
 
         {/* No Posts */}
-        {!loading && !error && filteredPosts.length === 0 && (
+        {!loading && !hasError && filteredPosts.length === 0 && (
           <div className="rounded-2xl border border-[#2F8F4E]/30 bg-white p-10 text-center shadow-sm">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E7F1E3]">
               <BookOpen
@@ -368,12 +363,11 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
             </div>
 
             <h3 className="text-lg font-semibold text-[#176B3A]">
-              No resources available
+              {t("awareness.none")}
             </h3>
 
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#173B28]/65">
-              No awareness posts are available in this language
-              yet. Please try another language or check back later.
+              {t("awareness.noneDescription")}
             </p>
           </div>
         )}
@@ -381,7 +375,7 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
         {/* =========================================================
             POSTS — Medium-style cards
         ========================================================= */}
-        {!loading && !error && filteredPosts.length > 0 && (
+        {!loading && !hasError && filteredPosts.length > 0 && (
           <div className="grid gap-5 lg:grid-cols-2">
             {filteredPosts.map((post, index) => (
               <article
@@ -462,7 +456,7 @@ function LogoMark({ className = "h-10 w-10" }: { className?: string }) {
         {/* =========================================================
             BOTTOM TRUST SECTION — deep forest band
         ========================================================= */}
-        {!loading && !error && filteredPosts.length > 0 && (
+        {!loading && !hasError && filteredPosts.length > 0 && (
           <div className="mt-12 rounded-[2rem] bg-[#176B3A] px-6 py-8 sm:px-10">
             <div className="flex flex-col items-center gap-5 text-center sm:flex-row sm:text-left">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#E7F1E3]">

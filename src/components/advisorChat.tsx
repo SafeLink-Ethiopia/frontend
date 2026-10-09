@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   getAdvisorConversation,
   sendAdvisorMessage,
@@ -25,6 +26,7 @@ const COLORS = {
 
 export default function AdvisorConversation() {
   const { conversationId } = useParams<{ conversationId: string }>();
+  const { t } = useTranslation();
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [message, setMessage] = useState("");
@@ -44,7 +46,7 @@ export default function AdvisorConversation() {
       setError("");
     } catch (err) {
       console.error(err);
-      setError("Unable to load this conversation.");
+      setError(t("conversation.loadError"));
     } finally {
       setLoading(false);
     }
@@ -88,7 +90,7 @@ export default function AdvisorConversation() {
       setMessage("");
     } catch (err) {
       console.error(err);
-      setError("Unable to send your message.");
+      setError(t("conversation.sendError"));
     } finally {
       setSending(false);
     }
@@ -120,7 +122,7 @@ export default function AdvisorConversation() {
           />
 
           <p className="text-sm font-medium" style={{ color: COLORS.ink }}>
-            Loading conversation...
+            {t("conversation.loading")}
           </p>
         </div>
       </main>
@@ -151,11 +153,11 @@ export default function AdvisorConversation() {
           </div>
 
           <h2 className="text-xl font-bold" style={{ color: COLORS.forest }}>
-            Conversation unavailable
+            {t("conversation.unavailable")}
           </h2>
 
           <p className="mt-2 text-sm" style={{ color: COLORS.ink }}>
-            {error || "Conversation not found."}
+            {error || t("conversation.notFound")}
           </p>
         </div>
       </main>
@@ -192,7 +194,7 @@ export default function AdvisorConversation() {
                 backgroundColor: COLORS.mist,
                 color: COLORS.forest,
               }}
-              title="Back"
+              title={t("conversation.back")}
             >
               <ArrowLeft size={20} />
             </button>
@@ -214,11 +216,13 @@ export default function AdvisorConversation() {
                 className="truncate text-base font-bold capitalize md:text-lg"
                 style={{ color: COLORS.forest }}
               >
-                {conversation.advisor_type} Advisor
+                {t(`conversation.advisor.${conversation.advisor_type}`, {
+                  defaultValue: conversation.advisor_type,
+                })}
               </h1>
 
               <p className="truncate text-xs" style={{ color: COLORS.ink }}>
-                SafeLink Advisor • Online conversation
+                {t("conversation.chatSubtitle")}
               </p>
             </div>
           </div>
@@ -230,7 +234,7 @@ export default function AdvisorConversation() {
             style={{
               color: COLORS.forest,
             }}
-            title="More options"
+            title={t("conversation.moreOptions")}
           >
             <MoreVertical size={21} />
           </button>
@@ -330,7 +334,7 @@ export default function AdvisorConversation() {
                             color: isAdvisor ? COLORS.mint : COLORS.leaf,
                           }}
                         >
-                          {isAdvisor ? "You" : "User"}
+                          {t(isAdvisor ? "conversation.you" : "conversation.user")}
                         </p>
 
                         {/* Message text */}
@@ -380,7 +384,7 @@ export default function AdvisorConversation() {
                 backgroundColor: COLORS.mist,
                 color: COLORS.forest,
               }}
-              title="Attach"
+              title={t("conversation.attach")}
             >
               <Paperclip size={20} />
             </button>
@@ -403,7 +407,7 @@ export default function AdvisorConversation() {
                     handleSendMessage();
                   }
                 }}
-                placeholder="Write a message..."
+                placeholder={t("conversation.writeMessage")}
                 disabled={sending}
                 className="w-full bg-transparent text-sm outline-none"
                 style={{
@@ -422,7 +426,7 @@ export default function AdvisorConversation() {
                 backgroundColor: COLORS.leaf,
                 color: COLORS.mist,
               }}
-              title="Send message"
+              title={t("conversation.sendMessage")}
             >
               {sending ? (
                 <div

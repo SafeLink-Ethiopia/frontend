@@ -1,8 +1,11 @@
+import { useTranslation } from "react-i18next";
+
 interface QuickExitProps {
   onExit?: () => void;
 }
 
 export default function QuickExit({ onExit }: QuickExitProps = {}) {
+  const { t } = useTranslation();
   const handleQuickExit = () => {
     if (onExit) {
       onExit();
@@ -16,7 +19,7 @@ export default function QuickExit({ onExit }: QuickExitProps = {}) {
     <button
       type="button"
       onClick={handleQuickExit}
-      aria-label="Quick Exit"
+      aria-label={t("quickExit")}
       className="fixed right-5 top-5 z-50 flex items-center gap-2 border border-[#a79093] bg-[#f7f5f6] px-4 py-2.5 text-sm font-semibold text-[#3e1919] shadow-sm transition hover:border-[#3e1919] hover:bg-[#f0e2d6] focus:outline-none focus:ring-2 focus:ring-[#a79093] focus:ring-offset-2"
     >
       <span
@@ -26,7 +29,7 @@ export default function QuickExit({ onExit }: QuickExitProps = {}) {
         ×
       </span>
 
-      <span>Quick Exit</span>
+      <span>{t("quickExit")}</span>
     </button>
   );
 }
