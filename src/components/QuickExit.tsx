@@ -4,6 +4,10 @@ interface QuickExitProps {
   onExit?: () => void;
 }
 
+export function executeQuickExit(): void {
+  window.location.replace("https://www.google.com");
+}
+
 export default function QuickExit({ onExit }: QuickExitProps = {}) {
   const { t } = useTranslation();
   const handleQuickExit = () => {
@@ -12,7 +16,7 @@ export default function QuickExit({ onExit }: QuickExitProps = {}) {
       return;
     }
 
-    window.location.replace("https://www.google.com");
+    executeQuickExit();
   };
 
   return (

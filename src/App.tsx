@@ -28,6 +28,7 @@ import LandingPage from "./pages/LandingPage";
 import CreateSessionPage from "./pages/CreateSessionPage";
 import SessionCreatedPage from "./pages/SessionCreatedPage";
 import LoginPage from "./pages/LoginPage";
+import { Assistant } from "./components/Assistant";
 
 
 
@@ -148,6 +149,7 @@ function App() {
   return (
     <BrowserRouter>
       <LanguageSwitcher />
+      <Assistant />
       <Routes>
         {/* =====================================================
             PUBLIC ROUTES
@@ -322,9 +324,6 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {/* Global Assistant
-      <Assistant />
-      */}
     </BrowserRouter>
   );
 }

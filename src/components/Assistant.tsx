@@ -1,144 +1,157 @@
+import { useEffect } from "react";
+import {
+  useLocation,
+  useNavigate,
+  type NavigateFunction,
+} from "react-router-dom";
 import { VoxideClient, VoxideWidget } from "@voxide/react";
+import {
+  getUserConversations,
+  requestAdvisor,
+  type AdvisorType,
+} from "../api/conversationApi";
+import { getSafelinkId, getSavedLanguage } from "../services/session";
+import { executeQuickExit } from "./QuickExit";
 
-type Language = "en" | "am" | "om";
-type AwarenessSlug = "consent" | "harassment";
+const publicKey = import.meta.env.VITE_VOXIDE_PUBLIC_KEY;
 
-// ---------------------------------------------------------------------
-// Read the language saved when the SafeLink session was created.
-// Falls back to English if there is no valid saved language.
-// ---------------------------------------------------------------------
-function getSavedLanguage(): Language {
-  try {
-    const saved = localStorage.getItem("safelink_session");
-
-    if (!saved) {
-      return "en";
-    }
-
-    const parsed = JSON.parse(saved);
-
-    if (parsed?.language === "am") {
-      return "am";
-    }
-
-    if (parsed?.language === "om") {
-      return "om";
-    }
-
-    return "en";
-  } catch {
-    return "en";
-  }
-}
-
-// ---------------------------------------------------------------------
-// Get the Voxide public key for the current language.
-//
-// If language-specific keys are not configured, the default key is used.
-// ---------------------------------------------------------------------
-function getPublicKeyForLanguage(language: Language): string {
-  const languageKeys: Record<Language, string | undefined> = {
-    en: import.meta.env.VITE_VOXIDE_PUBLIC_KEY_EN,
-    am: import.meta.env.VITE_VOXIDE_PUBLIC_KEY_AM,
-    om: import.meta.env.VITE_VOXIDE_PUBLIC_KEY_OM,
-  };
-
-  const key = languageKeys[language] || import.meta.env.VITE_VOXIDE_PUBLIC_KEY_DEFAULT;
-
-  if (!key) {
-    console.error(
-      "[Assistant] No Voxide public key found in .env. " +
-        "Check VITE_VOXIDE_PUBLIC_KEY_DEFAULT.",
-    );
-  }
-
-  return key ?? "";
-}
-
-// ---------------------------------------------------------------------
-// Session configuration
-// ---------------------------------------------------------------------
-const currentLanguage = getSavedLanguage();
-const publicKey = getPublicKeyForLanguage(currentLanguage);
-
-console.log("[Assistant] Using language:", currentLanguage);
-
-if (publicKey) {
-  console.log(
-    "[Assistant] Using key ending in:",
-    publicKey.slice(-6),
+if (!publicKey) {
+  console.error(
+    "[Assistant] VITE_VOXIDE_PUBLIC_KEY is not configured.",
   );
 }
 
 const ai = new VoxideClient({
-  publicKey,
+  publicKey: publicKey ?? "",
 });
 
-// ---------------------------------------------------------------------
-// Navigation helpers
-// ---------------------------------------------------------------------
-function goToMedicalFlow(): void {
-  window.location.href = "/medical";
-}
+let navigateTo: NavigateFunction | null = null;
 
-function showAwarenessPage(slug: AwarenessSlug): void {
-  window.location.href = `/awareness/${slug}`;
-}
+const advisorTypes: AdvisorType[] = [
+  "general",
+  "medical",
+  "legal",
+  "psychological",
+];
 
-// ---------------------------------------------------------------------
-// AI actions
-// ---------------------------------------------------------------------
 ai.register({
-  requestMedicalSupport: {
+  startAdvisorConversation: {
     description:
-      "Connect the user with a medical advisor. Trigger this when the user says they need medical help, need to see a doctor, or need medical support.",
-    params: {},
-    handler: async (): Promise<{ status: string }> => {
-      goToMedicalFlow();
+      "Start or open a private conversation with the requested SafeLink advisor type: general, medical, legal, or psychological. Use this when the user asks to talk to, connect with, or request one of these advisors.",
+    params: {
+      advisorType: {
+        type: "string",
+        required: true,
+        enum: advisorTypes,
+        description:
+          "The advisor type the user wants: general, medical, legal, or psychological.",
+      },
+    },
+    dangerous: false,
+    handler: async (args) => {
+      const requestedAdvisorType = args.advisorType;
+
+      if (
+        typeof requestedAdvisorType !== "string" ||
+        !advisorTypes.includes(requestedAdvisorType as AdvisorType)
+      ) {
+        throw new Error("Unsupported advisor type.");
+      }
+
+      const advisorType = requestedAdvisorType as AdvisorType;
+      const sessionId = getSafelinkId();
+      if (!sessionId) {
+        navigateTo?.("/create");
+        return {
+          status: "session_required",
+          message: "The user needs to create or continue a SafeLink session first.",
+        };
+      }
+
+      const conversations = await getUserConversations(sessionId);
+      const existingConversation = conversations.find(
+        (conversation) => conversation.advisor_type === advisorType,
+      );
+
+      if (!existingConversation) {
+        await requestAdvisor(sessionId, advisorType);
+      }
+
+      localStorage.setItem("safelink_selected_advisor", advisorType);
+      localStorage.setItem(
+        `safelink_selected_advisor_${sessionId}`,
+        advisorType,
+      );
+      navigateTo?.("/user/dashboard/chat");
 
       return {
-        status: "connecting",
+        status: existingConversation ? "opened" : "started",
+        advisorType,
       };
     },
   },
 
-  explainConsent: {
+  goToAwareness: {
     description:
-      "Explain what consent means. Trigger this when the user asks what consent is or wants to learn about consent.",
+      "Open SafeLink's awareness and education section, where the user can read safety and support information.",
     params: {},
+    dangerous: false,
     handler: (): { status: string } => {
-      showAwarenessPage("consent");
-
-      return {
-        status: "shown",
-      };
+      navigateTo?.("/awareness");
+      return { status: "opened" };
     },
   },
 
-  explainHarassment: {
+  quickExit: {
     description:
-      "Explain what sexual harassment is. Trigger this when the user asks what sexual harassment is or wants to learn about it.",
+      "Immediately leave SafeLink and open a neutral external page using the app's existing Quick Exit behavior. Use this when the user asks to leave quickly or says they need a quick exit.",
     params: {},
+    dangerous: false,
     handler: (): { status: string } => {
-      showAwarenessPage("harassment");
+      executeQuickExit();
+      return { status: "exited" };
+    },
+  },
 
-      return {
-        status: "shown",
-      };
+  goToDashboard: {
+    description:
+      "Open the user's SafeLink private dashboard. Use this when the user asks to go home, see their dashboard, or return to their private space.",
+    params: {},
+    dangerous: false,
+    handler: (): { status: string } => {
+      navigateTo?.("/user/dashboard");
+      return { status: "opened" };
     },
   },
 });
 
-// ---------------------------------------------------------------------
-// Give Voxide the current SafeLink session language.
-// ---------------------------------------------------------------------
-ai.bindState(() => ({
-  language: currentLanguage,
-}));
+ai.bindState(() => {
+  const sessionId = getSafelinkId();
 
-// ---------------------------------------------------------------------
-// Assistant widget
-// ---------------------------------------------------------------------
+  // preferredLanguage tells the assistant which language the user is using so it can respond in kind.
+  return {
+    currentRoute: window.location.pathname,
+    preferredLanguage: getSavedLanguage(),
+    hasSession: Boolean(sessionId),
+  };
+});
+
 export function Assistant() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  navigateTo = navigate;
+  ai.setActiveRoute(location.pathname);
+
+  useEffect(() => {
+    navigateTo = navigate;
+
+    return () => {
+      if (navigateTo === navigate) {
+        navigateTo = null;
+      }
+    };
+  }, [navigate]);
+
   return <VoxideWidget client={ai} />;
 }
