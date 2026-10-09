@@ -163,7 +163,7 @@ export default function AdminAdvisorChat() {
         setError("");
 
         const response = await axios.get<ConversationResponse>(
-          `${API_URL}/admin-advisor-conversations/advisor/${advisorId}`,
+          `${API_URL}/advisor-admin-conversations/advisor/${advisorId}`,
           { headers: { Authorization: `Bearer ${adminToken}` } },
         );
 
