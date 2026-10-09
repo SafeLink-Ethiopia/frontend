@@ -14,7 +14,7 @@ const navItems = [
   { label: "Profile", path: "/user/profile", icon: User },
   { label: "Advisor Chat", path: "/user/dashboard/chat", icon: MessageCircle },
   { label: "Awareness", path: "/awareness", icon: BookOpen },
-  { label: "Information", path: "/information", icon: Info },
+  
 ];
 
 type UserSidebarProps = {

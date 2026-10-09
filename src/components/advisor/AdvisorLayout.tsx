@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import AdvisorSidebar from "./AdvisorSidebar";
 
 export default function AdvisorLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -12,34 +13,61 @@ export default function AdvisorLayout() {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-[#f7f5f6]">
+    <div className="min-h-screen bg-[#FAFBF7] text-[#173B28]">
       <AdvisorSidebar
         mobileMenuOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
       />
+
       {mobileMenuOpen && (
         <button
           type="button"
-          aria-label="Close advisor navigation"
+          aria-label="Close advisor navigation overlay"
           onClick={() => setMobileMenuOpen(false)}
-          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          className="fixed inset-0 z-40 bg-[#173B28]/35 lg:hidden"
         />
       )}
-      <main className="min-h-screen bg-[#f7f5f6] lg:ml-[300px]">
-        <header className="flex items-center gap-3 border-b border-[#a79093]/25 bg-[#f7f5f6] px-4 py-3 lg:hidden">
+
+      {/* Sidebar stays fixed; route content changes inside this area. */}
+      <div className="min-h-screen min-w-0 lg:ml-[230px]">
+        {/* Mobile header */}
+        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-[#DCE8D9] bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
           <button
             type="button"
             aria-label="Open advisor navigation"
             aria-expanded={mobileMenuOpen}
             onClick={() => setMobileMenuOpen(true)}
-            className="rounded-lg p-2 text-[#3e1919] hover:bg-[#f0e2d6]"
+            className="rounded-lg p-2 text-[#176B3A] transition hover:bg-[#E7F1E3] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F8F4E]"
           >
             <Menu size={22} />
           </button>
-          <span className="font-bold text-[#3e1919]">SafeLink</span>
+
+          <button
+            type="button"
+            onClick={() => navigate("/advisor/dashboard")}
+            className="flex min-w-0 items-center gap-2.5 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F8F4E]"
+            aria-label="Go to Advisor Dashboard"
+          >
+            <img
+              src="/safelink-logo.png"
+              alt="SafeLink logo"
+              className="h-auto w-8 shrink-0 object-contain"
+            />
+            <span className="min-w-0">
+              <span className="block font-bold leading-tight text-[#173B28]">
+                SafeLink
+              </span>
+              <span className="block text-[7px] font-semibold tracking-[0.16em] text-[#7B8F82]">
+                PRIVATE SUPPORT
+              </span>
+            </span>
+          </button>
         </header>
-        <Outlet />
-      </main>
+
+        <main className="min-h-[calc(100vh-56px)] min-w-0 bg-[#FAFBF7] lg:min-h-screen">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

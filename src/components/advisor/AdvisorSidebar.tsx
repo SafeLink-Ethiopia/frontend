@@ -4,8 +4,7 @@ import {
   MessageSquare,
   MessageCircle,
   Diamond,
-  Heart,
-  Info,
+  
   User,
   LogOut,
   X,
@@ -16,6 +15,36 @@ type AdvisorSidebarProps = {
   onClose: () => void;
 };
 
+const navigationLinks = [
+  {
+    label: "Dashboard",
+    path: "/advisor/dashboard",
+    icon: Home,
+  },
+  {
+    label: "User Conversations",
+    path: "/advisor",
+    icon: MessageSquare,
+    end: true,
+  },
+  {
+    label: "Admin Chat",
+    path: "/advisor/messages",
+    icon: MessageCircle,
+  },
+  {
+    label: "Awareness",
+    path: "/advisor/awareness",
+    icon: Diamond,
+  },
+
+  {
+    label: "Profile",
+    path: "/advisor/profile",
+    icon: User,
+  },
+];
+
 export default function AdvisorSidebar({
   mobileMenuOpen,
   onClose,
@@ -25,125 +54,103 @@ export default function AdvisorSidebar({
   function handleLogout() {
     localStorage.removeItem("advisor_token");
     localStorage.removeItem("advisor_profile");
-    navigate("/advisor/login");
+    navigate("/", { replace: true });
+    onClose();
   }
 
   return (
     <aside
-      className={`${
+      aria-label="Advisor navigation"
+      className={`fixed inset-y-0 left-0 z-50 h-screen flex-col overflow-y-auto border-r border-[#DCE8D9] bg-white px-4 py-6 transition-transform duration-200 lg:w-[230px] lg:translate-x-0 ${
         mobileMenuOpen
-          ? "fixed inset-y-0 left-0 z-50 flex w-[min(85vw,300px)] shadow-xl"
-          : "fixed inset-y-0 left-0 z-40 hidden w-[300px] lg:flex"
-      } h-screen flex-col overflow-y-auto bg-[#3e1919] px-5 py-9`}
+          ? "flex w-[min(85vw,300px)] shadow-xl lg:w-[230px]"
+          : "hidden w-[230px] lg:flex"
+      }`}
     >
-      <div className="mb-10 flex items-center justify-between gap-4 px-2">
-        <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f0e2d6]">
-            <Heart size={29} strokeWidth={2} className="text-[#3e1919]" />
-          </div>
-          <div>
-            <h1 className="text-[25px] font-bold leading-none text-[#f7f5f6]">
-              SafeLink
-            </h1>
-            <p className="mt-2 text-[10px] font-bold tracking-[3px] text-[#a79093]">
-              PRIVATE SUPPORT
-            </p>
-          </div>
-        </div>
+      {/* SafeLink logo and brand */}
+      <div className="mb-8 px-2 pt-1">
         <button
           type="button"
-          onClick={onClose}
-          aria-label="Close advisor navigation"
-          className="rounded-lg p-2 text-[#f0e2d6] hover:bg-[#f0e2d6]/10 lg:hidden"
+          onClick={() => {
+            navigate("/advisor/dashboard");
+            onClose();
+          }}
+          className="flex items-center gap-3 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F8F4E] focus-visible:ring-offset-2"
+          aria-label="Go to Advisor Dashboard"
         >
-          <X size={20} />
+          <img
+            src="/safelink-logo.png"
+            alt="SafeLink logo"
+            className="h-auto w-10 shrink-0 object-contain"
+          />
+
+          <span className="min-w-0">
+            <span className="block text-[19px] font-bold leading-none text-[#173B28]">
+              SafeLink
+            </span>
+            <span className="mt-1.5 block text-[8px] font-semibold tracking-[0.18em] text-[#7B8F82]">
+              PRIVATE SUPPORT
+            </span>
+          </span>
         </button>
       </div>
 
-      <p className="mb-4 px-5 text-[12px] font-bold tracking-[2px] text-[#a79093]">
-        YOUR SPACE
+      <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#8A9A90]">
+        Your space
       </p>
 
       {/* Navigation */}
-      <nav className="space-y-2">
-        {[
-          {
-            label: "Dashboard",
-            path: "/advisor/dashboard",
-            icon: Home,
-          },
-          {
-            label: "User Conversations",
-            path: "/advisor",
-            icon: MessageSquare,
-          },
-          {
-            label: "Admin Chat",
-            path: "/advisor/messages",
-            icon: MessageCircle,
-          },
-          {
-            label: "Awareness",
-            path: "/advisor/awareness",
-            icon: Diamond,
-          },
-          {
-            label: "Information",
-            path: "/advisor/information",
-            icon: Info,
-          },
-          {
-            label: "Profile",
-            path: "/advisor/profile",
-            icon: User,
-          },
-        ].map((link) => {
+      <nav className="flex-1 space-y-1" aria-label="Advisor menu">
+        {navigationLinks.map((link) => {
           const Icon = link.icon;
 
           return (
             <NavLink
               key={link.path}
               to={link.path}
-              end={link.path === "/advisor"}
+              end={link.end ?? false}
               onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center gap-5 rounded-2xl px-5 py-5 text-[17px] transition ${
+                `flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F8F4E] ${
                   isActive
-                    ? "bg-[#f0e2d6] text-[#3e1919]"
-                    : "text-[#f0e2d6] hover:bg-[#f0e2d6]/80 hover:text-[#3e1919]"
+                    ? "bg-[#E7F1E3] font-semibold text-[#176B3A]"
+                    : "text-[#607568] hover:bg-[#F4F7F2] hover:text-[#173B28]"
                 }`
               }
             >
-              <Icon size={21} strokeWidth={1.7} />
+              <Icon size={18} strokeWidth={1.8} />
               <span>{link.label}</span>
             </NavLink>
           );
         })}
       </nav>
 
-      {/* Logout */}
+      {/* Session note and logout */}
+      <div className="mt-8 border-t border-[#E4ECE2] pt-4">
+        <div className="mb-3 flex items-center gap-2 px-3 text-xs text-[#607568]">
+          <span className="h-2 w-2 shrink-0 rounded-full bg-[#2F8F4E]" />
+          Advisor workspace
+        </div>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#607568] transition-colors hover:bg-[#F4F7F2] hover:text-[#173B28] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F8F4E]"
+        >
+          <LogOut size={18} strokeWidth={1.8} />
+          <span>Logout</span>
+        </button>
+      </div>
+
+      {/* Close button on mobile */}
       <button
         type="button"
-        onClick={handleLogout}
-        className="
-          mt-auto
-          flex
-          items-center
-          gap-5
-          rounded-2xl
-          px-5
-          py-4
-          text-[16px]
-          text-[#f0e2d6]
-          transition
-          hover:bg-[#f0e2d6]
-          hover:text-[#3e1919]
-        "
+        onClick={onClose}
+        aria-label="Close advisor navigation"
+        className="absolute right-3 top-3 rounded-lg p-2 text-[#607568] transition hover:bg-[#F4F7F2] hover:text-[#173B28] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F8F4E] lg:hidden"
       >
-        <LogOut size={20} />
-        <span>Logout</span>
+        <X size={18} />
       </button>
-
     </aside>
   );
 }

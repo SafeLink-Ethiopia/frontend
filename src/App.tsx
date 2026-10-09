@@ -8,8 +8,8 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import InformationPage from "./pages/InformationPage";
-import { Assistant } from "./components/Assistant";
+
+
 import UserLayout from "./components/user/UserLayout";
 import UserProfile from "./pages/UserProfile";
 
@@ -25,9 +25,9 @@ import LandingPage from "./pages/LandingPage";
 import CreateSessionPage from "./pages/CreateSessionPage";
 import SessionCreatedPage from "./pages/SessionCreatedPage";
 import LoginPage from "./pages/LoginPage";
-import PrivateSupportPage from "./pages/PrivateSupportPage";
-import HelpingPage from "./pages/HelpingPage";
-import QuickExitPage from "./pages/QuickExitPage";
+
+
+
 
 // =========================
 // Advisor Pages
@@ -38,9 +38,9 @@ import AdvisorLoginPage from "./pages/AdvisorLoginPage";
 import AdvisorDashboardPage from "./pages/AdvisorDashboardPage";
 import AdvisorProfilePage from "./pages/AdvisorProfilePage";
 
-import ForgotPassword from "./pages/advisor/ForgotPassword";
+
 import VerifyOtp from "./pages/advisor/VerifyOtp";
-import ResetPassword from "./pages/advisor/ResetPassword";
+
 import AdvisorMessages from "./pages/advisor/AdvisorMessages";
 import AdvisorAdminChat from "./pages/advisor/AdvisorAdminChat";
 import UserConversations from "./pages/advisor/UserConversations";
@@ -49,7 +49,6 @@ import UserConversations from "./pages/advisor/UserConversations";
 // Admin Pages
 // =========================
 
-import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminAwareness from "./pages/admin/AdminAwareness";
 import CreateAdvisor from "./pages/admin/CreateAdvisor";
@@ -126,12 +125,7 @@ function SessionCreatedRoute({ safelinkId }: { safelinkId: string }) {
 // Helping Route
 // =========================
 
-function HelpingRoute() {
-  const navigate = useNavigate();
-
-  return <HelpingPage onBack={() => navigate("/")} />;
-}
-
+// 
 // =========================
 // Main App
 // =========================
@@ -186,12 +180,12 @@ function App() {
             element={<Navigate to="/user/dashboard/chat" replace />}
           />
           <Route path="/awareness" element={<AwarenessPage />} />
-          <Route path="/information" element={<InformationPage />} />
+          
         </Route>
 
-        <Route path="/helping" element={<HelpingRoute />} />
+        
 
-        <Route path="/quick-exit" element={<QuickExitPage />} />
+  
 
         {/* =====================================================
             ADVISOR ROUTES
@@ -258,14 +252,14 @@ function App() {
             element={<AdvisorAdminChat />}
           />
           <Route path="awareness" element={<AwarenessPage />} />
-          <Route path="information" element={<InformationPage />} />
+          
         </Route>
 
-        {/* =====================================================
+        {/* {/* =====================================================
             ADMIN LOGIN
         ====================================================== */}
 
-        <Route path="/admin/login" element={<AdminLogin />} />
+       
 
         {/* =====================================================
             PROTECTED ADMIN ROUTES
