@@ -4,7 +4,7 @@ import {
   MessageSquare,
   MessageCircle,
   Diamond,
-  Info,
+  
   User,
   LogOut,
   X,
@@ -37,11 +37,7 @@ const navigationLinks = [
     path: "/advisor/awareness",
     icon: Diamond,
   },
-  {
-    label: "Information",
-    path: "/advisor/information",
-    icon: Info,
-  },
+
   {
     label: "Profile",
     path: "/advisor/profile",
