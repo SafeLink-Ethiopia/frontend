@@ -79,7 +79,7 @@ export default function AdminAwareness() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/admin/awareness-posts",
+        "https://backend-tncs.onrender.com/api/admin/awareness-posts",
         {
           method: "GET",
           headers: {
@@ -136,8 +136,8 @@ export default function AdminAwareness() {
 
     try {
       const url = editingPostId
-        ? `http://localhost:5000/api/admin/awareness-posts/${editingPostId}`
-        : "http://localhost:5000/api/admin/awareness-posts";
+        ? `https://backend-tncs.onrender.com/api/admin/awareness-posts/${editingPostId}`
+        : "https://backend-tncs.onrender.com/api/admin/awareness-posts";
 
       const response = await fetch(url, {
         method: editingPostId ? "PUT" : "POST",
@@ -220,7 +220,7 @@ export default function AdminAwareness() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/admin/awareness-posts/${postId}`,
+        `https://backend-tncs.onrender.com/api/admin/awareness-posts/${postId}`,
         {
           method: "DELETE",
           headers: {

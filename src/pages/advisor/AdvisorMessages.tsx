@@ -4,8 +4,8 @@ import { io, Socket } from "socket.io-client";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-const API_URL = "http://localhost:5000/api";
-const SOCKET_URL = "http://localhost:5000";
+const API_URL = "https://backend-tncs.onrender.com/api";
+const SOCKET_URL = "https://backend-tncs.onrender.com";
 
 const COLORS = {
   background: "#FAFBF7",

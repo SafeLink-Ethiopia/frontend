@@ -22,7 +22,7 @@ export interface FacilityFilters {
   supportTypes?: SupportType[];
 }
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://backend-tncs.onrender.com/api";
 
 export async function getFacilities(
   filters: FacilityFilters = {},

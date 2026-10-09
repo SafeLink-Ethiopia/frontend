@@ -12,7 +12,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://backend-tncs.onrender.com/api";
 
 type AdvisorType = "medical" | "legal" | "psychological" | "general";
 type AdvisorGender = "male" | "female";

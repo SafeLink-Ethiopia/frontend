@@ -54,7 +54,7 @@ interface Conversation {
    CONSTANTS
 ========================================================= */
 
-const API_URL = "http://localhost:5000";
+const API_URL = "https://backend-tncs.onrender.com";
 
 /* =========================================================
    COMPONENT

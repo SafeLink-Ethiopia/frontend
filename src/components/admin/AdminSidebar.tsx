@@ -56,7 +56,7 @@ export default function AdminSidebar({
 
     try {
       if (token) {
-        await fetch("http://localhost:5000/api/admin/logout", {
+        await fetch("https://backend-tncs.onrender.com/api/admin/logout", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,

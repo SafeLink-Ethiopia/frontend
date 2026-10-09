@@ -6,7 +6,7 @@ import type {
   LoginSessionResponse,
 } from "../types/session";
 
-const API_URL = "http://localhost:5000";
+const API_URL = "https://backend-tncs.onrender.com";
 
 export const createSession = async (
   language: Language,

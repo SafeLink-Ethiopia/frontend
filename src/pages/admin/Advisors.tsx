@@ -42,7 +42,7 @@ export default function Advisors() {
 
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
-  const API_URL = "http://localhost:5000/api";
+  const API_URL = "https://backend-tncs.onrender.com/api";
 
   const fetchAdvisors = async () => {
     try {

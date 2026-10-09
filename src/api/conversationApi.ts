@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api/conversations";
+const API_URL = "https://backend-tncs.onrender.com/api/conversations";
 
 export type Sender = "user" | "advisor";
 

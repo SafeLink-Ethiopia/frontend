@@ -88,7 +88,7 @@ interface DistributionSectionProps {
   emptyMessage: string;
 }
 
-const API_URL = "http://localhost:5000/api/admin/dashboard";
+const API_URL = "https://backend-tncs.onrender.com/api/admin/dashboard";
 
 const formatNumber = (value: number) => new Intl.NumberFormat().format(value);
 

@@ -68,7 +68,7 @@ interface ConversationResponse {
 
 type DeleteType = "me" | "everyone";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://backend-tncs.onrender.com/api";
 
 const getInitials = (name?: string, fallback = "A") => {
   if (!name) return fallback;

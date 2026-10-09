@@ -1,7 +1,7 @@
 import axios from "axios";
 import type { Conversation, Message } from "./conversationApi";
 
-const API_URL = "http://localhost:5000/api/conversations";
+const API_URL = "https://backend-tncs.onrender.com/api/conversations";
 
 interface ConversationsResponse {
   success: boolean;
